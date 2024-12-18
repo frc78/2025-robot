@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/wpilib/2025/maven/edu/wpi/first/epilogue/epilogue-processor-java/2025.1.1-beta-3/epilogue-processor-java-2025.1.1-beta-3.jar" />
+          <entry name="$USER_HOME$/wpilib/2025/maven/edu/wpi/first/epilogue/epilogue-runtime-java/2025.1.1-beta-3/epilogue-runtime-java-2025.1.1-beta-3.jar" />
+        </processorPath>
+        <module name="2025-robot.main" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="17" />
+  </component>
+</project>
