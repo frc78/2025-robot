@@ -3,7 +3,7 @@
   <component name="KtfmtSettings">
     <option name="customBlockIndent" value="4" />
     <option name="customManageTrailingCommas" value="true" />
-    <option name="enableKtfmt" value="Disabled" />
+    <option name="enableKtfmt" value="Enabled" />
     <option name="uiFormatterStyle" value="Kotlinlang" />
   </component>
 </project>
