@@ -75,6 +75,10 @@ object Robot : TimedRobot() {
         wristMech.angle = -Wrist.angle.degrees
     }
 
+    override fun teleopInit() {
+        CommandScheduler.getInstance().cancelAll()
+    }
+
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
     }

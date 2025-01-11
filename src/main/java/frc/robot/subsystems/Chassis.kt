@@ -2,10 +2,14 @@ package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
+import com.ctre.phoenix6.hardware.CANcoder
+import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants
 import com.ctre.phoenix6.swerve.SwerveModuleConstants
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.Nat
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
@@ -27,7 +31,11 @@ import java.util.function.Supplier
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  * Subsystem so it can easily be used in command-based projects.
  */
-object Chassis : TunerSwerveDrivetrain, Subsystem {
+object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
+    DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
+    DeviceConstructor<CANcoder> { deviceId: Int, canbus: String? -> CANcoder(deviceId, canbus) },
+    TunerConstants.DrivetrainConstants, 0.0, Matrix(Nat.N3(), Nat.N1()), Matrix(Nat.N3(), Nat.N1()),
+    TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight), Subsystem {
     private var m_simNotifier: Notifier? = null
     private var m_lastSimTime = 0.0
 
