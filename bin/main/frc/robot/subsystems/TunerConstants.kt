@@ -206,7 +206,7 @@ object TunerConstants {
     /**
      * Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected device types.
      */
-    class TunerSwerveDrivetrain : SwerveDrivetrain<TalonFX?, TalonFX?, CANcoder?> {
+    class TunerSwerveDrivetrain : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> {
         /**
          * Constructs a CTRE SwerveDrivetrain using the specified constants.
          *
@@ -219,8 +219,8 @@ object TunerConstants {
          * @param modules               Constants for each specific module
          */
         constructor(
-            drivetrainConstants: SwerveDrivetrainConstants?,
-            vararg modules: SwerveModuleConstants<*, *, *>?
+            drivetrainConstants: SwerveDrivetrainConstants,
+            vararg modules: SwerveModuleConstants<*, *, *>
         ) : super(
             DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
             DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },

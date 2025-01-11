@@ -12,6 +12,10 @@ object Robot : TimedRobot() {
         CommandScheduler.getInstance().run()
     }
 
+    override fun teleopInit() {
+        CommandScheduler.getInstance().cancelAll()
+    }
+
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
     }
