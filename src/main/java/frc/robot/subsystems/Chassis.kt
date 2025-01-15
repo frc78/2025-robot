@@ -1,41 +1,46 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
-import com.ctre.phoenix6.Utils
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
-import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants
-import com.ctre.phoenix6.swerve.SwerveModuleConstants
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.Nat
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.numbers.N1
-import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
-import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.subsystems.TunerConstants.TunerSwerveDrivetrain
 import java.util.function.Supplier
 
 /**
- * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
- * Subsystem so it can easily be used in command-based projects.
+ * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
+ * be used in command-based projects.
  */
-object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
-    DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
-    DeviceConstructor<CANcoder> { deviceId: Int, canbus: String? -> CANcoder(deviceId, canbus) },
-    TunerConstants.DrivetrainConstants, 0.0, Matrix(Nat.N3(), Nat.N1()), Matrix(Nat.N3(), Nat.N1()),
-    TunerConstants.FrontLeft, TunerConstants.FrontRight, TunerConstants.BackLeft, TunerConstants.BackRight), Subsystem {
+object Chassis :
+    SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
+        DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
+        DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
+        DeviceConstructor<CANcoder> { deviceId: Int, canbus: String? ->
+            CANcoder(deviceId, canbus)
+        },
+        TunerConstants.DrivetrainConstants,
+        0.0,
+        Matrix(Nat.N3(), Nat.N1()),
+        Matrix(Nat.N3(), Nat.N1()),
+        TunerConstants.FrontLeft,
+        TunerConstants.FrontRight,
+        TunerConstants.BackLeft,
+        TunerConstants.BackRight,
+    ),
+    Subsystem {
     private var m_simNotifier: Notifier? = null
     private var m_lastSimTime = 0.0
 
@@ -50,62 +55,76 @@ object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor
     private val m_rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
-    private val m_sysIdRoutineTranslation = SysIdRoutine(
-        SysIdRoutine.Config(
-            null,  // Use default ramp rate (1 V/s)
-            Units.Volts.of(4.0),  // Reduce dynamic step voltage to 4 V to prevent brownout
-            null
-        )  // Use default timeout (10 s)
-        // Log state with SignalLogger class
-        { state: SysIdRoutineLog.State -> SignalLogger.writeString("SysIdTranslation_State", state.toString()) },
-        Mechanism(
-            { output: Voltage? -> setControl(m_translationCharacterization.withVolts(output))},
-            null,
-            this
+    private val m_sysIdRoutineTranslation =
+        SysIdRoutine(
+            SysIdRoutine.Config(
+                null, // Use default ramp rate (1 V/s)
+                Units.Volts.of(4.0), // Reduce dynamic step voltage to 4 V to prevent brownout
+                null,
+            ) // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            { state: SysIdRoutineLog.State ->
+                SignalLogger.writeString("SysIdTranslation_State", state.toString())
+            },
+            Mechanism(
+                { output: Voltage? -> setControl(m_translationCharacterization.withVolts(output)) },
+                null,
+                this,
+            ),
         )
-    )
 
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
-    private val m_sysIdRoutineSteer = SysIdRoutine(
-        SysIdRoutine.Config(
-            null,  // Use default ramp rate (1 V/s)
-            Units.Volts.of(7.0),  // Use dynamic voltage of 7 V
-            null
-        )  // Use default timeout (10 s)
-        // Log state with SignalLogger class
-        { state: SysIdRoutineLog.State -> SignalLogger.writeString("SysIdSteer_State", state.toString()) },
-        Mechanism(
-            { volts: Voltage? -> setControl(m_steerCharacterization.withVolts(volts))},
-            null,
-            this
+    private val m_sysIdRoutineSteer =
+        SysIdRoutine(
+            SysIdRoutine.Config(
+                null, // Use default ramp rate (1 V/s)
+                Units.Volts.of(7.0), // Use dynamic voltage of 7 V
+                null,
+            ) // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            { state: SysIdRoutineLog.State ->
+                SignalLogger.writeString("SysIdSteer_State", state.toString())
+            },
+            Mechanism(
+                { volts: Voltage? -> setControl(m_steerCharacterization.withVolts(volts)) },
+                null,
+                this,
+            ),
         )
-    )
 
     /*
-    * SysId routine for characterizing rotation.
-    * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
-    * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
-    */
-    private val m_sysIdRoutineRotation = SysIdRoutine(
-        SysIdRoutine.Config( /* This is in radians per second², but SysId only supports "volts per second" */
-            Units.Volts.of(Math.PI / 6).per(Units.Second),  /* This is in radians per second, but SysId only supports "volts" */
-            Units.Volts.of(Math.PI),
-            null
-        )  // Use default timeout (10 s)
-        // Log state with SignalLogger class
-        { state: SysIdRoutineLog.State -> SignalLogger.writeString("SysIdRotation_State", state.toString()) },
-        Mechanism(
-            {
-                    output: Voltage ->
-                /* output is actually radians per second, but SysId only supports "volts" */
-                setControl(m_rotationCharacterization.withRotationalRate(output.`in`(Units.Volts)))
-                /* also log the requested output for SysId */
-                SignalLogger.writeDouble("Rotational_Rate", output.`in`(Units.Volts))
+     * SysId routine for characterizing rotation.
+     * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
+     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
+     */
+    private val m_sysIdRoutineRotation =
+        SysIdRoutine(
+            SysIdRoutine.Config(
+                /* This is in radians per second², but SysId only supports "volts per second" */
+                Units.Volts.of(Math.PI / 6)
+                    .per(
+                        Units.Second
+                    ), /* This is in radians per second, but SysId only supports "volts" */
+                Units.Volts.of(Math.PI),
+                null,
+            ) // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            { state: SysIdRoutineLog.State ->
+                SignalLogger.writeString("SysIdRotation_State", state.toString())
             },
-            null,
-            this
+            Mechanism(
+                { output: Voltage ->
+                    /* output is actually radians per second, but SysId only supports "volts" */
+                    setControl(
+                        m_rotationCharacterization.withRotationalRate(output.`in`(Units.Volts))
+                    )
+                    /* also log the requested output for SysId */
+                    SignalLogger.writeDouble("Rotational_Rate", output.`in`(Units.Volts))
+                },
+                null,
+                this,
+            ),
         )
-    )
 
     /* The SysId routine to test */
     private val m_sysIdRoutineToApply = m_sysIdRoutineTranslation
@@ -121,8 +140,8 @@ object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor
     }
 
     /**
-     * Runs the SysId Quasistatic test in the given direction for the routine
-     * specified by [.m_sysIdRoutineToApply].
+     * Runs the SysId Quasistatic test in the given direction for the routine specified by
+     * [.m_sysIdRoutineToApply].
      *
      * @param direction Direction of the SysId Quasistatic test
      * @return Command to run
@@ -132,8 +151,8 @@ object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor
     }
 
     /**
-     * Runs the SysId Dynamic test in the given direction for the routine
-     * specified by [.m_sysIdRoutineToApply].
+     * Runs the SysId Dynamic test in the given direction for the routine specified by
+     * [.m_sysIdRoutineToApply].
      *
      * @param direction Direction of the SysId Dynamic test
      * @return Command to run
@@ -153,13 +172,11 @@ object Chassis : SwerveDrivetrain<TalonFX, TalonFX, CANcoder> (DeviceConstructor
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent { allianceColor: Alliance ->
                 setOperatorPerspectiveForward(
-                    if (allianceColor == Alliance.Red)
-                        kRedAlliancePerspectiveRotation
-                    else
-                        kBlueAlliancePerspectiveRotation
+                    if (allianceColor == Alliance.Red) kRedAlliancePerspectiveRotation
+                    else kBlueAlliancePerspectiveRotation
                 )
                 m_hasAppliedOperatorPerspective = true
             }
         }
     }
-    }
+}
