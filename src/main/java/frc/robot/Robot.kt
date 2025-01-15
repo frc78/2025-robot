@@ -3,15 +3,19 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.wpilibj.TimedRobot
+import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import frc.robot.lib.Drive
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
+import frc.robot.subsystems.Chassis
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -20,6 +24,9 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.Wrist
 
 object Robot : TimedRobot() {
+    val swerveRequest: SwerveRequest.ApplyFieldSpeeds =
+        SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    val driveController: XboxController = XboxController(0)
 
     init {
         // Initializing Subsystems
@@ -77,6 +84,10 @@ object Robot : TimedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
+        Chassis.defaultCommand =
+            Chassis.applyRequest {
+                swerveRequest.withSpeeds(Drive.calculateSpeeds(driveController))
+            }
     }
 
     override fun testInit() {
