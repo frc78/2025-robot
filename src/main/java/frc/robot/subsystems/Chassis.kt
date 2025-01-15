@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import java.util.function.Supplier
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -135,8 +134,8 @@ object Chassis :
      * @param request Function returning the request to apply
      * @return Command to run
      */
-    fun applyRequest(requestSupplier: Supplier<SwerveRequest?>): Command {
-        return run { this.setControl(requestSupplier.get()) }
+    fun applyRequest(requestSupplier: () -> SwerveRequest): Command {
+        return run { this.setControl(requestSupplier()) }
     }
 
     /**
