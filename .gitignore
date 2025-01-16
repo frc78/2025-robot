@@ -84,8 +84,8 @@ fabric.properties
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
 # *.iml
-# modules.xml
-# .idea/misc.xml
+modules.xml
+.idea/misc.xml
 # *.ipr
 
 # Sonarlint plugin
@@ -255,3 +255,7 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,intellij,gradle,kotlin,java
+
+# Ignore FRC run configurations
+.run/
+.idea/
