@@ -26,7 +26,7 @@ object TunerConstants {
     // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     private val steerGains: Slot0Configs =
         Slot0Configs()
-            .withKP(100.0)
+            .withKP(60.0)
             .withKI(0.0)
             .withKD(0.5)
             .withKS(0.1)
