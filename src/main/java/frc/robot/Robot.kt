@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import frc.robot.lib.Drive
+import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Chassis
@@ -85,9 +85,7 @@ object Robot : TimedRobot() {
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
         Chassis.defaultCommand =
-            Chassis.applyRequest {
-                swerveRequest.withSpeeds(Drive.calculateSpeeds(driveController))
-            }
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.calculateSpeeds()) }
     }
 
     override fun testInit() {
