@@ -1,5 +1,3 @@
 package frc.robot
 
-object Chassis {
-    
-}
+object Chassis {}
