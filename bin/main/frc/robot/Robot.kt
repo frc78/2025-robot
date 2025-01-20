@@ -3,10 +3,17 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.wpilibj.TimedRobot
+import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import frc.robot.lib.calculateSpeeds
+import frc.robot.subsystems.Chassis
 
 object Robot : TimedRobot() {
+    val swerveRequest: SwerveRequest.ApplyFieldSpeeds =
+        SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    val driveController: XboxController = XboxController(0)
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
@@ -14,6 +21,8 @@ object Robot : TimedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
+        Chassis.defaultCommand =
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.calculateSpeeds()) }
     }
 
     override fun testInit() {
