@@ -4,6 +4,7 @@ import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.Nat
@@ -26,6 +27,9 @@ import org.photonvision.EstimatedRobotPose
  */
 object Chassis :
     SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
+        // TW: DeviceConstructor is a functional interface, meaning you can use a method reference
+        // TW: In this case, the intention is to use the constructor of the class.
+        // TW: To reference the constructor in kotlin, you can use `::ClassName`
         DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
         DeviceConstructor<TalonFX> { deviceId: Int, canbus: String? -> TalonFX(deviceId, canbus) },
         DeviceConstructor<CANcoder> { deviceId: Int, canbus: String? ->
@@ -41,6 +45,7 @@ object Chassis :
         TunerConstants.BackRight,
     ),
     Subsystem {
+    // TW: Let's not use the `m_` notation.
     private var m_simNotifier: Notifier? = null
     private var m_lastSimTime = 0.0
 
@@ -101,6 +106,9 @@ object Chassis :
         SysIdRoutine(
             SysIdRoutine.Config(
                 /* This is in radians per second², but SysId only supports "volts per second" */
+                // TW: Try creating an extension property on the `Number` class that lets you write
+                // this as `
+                // TW: `(Math.PI / 6).volts`
                 Units.Volts.of(Math.PI / 6)
                     .per(
                         Units.Second
@@ -179,9 +187,14 @@ object Chassis :
             }
         }
 
+        // TW: Instead of getting the cameras from this class, it might make more sense to call
+        // `addVisionMeasurement`
+        // TW: from the Vision class.
         Vision.cams.forEach {
+            // TW: This is a good place to use the `let` function
             val est: EstimatedRobotPose? = it.getEstimatedGlobalPose()
-            if(est != null) addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds, it.)
+            if (est != null)
+                addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds, it)
         }
     }
 }
