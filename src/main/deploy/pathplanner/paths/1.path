@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 7.3920512820512805,
+        "y": 2.3117948717948718
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 7.145329494971315,
+        "y": 2.2714419316285337
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.3279487179487175,
+        "y": 2.631730769230769
+      },
+      "prevControl": {
+        "x": 5.573679145875344,
+        "y": 2.6777368209087484
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 118.61045966596515
+  },
+  "reversed": false,
+  "folder": "Boiled B ",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -174.42780219603623
+  },
+  "useDefaultConstraints": true
+}

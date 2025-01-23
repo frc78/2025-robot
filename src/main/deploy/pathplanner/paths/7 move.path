@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.7673717948717944,
+        "y": 4.406858974358975
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.4802891065706982,
+        "y": 4.435339804246381
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 2.9335897435897436,
+        "y": 4.169487179487179
+      },
+      "prevControl": {
+        "x": 2.6768640517534887,
+        "y": 4.180413142299921
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 1.3019526725789339
+  },
+  "reversed": false,
+  "folder": "Pathfinder Path #2",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -50.042451069170966
+  },
+  "useDefaultConstraints": true
+}

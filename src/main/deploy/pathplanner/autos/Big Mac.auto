@@ -1,0 +1,55 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": " move 3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 4"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 5"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 6"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "move 7"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Big Mac Manuever",
+  "choreoAuto": false
+}
