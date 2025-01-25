@@ -8,17 +8,18 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.Nat
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
-import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
+import org.littletonrobotics.junction.Logger
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -44,22 +45,19 @@ object Chassis :
         TunerConstants.BackRight,
     ),
     Subsystem {
-    // TW: Let's not use the `m_` notation.
-    private var m_simNotifier: Notifier? = null
-    private var m_lastSimTime = 0.0
 
     /* Keep track if we've ever applied the operator perspective before or not */
-    private var m_hasAppliedOperatorPerspective = false
+    private var hasAppliedOperatorPerspective = false
     private val kBlueAlliancePerspectiveRotation: Rotation2d = Rotation2d.kZero
     private val kRedAlliancePerspectiveRotation: Rotation2d = Rotation2d.k180deg
 
     /* Swerve requests to apply during SysId characterization */
-    private val m_translationCharacterization = SwerveRequest.SysIdSwerveTranslation()
-    private val m_steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
-    private val m_rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
+    private val translationCharacterization = SwerveRequest.SysIdSwerveTranslation()
+    private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
+    private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
-    private val m_sysIdRoutineTranslation =
+    private val sysIdRoutineTranslation =
         SysIdRoutine(
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
@@ -71,7 +69,7 @@ object Chassis :
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
             Mechanism(
-                { output: Voltage? -> setControl(m_translationCharacterization.withVolts(output)) },
+                { output: Voltage? -> setControl(translationCharacterization.withVolts(output)) },
                 null,
                 this,
             ),
@@ -90,7 +88,7 @@ object Chassis :
                 SignalLogger.writeString("SysIdSteer_State", state.toString())
             },
             Mechanism(
-                { volts: Voltage? -> setControl(m_steerCharacterization.withVolts(volts)) },
+                { volts: Voltage? -> setControl(steerCharacterization.withVolts(volts)) },
                 null,
                 this,
             ),
@@ -101,7 +99,7 @@ object Chassis :
      * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
      * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
      */
-    private val m_sysIdRoutineRotation =
+    private val sysIdRoutineRotation =
         SysIdRoutine(
             SysIdRoutine.Config(
                 /* This is in radians per second², but SysId only supports "volts per second" */
@@ -123,7 +121,7 @@ object Chassis :
                 { output: Voltage ->
                     /* output is actually radians per second, but SysId only supports "volts" */
                     setControl(
-                        m_rotationCharacterization.withRotationalRate(output.`in`(Units.Volts))
+                        rotationCharacterization.withRotationalRate(output.`in`(Units.Volts))
                     )
                     /* also log the requested output for SysId */
                     SignalLogger.writeDouble("Rotational_Rate", output.`in`(Units.Volts))
@@ -134,7 +132,7 @@ object Chassis :
         )
 
     /* The SysId routine to test */
-    private val m_sysIdRoutineToApply = m_sysIdRoutineTranslation
+    private val sysIdRoutineToApply = sysIdRoutineTranslation
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
@@ -154,7 +152,7 @@ object Chassis :
      * @return Command to run
      */
     fun sysIdQuasistatic(direction: SysIdRoutine.Direction?): Command {
-        return m_sysIdRoutineToApply.quasistatic(direction)
+        return sysIdRoutineToApply.quasistatic(direction)
     }
 
     /**
@@ -165,7 +163,7 @@ object Chassis :
      * @return Command to run
      */
     fun sysIdDynamic(direction: SysIdRoutine.Direction?): Command {
-        return m_sysIdRoutineToApply.dynamic(direction)
+        return sysIdRoutineToApply.dynamic(direction)
     }
 
     override fun periodic() {
@@ -176,16 +174,17 @@ object Chassis :
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
          * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
          */
-        if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+        if (!hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent { allianceColor: Alliance ->
                 setOperatorPerspectiveForward(
                     if (allianceColor == Alliance.Red) kRedAlliancePerspectiveRotation
                     else kBlueAlliancePerspectiveRotation
                 )
-                m_hasAppliedOperatorPerspective = true
+                hasAppliedOperatorPerspective = true
             }
         }
-
         Vision.update()
+
+        Logger.recordOutput("ChassisPose", state.Pose)
     }
 }

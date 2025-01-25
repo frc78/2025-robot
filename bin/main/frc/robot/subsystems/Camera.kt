@@ -30,7 +30,7 @@ class Camera(name: String, pose: Transform3d) {
             pose,
         )
 
-    //TODO guessed values, should tune one day
+    // TODO guessed values, should tune one day
     private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(4.0, 4.0, 8.0)
     private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 1.0)
 
@@ -45,8 +45,10 @@ class Camera(name: String, pose: Transform3d) {
 
     fun getEstimatedGlobalPose(): EstimatedRobotPose? {
         var visionEst: EstimatedRobotPose? = null
-        cam.allUnreadResults.forEach { visionEst = estimator.update(it).getOrNull() }
-        updateStds(visionEst, cam.allUnreadResults.last().getTargets()) // TODO maybe work?
+        cam.allUnreadResults.forEach {
+            visionEst = estimator.update(it).getOrNull()
+            updateStds(visionEst, it.getTargets())
+        }
         return visionEst // TODO does this work? It's what the example said
     }
 

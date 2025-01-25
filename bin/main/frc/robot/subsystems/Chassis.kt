@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
+import edu.wpi.first.epilogue.Logged
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.Nat
 import edu.wpi.first.math.geometry.Rotation2d
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
  * be used in command-based projects.
  */
+@Logged
 object Chassis :
     SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
         // TW: DeviceConstructor is a functional interface, meaning you can use a method reference
@@ -185,7 +187,6 @@ object Chassis :
                 m_hasAppliedOperatorPerspective = true
             }
         }
-
         Vision.update()
     }
 }
