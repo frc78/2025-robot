@@ -89,7 +89,5 @@ class Camera(name: String, pose: Transform3d) {
                 currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
             else currentStds = currentStds.times(1 + (avgDist.pow(2) / 30))
         }
-
-        currentStds = multiTagStds
     }
 }

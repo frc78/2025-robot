@@ -1,15 +1,17 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.Utils
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
-import edu.wpi.first.math.Nat
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.numbers.N1
+import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
@@ -20,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import org.littletonrobotics.junction.Logger
+
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -36,9 +39,6 @@ object Chassis :
             CANcoder(deviceId, canbus)
         },
         TunerConstants.DrivetrainConstants,
-        0.0,
-        Matrix(Nat.N3(), Nat.N1()),
-        Matrix(Nat.N3(), Nat.N1()),
         TunerConstants.FrontLeft,
         TunerConstants.FrontRight,
         TunerConstants.BackLeft,
@@ -55,6 +55,18 @@ object Chassis :
     private val translationCharacterization = SwerveRequest.SysIdSwerveTranslation()
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
+
+    override fun addVisionMeasurement(
+        visionRobotPoseMeters: Pose2d?,
+        timestampSeconds: Double,
+        visionMeasurementStdDevs: Matrix<N3, N1>
+    ) {
+        super.addVisionMeasurement(
+            visionRobotPoseMeters,
+            Utils.fpgaToCurrentTime(timestampSeconds),
+            visionMeasurementStdDevs
+        )
+    }
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private val sysIdRoutineTranslation =
