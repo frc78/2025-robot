@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -16,7 +17,7 @@ import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.PhotonTrackedTarget
 
 class Camera(name: String, pose: Transform3d) {
-    private val cam = PhotonCamera(name)
+    val cam = PhotonCamera(name)
 
     companion object {
         private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
@@ -45,8 +46,10 @@ class Camera(name: String, pose: Transform3d) {
 
     fun getEstimatedGlobalPose(): EstimatedRobotPose? {
         var visionEst: EstimatedRobotPose? = null
-        cam.allUnreadResults.forEach { visionEst = estimator.update(it).getOrNull() }
-        updateStds(visionEst, cam.allUnreadResults.last().getTargets()) // TODO maybe work?
+        cam.allUnreadResults.forEach {
+            visionEst = estimator.update(it).getOrNull()
+            updateStds(visionEst, it.getTargets())
+        }
         return visionEst // TODO does this work? It's what the example said
     }
 
@@ -86,5 +89,7 @@ class Camera(name: String, pose: Transform3d) {
                 currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
             else currentStds = currentStds.times(1 + (avgDist.pow(2) / 30))
         }
+
+        currentStds = multiTagStds
     }
 }

@@ -4,7 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
-import edu.wpi.first.wpilibj.TimedRobot
+import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
@@ -22,8 +22,12 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.Wrist
+import org.littletonrobotics.junction.LoggedRobot
+import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-object Robot : TimedRobot() {
+object Robot : LoggedRobot() {
     val swerveRequest: SwerveRequest.ApplyFieldSpeeds =
         SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController: XboxController = XboxController(0)
@@ -34,6 +38,13 @@ object Robot : TimedRobot() {
         Intake
         Drivetrain
         Pivot
+        Logger.recordMetadata("ProjectName", "MyProject")
+        Logger.addDataReceiver(WPILOGWriter())
+        // Log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(NT4Publisher())
+        // Publish data to NetworkTables
+        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
+        Logger.start()
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before

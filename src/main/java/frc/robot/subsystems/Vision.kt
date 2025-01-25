@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.units.Units.*
 import frc.robot.lib.degrees
 import frc.robot.lib.meters
+import org.littletonrobotics.junction.Logger
 
 object Vision {
     private val cams: List<Camera> =
@@ -50,11 +51,13 @@ object Vision {
     fun update() {
         cams.forEach { cam ->
             cam.getEstimatedGlobalPose()?.let {
+                val pose = it.estimatedPose.toPose2d()
                 Chassis.addVisionMeasurement(
-                    it.estimatedPose.toPose2d(),
+                    pose,
                     it.timestampSeconds,
                     cam.currentStds,
                 )
+                Logger.recordOutput(cam.cam.name + " est", pose)
             }
         }
     }
