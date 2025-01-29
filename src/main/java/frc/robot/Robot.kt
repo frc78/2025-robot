@@ -29,6 +29,8 @@ object Robot : LoggedRobot() {
             Logger.addDataReceiver(NT4Publisher()); // Publish data to NetworkTables
         PowerDistribution(1, PowerDistribution.ModuleType.kCTRE);
         Logger.start()
+
+        Chassis.applyRequest { SwerveRequest.Idle() }
     }
 
     override fun robotPeriodic() {
