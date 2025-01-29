@@ -259,3 +259,7 @@ gradle-app.setting
 # Ignore FRC run configurations
 .run/
 .idea/
+/networktables.json
+/simgui.json
+/simgui-ds.json
+/simgui-window.json
