@@ -45,6 +45,8 @@ object Robot : LoggedRobot() {
         // Publish data to NetworkTables
         PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+
+        Chassis.applyRequest { SwerveRequest.Idle() }
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before

@@ -8,6 +8,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.numbers.N1
@@ -39,6 +40,9 @@ object Chassis :
             CANcoder(deviceId, canbus)
         },
         TunerConstants.DrivetrainConstants,
+        0.0,
+        VecBuilder.fill(0.5, 0.5, 0.005),
+        VecBuilder.fill(1.0, 1.0, 1.0),
         TunerConstants.FrontLeft,
         TunerConstants.FrontRight,
         TunerConstants.BackLeft,
