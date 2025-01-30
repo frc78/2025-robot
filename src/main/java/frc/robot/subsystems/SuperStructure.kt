@@ -3,10 +3,11 @@ package frc.robot.subsystems
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
-enum class RobotState(val pivotAngle: Angle, val ElevatorHeight: Distance, val wristAngle: Angle) {
+enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     L1(30.degrees, 0.inches, -120.degrees),
     L2(15.degrees, 6.inches, -110.degrees),
     L3(12.degrees, 20.inches, -100.degrees),
@@ -30,7 +31,7 @@ object SuperStructure {
     }
 
     // Command factory to go to a specific robot state
-    fun goTo(state: RobotState) =
+    private fun goTo(state: RobotState): Command =
         Pivot.goTo(state)
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
