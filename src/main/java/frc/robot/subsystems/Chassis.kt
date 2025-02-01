@@ -24,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import org.littletonrobotics.junction.Logger
 
-
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
  * be used in command-based projects.
@@ -63,12 +62,12 @@ object Chassis :
     override fun addVisionMeasurement(
         visionRobotPoseMeters: Pose2d?,
         timestampSeconds: Double,
-        visionMeasurementStdDevs: Matrix<N3, N1>
+        visionMeasurementStdDevs: Matrix<N3, N1>,
     ) {
         super.addVisionMeasurement(
             visionRobotPoseMeters,
             Utils.fpgaToCurrentTime(timestampSeconds),
-            visionMeasurementStdDevs
+            visionMeasurementStdDevs,
         )
     }
 
@@ -199,7 +198,6 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
-        Vision.update()
 
         Logger.recordOutput("ChassisPose", state.Pose)
     }

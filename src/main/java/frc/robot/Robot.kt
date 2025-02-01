@@ -4,18 +4,15 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
-import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.lib.calculateSpeeds
 import frc.robot.subsystems.Chassis
-import org.littletonrobotics.junction.LogFileUtil
+import frc.robot.subsystems.Vision
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
-import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 object Robot : LoggedRobot() {
@@ -24,10 +21,12 @@ object Robot : LoggedRobot() {
     val driveController: XboxController = XboxController(0)
 
     override fun robotInit() {
-        Logger.recordMetadata("ProjectName", "MyProject");
-            Logger.addDataReceiver(WPILOGWriter()); // Log to a USB stick ("/U/logs")
-            Logger.addDataReceiver(NT4Publisher()); // Publish data to NetworkTables
-        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE);
+        Logger.recordMetadata("ProjectName", "MyProject")
+        Logger.addDataReceiver(WPILOGWriter())
+        // Log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(NT4Publisher())
+        // Publish data to NetworkTables
+        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
 
         Chassis.applyRequest { SwerveRequest.Idle() }
@@ -35,6 +34,7 @@ object Robot : LoggedRobot() {
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
+        Vision.update()
     }
 
     override fun teleopInit() {
