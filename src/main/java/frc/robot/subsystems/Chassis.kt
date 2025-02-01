@@ -41,7 +41,7 @@ object Chassis :
         TunerConstants.DrivetrainConstants,
         0.0,
         VecBuilder.fill(0.5, 0.5, 0.005),
-        VecBuilder.fill(1.0, 1.0, 1.0),
+        VecBuilder.fill(0.5, 0.5, 1.0),
         TunerConstants.FrontLeft,
         TunerConstants.FrontRight,
         TunerConstants.BackLeft,
@@ -198,7 +198,5 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
-
-        Logger.recordOutput("ChassisPose", state.Pose)
     }
 }

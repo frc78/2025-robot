@@ -85,6 +85,7 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
+        Logger.recordOutput("ChassisPose", Chassis.state.Pose)
     }
 
     override fun simulationPeriodic() {
