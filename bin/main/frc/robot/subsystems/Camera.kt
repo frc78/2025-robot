@@ -1,22 +1,28 @@
 package frc.robot.subsystems
 
+import com.ctre.phoenix6.Utils
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.units.measure.Time
+import edu.wpi.first.wpilibj.Timer
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.PhotonTrackedTarget
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class Camera(name: String, pose: Transform3d) {
-    private val cam = PhotonCamera(name)
+    val cam = PhotonCamera(name)
 
     companion object {
         private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
@@ -31,8 +37,8 @@ class Camera(name: String, pose: Transform3d) {
         )
 
     // TODO guessed values, should tune one day
-    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(4.0, 4.0, 8.0)
-    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 1.0)
+    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 1.0)
+    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.3, 0.3, 0.5)
 
     var currentStds: Matrix<N3, N1> = singleTagStds
         private set
@@ -49,8 +55,13 @@ class Camera(name: String, pose: Transform3d) {
             visionEst = estimator.update(it).getOrNull()
             updateStds(visionEst, it.getTargets())
         }
+        lastEstimatedPose = visionEst
         return visionEst // TODO does this work? It's what the example said
     }
+
+//    fun getTimeFromLastRefresh(): Duration {
+//        return (lastEstimatedPose?.timestampSeconds?.minus(Timer.getFPGATimestamp())?.milliseconds) ?: Double.MAX_VALUE.milliseconds
+//    }
 
     private fun updateStds(pose: EstimatedRobotPose?, targets: List<PhotonTrackedTarget>) {
         if (pose == null) {
@@ -84,8 +95,8 @@ class Camera(name: String, pose: Transform3d) {
             avgDist /= nTargets
 
             if (nTargets > 1) currentStds = multiTagStds
-            if (nTargets == 1 && avgDist > 4)
-                currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
+//            if (nTargets == 1 && avgDist > 4)
+//                currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
             else currentStds = currentStds.times(1 + (avgDist.pow(2) / 30))
         }
     }
