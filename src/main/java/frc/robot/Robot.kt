@@ -21,6 +21,7 @@ import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
 import frc.robot.subsystems.Wrist
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -83,6 +84,7 @@ object Robot : LoggedRobot() {
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
+        Vision.update()
     }
 
     override fun simulationPeriodic() {
