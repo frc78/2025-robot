@@ -7,6 +7,9 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.RobotConfig
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
@@ -22,7 +25,6 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import org.littletonrobotics.junction.Logger
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -58,6 +60,34 @@ object Chassis :
     private val translationCharacterization = SwerveRequest.SysIdSwerveTranslation()
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
+
+    private fun configureAutoBuilder() {
+        try {
+            val config: Unit = RobotConfig.fromGUISettings()
+            AutoBuilder.configure(
+                { state.Pose },  // Supplier of current robot pose
+                this::resetPose,  // Consumer for seeding pose against auto
+                { state.Speeds },  // Supplier of current robot speeds
+                // Consumer of ChassisSpeeds and feedforwards to drive the robot
+                { speeds, feedforwards ->
+                    setControl(
+                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                    )
+                },
+                PPHolonomicDriveController( // PID constants for translation
+                    PIDConstants(10, 0, 0),  // PID constants for rotation
+                    PIDConstants(7, 0, 0)
+                ),
+                config,  // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
+                this // Subsystem for requirements
+            )
+        } catch (ex: Exception) {
+            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.stackTrace)
+        }
+    }
 
     override fun addVisionMeasurement(
         visionRobotPoseMeters: Pose2d?,

@@ -4,18 +4,19 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
-import edu.wpi.first.wpilibj.DataLogManager
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.commands.PathPlannerAuto
 import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.lib.calculateSpeeds
 import frc.robot.subsystems.Chassis
-import org.littletonrobotics.junction.LogFileUtil
+import frc.robot.subsystems.Vision
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
-import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 object Robot : LoggedRobot() {
@@ -23,15 +24,24 @@ object Robot : LoggedRobot() {
         SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController: XboxController = XboxController(0)
 
+    val autoChooser = AutoBuilder.buildAutoChooser();
+
     override fun robotInit() {
-        Logger.recordMetadata("ProjectName", "MyProject");
-            Logger.addDataReceiver(WPILOGWriter()); // Log to a USB stick ("/U/logs")
-            Logger.addDataReceiver(NT4Publisher()); // Publish data to NetworkTables
+        Logger.recordMetadata("ProjectName", "MyProject")
+        Logger.addDataReceiver(WPILOGWriter())
+        // Log to a USB stick ("/U/logs")
+        Logger.addDataReceiver(NT4Publisher())
+        // Publish data to NetworkTables
+        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+
+        Chassis.applyRequest { SwerveRequest.Idle() }
     }
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
+        Vision.update()
+        Logger.recordOutput("ChassisPose", Chassis.state.Pose)
     }
 
     override fun teleopInit() {
@@ -42,5 +52,10 @@ object Robot : LoggedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
+    }
+
+    override fun autonomousInit() {
+        CommandScheduler.getInstance().cancelAll()
+        CommandScheduler.getInstance().schedule(autoChooser.selected)
     }
 }
