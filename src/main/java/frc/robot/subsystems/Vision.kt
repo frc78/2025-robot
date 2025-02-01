@@ -1,11 +1,18 @@
 package frc.robot.subsystems
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation3d
+import edu.wpi.first.wpilibj.Timer
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import org.littletonrobotics.junction.Logger
+import org.photonvision.EstimatedRobotPose
+import kotlin.time.Duration.Companion.milliseconds
 
 object Vision {
     // Measured from CAD
@@ -15,6 +22,9 @@ object Vision {
     private val camRoll = 0.degrees
     private val camPitch = (-61.875).degrees
     private val camYaw = 30.degrees
+
+    private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+
     private val cams: List<Camera> =
         listOf(
             Camera("FL", Transform3d(camX, camY, camZ, Rotation3d(camRoll, camPitch, camYaw))),
@@ -37,23 +47,11 @@ object Vision {
                 Logger.recordOutput(cam.cam.name + " est", pose)
                 Logger.recordOutput(
                     cam.cam.name + " tags",
-                    Transform3d.struct,
-                    *it.targetsUsed
-                        .map {
-                            it.getBestCameraToTarget()
-                                .plus(
-                                    Transform3d(
-                                        Transform2d(
-                                            Chassis.state.Pose.x,
-                                            Chassis.state.Pose.y,
-                                            Chassis.state.Pose.rotation,
-                                        )
-                                    )
-                                )
-                        }
-                        .toTypedArray(),
+                    Translation3d.struct,
+                     *it.targetsUsed.map{field.getTagPose(it.fiducialId).get().translation}.toTypedArray()
                 )
-            }
+            } //?: kotlin.run {  if (cam.getTimeFromLastRefresh() > 1000.milliseconds) Logger.recordOutput(cam.cam.name + " est", Pose2d())
+//            Logger.recordOutput(cam.cam.name + " tags", Translation3d())}
         }
     }
 }
