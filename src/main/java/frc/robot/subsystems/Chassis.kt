@@ -67,31 +67,36 @@ object Chassis :
 
     private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
 
-    private fun configureAutoBuilder() {
+    fun configureAutoBuilder() {
         try {
             val config = RobotConfig.fromGUISettings()
             AutoBuilder.configure(
-                { state.Pose },  // Supplier of current robot pose
-                this::resetPose,  // Consumer for seeding pose against auto
-                { state.Speeds },  // Supplier of current robot speeds
+                { state.Pose }, // Supplier of current robot pose
+                this::resetPose, // Consumer for seeding pose against auto
+                { state.Speeds }, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
                     setControl(
-                        pathApplyRobotSpeeds.withSpeeds(speeds)
+                        pathApplyRobotSpeeds
+                            .withSpeeds(speeds)
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                             .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     )
                 },
                 PPHolonomicDriveController( // PID constants for translation
-                    PIDConstants(10.0, 0.0, 0.0),  // PID constants for rotation
-                    PIDConstants(7.0, 0.0, 0.0)
+                    PIDConstants(10.0, 0.0, 0.0), // PID constants for rotation
+                    PIDConstants(7.0, 0.0, 0.0),
                 ),
-                config,  // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                config, // Assume the path needs to be flipped for Red vs Blue, this is normally the
+                // case
                 { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
-                this // Subsystem for requirements
+                this, // Subsystem for requirements
             )
         } catch (ex: Exception) {
-            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.stackTrace)
+            DriverStation.reportError(
+                "Failed to load PathPlanner config and configure AutoBuilder",
+                ex.stackTrace,
+            )
         }
     }
 
