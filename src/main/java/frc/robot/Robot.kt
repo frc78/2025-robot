@@ -9,7 +9,10 @@ import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.Trigger
+import frc.robot.lib.REEF_POSITION
 import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.meters
 import frc.robot.subsystems.Chassis
 import frc.robot.subsystems.Vision
 import org.littletonrobotics.junction.LoggedRobot
@@ -40,6 +43,10 @@ object Robot : LoggedRobot() {
 
         SmartDashboard.putData("Auto Mode", autoChooser)
         Chassis.applyRequest { SwerveRequest.Idle() }
+
+        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }.whileTrue(
+
+        )
     }
 
     override fun robotPeriodic() {
