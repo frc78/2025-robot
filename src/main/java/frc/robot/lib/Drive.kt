@@ -16,8 +16,8 @@ private val maxRotSpeed: AngularVelocity = Units.RadiansPerSecond.of(2.0 * Math.
 // TW: This year, the robot will be moving at a reduced speed, and the cycles are short, so I
 // TW: suspect we won't have much need for faster and slower
 fun XboxController.calculateSpeeds(): ChassisSpeeds {
-    val y = -leftY
-    val x = -leftX
+    val y = -leftX
+    val x = -leftY
     val rot = -rightX
     val triggerAdjust =
         (1 - upAdjust) + (rightTriggerAxis * upAdjust) - (leftTriggerAxis * downAdjust)
