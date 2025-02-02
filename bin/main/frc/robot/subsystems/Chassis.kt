@@ -8,6 +8,7 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import edu.wpi.first.math.Matrix
@@ -77,8 +78,8 @@ object Chassis :
                     )
                 },
                 PPHolonomicDriveController( // PID constants for translation
-                    PIDConstants(10, 0, 0),  // PID constants for rotation
-                    PIDConstants(7, 0, 0)
+                    PIDConstants(10.0, 0.0, 0.0),  // PID constants for rotation
+                    PIDConstants(7.0, 0.0, 0.0)
                 ),
                 config,  // Assume the path needs to be flipped for Red vs Blue, this is normally the case
                 { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },

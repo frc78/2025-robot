@@ -7,13 +7,17 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.DeviceConstructor
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.util.DriveFeedforwards
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.units.Units
@@ -61,24 +65,26 @@ object Chassis :
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
+    private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
+
     private fun configureAutoBuilder() {
         try {
-            val config: Unit = RobotConfig.fromGUISettings()
+            val config = RobotConfig.fromGUISettings()
             AutoBuilder.configure(
                 { state.Pose },  // Supplier of current robot pose
                 this::resetPose,  // Consumer for seeding pose against auto
                 { state.Speeds },  // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                { speeds, feedforwards ->
+                { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
                     setControl(
-                        m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                        pathApplyRobotSpeeds.withSpeeds(speeds)
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                             .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
                     )
                 },
                 PPHolonomicDriveController( // PID constants for translation
-                    PIDConstants(10, 0, 0),  // PID constants for rotation
-                    PIDConstants(7, 0, 0)
+                    PIDConstants(10.0, 0.0, 0.0),  // PID constants for rotation
+                    PIDConstants(7.0, 0.0, 0.0)
                 ),
                 config,  // Assume the path needs to be flipped for Red vs Blue, this is normally the case
                 { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
