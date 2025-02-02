@@ -23,11 +23,12 @@ import frc.robot.subsystems.Wrist
 object Robot : TimedRobot() {
 
     init {
-        // Initlizing Sub-Systems
+        // Initializing Subsystems
         SuperStructure
         Intake
         Drivetrain
         Climber
+        Pivot
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before

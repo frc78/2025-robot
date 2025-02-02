@@ -8,11 +8,11 @@ import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    L1(30.degrees, 0.inches, -120.degrees),
-    L2(15.degrees, 6.inches, -110.degrees),
-    L3(12.degrees, 20.inches, -100.degrees),
-    L4(8.degrees, 46.inches, -100.degrees),
-    Net(8.degrees, 46.inches, -100.degrees),
+    L1(30.degrees, 0.inches, (-120).degrees),
+    L2(15.degrees, 6.inches, (-110).degrees),
+    L3(12.degrees, 20.inches, (-100).degrees),
+    L4(8.degrees, 46.inches, (-100).degrees),
+    Net(8.degrees, 46.inches, (-100).degrees),
     CoralStation(30.degrees, 0.inches, 60.degrees),
     AlgaeGroundPickup(72.degrees, 3.inches, 30.degrees),
     CoralGroundPickup(85.degrees, 5.inches, 74.degrees),
@@ -31,7 +31,7 @@ object SuperStructure {
     }
 
     // Command factory to go to a specific robot state
-    private fun goTo(state: RobotState): Command =
+    fun goTo(state: RobotState): Command =
         Pivot.goTo(state)
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
