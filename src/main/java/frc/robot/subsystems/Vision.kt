@@ -2,17 +2,12 @@ package frc.robot.subsystems
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
-import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation3d
-import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation3d
-import edu.wpi.first.wpilibj.Timer
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import org.littletonrobotics.junction.Logger
-import org.photonvision.EstimatedRobotPose
-import kotlin.time.Duration.Companion.milliseconds
 
 object Vision {
     // Measured from CAD
@@ -48,10 +43,13 @@ object Vision {
                 Logger.recordOutput(
                     cam.cam.name + " tags",
                     Translation3d.struct,
-                     *it.targetsUsed.map{field.getTagPose(it.fiducialId).get().translation}.toTypedArray()
+                    *it.targetsUsed
+                        .map { field.getTagPose(it.fiducialId).get().translation }
+                        .toTypedArray(),
                 )
-            } //?: kotlin.run {  if (cam.getTimeFromLastRefresh() > 1000.milliseconds) Logger.recordOutput(cam.cam.name + " est", Pose2d())
-//            Logger.recordOutput(cam.cam.name + " tags", Translation3d())}
+            } // ?: kotlin.run {  if (cam.getTimeFromLastRefresh() > 1000.milliseconds)
+            // Logger.recordOutput(cam.cam.name + " est", Pose2d())
+            //            Logger.recordOutput(cam.cam.name + " tags", Translation3d())}
         }
     }
 }
