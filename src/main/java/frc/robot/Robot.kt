@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -27,7 +26,6 @@ object Robot : TimedRobot() {
         SuperStructure
         Intake
         Drivetrain
-        Climber
         Pivot
     }
 
