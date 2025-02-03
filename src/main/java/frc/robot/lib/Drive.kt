@@ -22,8 +22,8 @@ fun XboxController.calculateSpeeds(): ChassisSpeeds {
     val triggerAdjust =
         (1 - upAdjust) + (rightTriggerAxis * upAdjust) - (leftTriggerAxis * downAdjust)
     return ChassisSpeeds(
-        Units.MetersPerSecond.of(x * triggerAdjust * maxSpeed.`in`(Units.MetersPerSecond)),
-        Units.MetersPerSecond.of(y * triggerAdjust * maxSpeed.`in`(Units.MetersPerSecond)),
-        Units.RadiansPerSecond.of(rot * triggerAdjust * maxRotSpeed.`in`(Units.RadiansPerSecond)),
+        maxSpeed.metersPerSecond * x * triggerAdjust,
+        maxSpeed.metersPerSecond * y * triggerAdjust,
+        maxRotSpeed.radiansPerSecond * rot * triggerAdjust,
     )
 }

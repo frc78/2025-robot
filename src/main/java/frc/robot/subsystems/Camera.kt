@@ -15,7 +15,7 @@ import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.PhotonTrackedTarget
 
-class Camera(name: String, pose: Transform3d) {
+class Camera(val name: String, val pose: Transform3d) {
     val cam = PhotonCamera(name)
 
     companion object {

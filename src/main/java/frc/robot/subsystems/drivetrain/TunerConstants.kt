@@ -1,4 +1,4 @@
-package frc.robot.subsystems
+package frc.robot.subsystems.drivetrain
 
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.configs.*
@@ -60,8 +60,7 @@ object TunerConstants {
 
     // The remote sensor feedback type to use for the steer motors;
     // When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
-    private val kSteerFeedbackType:
-            SwerveModuleConstants.SteerFeedbackType =
+    private val kSteerFeedbackType: SwerveModuleConstants.SteerFeedbackType =
         SwerveModuleConstants.SteerFeedbackType.FusedCANcoder
 
     // The stator current at which the wheels start to slip;

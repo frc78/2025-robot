@@ -4,6 +4,8 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -15,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Chassis
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -23,6 +24,8 @@ import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.Vision
 import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.drivetrain.Chassis
+import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
@@ -46,8 +49,18 @@ object Robot : LoggedRobot() {
         // Publish data to NetworkTables
         PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+        Chassis.registerTelemetry(Telemetry::telemeterize)
+    }
 
-        Chassis.applyRequest { SwerveRequest.Idle() }
+    override fun robotInit() {
+        if (isReal()) {
+            // Log to a USB stick ("/U/logs")
+            Logger.addDataReceiver(WPILOGWriter())
+        }
+        // Publish data to NetworkTables
+        Logger.addDataReceiver(NT4Publisher())
+        PowerDistribution(1, PowerDistribution.ModuleType.kRev)
+        Logger.start()
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
@@ -80,12 +93,13 @@ object Robot : LoggedRobot() {
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
+        Vision.setupSimulation()
     }
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
-        Logger.recordOutput("ChassisPose", Chassis.state.Pose)
+        Logger.recordOutput("ChassisPose", Pose2d.struct, Chassis.state.Pose)
     }
 
     override fun simulationPeriodic() {
@@ -102,6 +116,12 @@ object Robot : LoggedRobot() {
         CommandScheduler.getInstance().cancelAll()
         Chassis.defaultCommand =
             Chassis.applyRequest { swerveRequest.withSpeeds(driveController.calculateSpeeds()) }
+    }
+
+    override fun teleopExit() {
+        if (DriverStation.isFMSAttached()) {
+            Logger.end()
+        }
     }
 
     override fun testInit() {
