@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.commands.SnapAngleToTag
+import frc.robot.commands.DriveToPose
 import frc.robot.lib.REEF_POSITION
 import frc.robot.lib.calculateSpeeds
 import frc.robot.subsystems.Chassis
@@ -45,7 +45,7 @@ object Robot : LoggedRobot() {
         Chassis.applyRequest { SwerveRequest.Idle() }
 
         Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3}.whileTrue(
-            SnapAngleToTag()
+            DriveToPose()
         )
     }
 
