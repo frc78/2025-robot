@@ -4,20 +4,18 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
-import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -32,35 +30,24 @@ import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 object Robot : LoggedRobot() {
-    val swerveRequest: SwerveRequest.ApplyFieldSpeeds =
-        SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
-    val driveController: XboxController = XboxController(0)
+    private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    private val driveController = CommandXboxController(0)
 
     init {
-        // Initializing Subsystems
-        SuperStructure
-        Intake
-        Drivetrain
-        Pivot
-        Logger.recordMetadata("ProjectName", "MyProject")
-        Logger.addDataReceiver(WPILOGWriter())
-        // Log to a USB stick ("/U/logs")
-        Logger.addDataReceiver(NT4Publisher())
-        // Publish data to NetworkTables
-        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
-        Logger.start()
-        Chassis.registerTelemetry(Telemetry::telemeterize)
-    }
-
-    override fun robotInit() {
         if (isReal()) {
             // Log to a USB stick ("/U/logs")
             Logger.addDataReceiver(WPILOGWriter())
         }
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
-        PowerDistribution(1, PowerDistribution.ModuleType.kRev)
+        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+        Chassis.registerTelemetry(Telemetry::telemeterize)
+
+        // Initializing Subsystems
+        SuperStructure
+        Intake
+        Pivot
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
@@ -99,7 +86,6 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
-        Logger.recordOutput("ChassisPose", Pose2d.struct, Chassis.state.Pose)
     }
 
     override fun simulationPeriodic() {
@@ -115,10 +101,11 @@ object Robot : LoggedRobot() {
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
         Chassis.defaultCommand =
-            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.calculateSpeeds()) }
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {
+        // Stop logging at the end of the match
         if (DriverStation.isFMSAttached()) {
             Logger.end()
         }

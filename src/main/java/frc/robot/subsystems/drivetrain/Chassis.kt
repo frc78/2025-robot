@@ -11,7 +11,6 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
-import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
@@ -23,6 +22,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
+import kotlin.math.PI
 
 /**
  * Class that extends the Phoenix 6 SwSendable1etrain class and implements Subsystem so it can
@@ -30,10 +32,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
  */
 object Chassis :
     SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
-        // TW: DeviceConstructor is a functional interface, meaning you can use a method
-        // reference
-        // TW: In this case, the intention is to use the constructor of the class.
-        // TW: To reference the constructor in kotlin, you can use `::ClassName`
         ::TalonFX,
         ::TalonFX,
         ::CANcoder,
@@ -100,7 +98,7 @@ object Chassis :
         SysIdRoutine(
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
-                Units.Volts.of(4.0), // Reduce dynamic step voltage to 4 V to prevent brownout
+                4.0.volts,
                 null,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
@@ -108,18 +106,19 @@ object Chassis :
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
             Mechanism(
-                { output: Voltage? -> setControl(translationCharacterization.withVolts(output)) },
+                { output: Voltage -> setControl(translationCharacterization.withVolts(output)) },
                 null,
                 this,
             ),
         )
 
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
+    @Suppress("UnusedPrivateProperty")
     private val m_sysIdRoutineSteer =
         SysIdRoutine(
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
-                Units.Volts.of(7.0), // Use dynamic voltage of 7 V
+                7.0.volts,
                 null,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
@@ -127,7 +126,7 @@ object Chassis :
                 SignalLogger.writeString("SysIdSteer_State", state.toString())
             },
             Mechanism(
-                { volts: Voltage? -> setControl(steerCharacterization.withVolts(volts)) },
+                { volts: Voltage -> setControl(steerCharacterization.withVolts(volts)) },
                 null,
                 this,
             ),
@@ -138,18 +137,13 @@ object Chassis :
      * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
      * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
      */
+    @Suppress("UnusedPrivateProperty")
     private val sysIdRoutineRotation =
         SysIdRoutine(
             SysIdRoutine.Config(
                 /* This is in radians per second², but SysId only supports "volts per second" */
-                // TW: Try creating an extension property on the `Number` class that lets you write
-                // this as `
-                // TW: `(Math.PI / 6).volts`
-                Units.Volts.of(Math.PI / 6)
-                    .per(
-                        Units.Second
-                    ), /* This is in radians per second, but SysId only supports "volts" */
-                Units.Volts.of(Math.PI),
+                (PI / 6).voltsPerSecond,
+                PI.volts,
                 null,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
@@ -159,11 +153,9 @@ object Chassis :
             Mechanism(
                 { output: Voltage ->
                     /* output is actually radians per second, but SysId only supports "volts" */
-                    setControl(
-                        rotationCharacterization.withRotationalRate(output.`in`(Units.Volts))
-                    )
+                    setControl(rotationCharacterization.withRotationalRate(output.volts))
                     /* also log the requested output for SysId */
-                    SignalLogger.writeDouble("Rotational_Rate", output.`in`(Units.Volts))
+                    SignalLogger.writeDouble("Rotational_Rate", output.volts)
                 },
                 null,
                 this,

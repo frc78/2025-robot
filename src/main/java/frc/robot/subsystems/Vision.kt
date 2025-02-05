@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
+import edu.wpi.first.wpilibj.RobotBase
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.drivetrain.Chassis
@@ -18,28 +19,20 @@ import org.photonvision.simulation.SimCameraProperties
 import org.photonvision.simulation.VisionSystemSim
 
 object Vision {
-    // Measured from CAD
-    private val camX = 9.486.inches
-    private val camY = 10.309.inches
-    private val camZ = 8.5.inches
-    private val camRoll = 0.degrees
-    private val camPitch = (-28.125).degrees
-    private val camYaw = 30.degrees
-
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
     private val cams: List<Camera> =
-        listOf(
-            Camera("FL", Transform3d(camX, camY, camZ, Rotation3d(camRoll, camPitch, camYaw))),
-            Camera("FR", Transform3d(camX, -camY, camZ, Rotation3d(camRoll, camPitch, -camYaw))),
+        listOfNotNull(
             Camera(
-                "BL",
-                Transform3d(-camX, camY, camZ, Rotation3d(camRoll, camPitch, 180.degrees - camYaw)),
-            ),
-            Camera(
-                "BR",
-                Transform3d(-camX, -camY, camZ, Rotation3d(camRoll, camPitch, 180.degrees + camYaw)),
-            ),
+                    "Front",
+                    Transform3d(
+                        0.inches,
+                        0.inches,
+                        0.inches,
+                        Rotation3d(0.degrees, (-15).degrees, 0.degrees),
+                    ),
+                )
+                .takeIf { RobotBase.isSimulation() }
         )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
@@ -57,10 +50,7 @@ object Vision {
                     it.targetsUsed
                         .map {
                             Chassis.state.Pose +
-                                Transform2d(
-                                    cam.pose.translation.toTranslation2d(),
-                                    cam.pose.rotation.toRotation2d(),
-                                ) +
+                                cam.robotToCamera2d +
                                 Transform2d(
                                     it.bestCameraToTarget.translation.toTranslation2d(),
                                     it.bestCameraToTarget.rotation.toRotation2d(),
@@ -68,9 +58,7 @@ object Vision {
                         }
                         .toTypedArray()
                 )
-            } // ?: kotlin.run {  if (cam.getTimeFromLastRefresh() > 1000.milliseconds)
-            // Logger.recordOutput(cam.cam.name + " est", Pose2d())
-            //            Logger.recordOutput(cam.cam.name + " tags", Translation3d())}
+            }
         }
     }
 

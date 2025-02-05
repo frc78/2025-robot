@@ -7,7 +7,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -23,8 +22,7 @@ object Telemetry {
 
     /* Robot swerve drive state */
     private val driveStateTable = inst.getTable("DriveState")
-    private val drivePose: StructPublisher<Pose2d> =
-        driveStateTable.getStructTopic("Pose", Pose2d.struct).publish()
+    private val drivePose = driveStateTable.getStructTopic("Pose", Pose2d.struct).publish()
     private val driveSpeeds =
         driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish()
     private val driveModuleStates =
