@@ -53,6 +53,8 @@ val Number.amps: Current
     get() = Amps.of(this.toDouble())
 val Number.metersPerSecondPerSecond: LinearAcceleration
     get() = MetersPerSecondPerSecond.of(this.toDouble())
+val Number.radians: Angle
+    get() = Radians.of(this.toDouble())
 val Number.radiansPerSecond: AngularVelocity
     get() = RadiansPerSecond.of(this.toDouble())
 val Number.radiansPerSecondPerSecond: AngularAcceleration

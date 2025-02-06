@@ -109,7 +109,7 @@ object Robot : LoggedRobot() {
     override fun simulationPeriodic() {
         // The angle of the elevator is determined by the pivot angle
         // The angle parameter expects a value in degrees, so we convert it to degrees
-        elevatorMech.angle = 90 - Pivot.angle.degrees
+        elevatorMech.angle = Pivot.angle.degrees
         // Elevator.length is 0 when the elevator is retracted, but the elevator has a fixed length
         // of 30 inches
         elevatorMech.length = (30.inches + Elevator.height).inches
