@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -23,11 +22,11 @@ import frc.robot.subsystems.Wrist
 object Robot : TimedRobot() {
 
     init {
-        // Initlizing Sub-Systems
+        // Initializing Subsystems
         SuperStructure
         Intake
         Drivetrain
-        Climber
+        Pivot
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before

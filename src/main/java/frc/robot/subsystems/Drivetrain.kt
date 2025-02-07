@@ -1,5 +1,5 @@
 package frc.robot.subsystems
 
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 
-object Drivetrain : Subsystem {}
+object Drivetrain : SubsystemBase("Drivetrain")
