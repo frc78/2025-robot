@@ -17,24 +17,24 @@ object Intake : Subsystem {
     }
 
     // Returns the distance from the center of the intake to the center of the coral.
-    fun Distance(): Double {
+    fun distance(): Double {
         if (!HasCoral()) {
             return 0.0
         }
 
-        return RawDistance() - (intakeWidth / 2) + 5.715
+        return rawDistance() - (intakeWidth / 2) + 5.715
     }
 
     // Returns the distance from the sensor to the nearest object's edge.
     // Usually returns around +/- 1cm.
-    fun RawDistance(): Double {
+    fun rawDistance(): Double {
         var original = canRange.getDistance().value.`in`(Units.Centimeter)
 
-        return original - OffsetError(original) - sidePlateThickness
+        return original - offsetError(original) - sidePlateThickness
     }
 
     // Adjusts the distance value from the sensor to counter its error.
-    private fun OffsetError(original: Double): Double {
+    private fun offsetError(original: Double): Double {
         return 4.0
     }
 }
