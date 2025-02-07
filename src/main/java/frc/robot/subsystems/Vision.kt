@@ -12,26 +12,27 @@ import org.littletonrobotics.junction.Logger
 
 object Vision {
     // Measured from CAD
-    private val camX = (21/2).inches
-    private val camY = (18/2).inches
+    private val camX = (21 / 2).inches
+    private val camY = (18 / 2).inches
     private val camZ = 8.inches
     private val camRoll = 0.degrees
-    private val camPitch = (-61.875).degrees
-    private val camYaw = (-45 - (90 - 73.535)).degrees
+    private val camPitchOld = (-61.875).degrees
+    private val camPitchNew = (-14).degrees
+    private val camYawOffset = (90 - 73.535).degrees
 
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
     private val cams: List<Camera> =
         listOf(
-            Camera("FL", Transform3d(camX, camY, camZ, Rotation3d(camRoll, camPitch, -camYaw))),
-            Camera("FR", Transform3d(camX, -camY, camZ, Rotation3d(camRoll, camPitch, camYaw))),
+            Camera("FL", Transform3d(camX, camY, camZ, Rotation3d(camRoll, camPitchNew, (-45).degrees + camYawOffset))),
+            Camera("FR", Transform3d(camX, -camY, camZ, Rotation3d(camRoll, camPitchOld, (-135).degrees + camYawOffset))),
             Camera(
                 "BL",
-                Transform3d(-camX, camY, camZ, Rotation3d(camRoll, camPitch, 180.degrees + camYaw)),
+                Transform3d(-camX, camY, camZ, Rotation3d(camRoll, camPitchNew, (-225).degrees + camYawOffset)),
             ),
             Camera(
                 "BR",
-                Transform3d(-camX, -camY, camZ, Rotation3d(camRoll, camPitch, 180.degrees - camYaw)),
+                Transform3d(-camX, -camY, camZ, Rotation3d(camRoll, camPitchOld, (-315).degrees + camYawOffset)),
             ),
         )
 

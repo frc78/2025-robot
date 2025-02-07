@@ -4,7 +4,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 
 private val upAdjust: Double = 0.5
 private val downAdjust: Double = 0.25
@@ -15,7 +15,7 @@ private val maxRotSpeed: AngularVelocity = Units.RadiansPerSecond.of(2.0 * Math.
 // TW: buttons on the controller.
 // TW: This year, the robot will be moving at a reduced speed, and the cycles are short, so I
 // TW: suspect we won't have much need for faster and slower
-fun XboxController.calculateSpeeds(): ChassisSpeeds {
+fun CommandXboxController.calculateSpeeds(): ChassisSpeeds {
     val y = -leftY
     val x = -leftX
     val rot = -rightX

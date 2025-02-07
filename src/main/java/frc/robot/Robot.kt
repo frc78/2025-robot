@@ -6,11 +6,11 @@ package frc.robot
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.commands.DriveToPose
+import frc.robot.commands.Alignments
 import frc.robot.lib.REEF_POSITION
 import frc.robot.lib.calculateSpeeds
 import frc.robot.subsystems.Chassis
@@ -22,7 +22,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 object Robot : LoggedRobot() {
 
-    val driveController: XboxController = XboxController(0)
+    val driveController = CommandXboxController(0)
     private val swerveRequest: SwerveRequest.ApplyFieldSpeeds =
         SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
 
@@ -44,9 +44,10 @@ object Robot : LoggedRobot() {
         SmartDashboard.putData("Auto Mode", autoChooser)
         Chassis.applyRequest { SwerveRequest.Idle() }
 
-        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3}.whileTrue(
-            DriveToPose()
-        )
+        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+            .whileTrue(Alignments.snapAngleToReef())
+        driveController.leftBumper().whileTrue(Alignments.snapToReefLeft())
+        driveController.rightBumper().whileTrue(Alignments.snapToReefRight())
     }
 
     override fun robotPeriodic() {
