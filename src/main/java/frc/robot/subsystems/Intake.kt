@@ -7,9 +7,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 object Intake : Subsystem {
     val canRange: CANrange = CANrange(0)
 
-    // TODO: Change this value for actual robot.
-    val sidePlateThickness = 0.5 // Measured in cm.
-    val intakeWidth = 52.0 // Measured in cm.
+    const val sidePlateThickness = 0.5 // Measured in cm.
+    const val intakeWidth = 52.0 // Measured in cm.
 
     var hasCoral: Boolean = false
 
