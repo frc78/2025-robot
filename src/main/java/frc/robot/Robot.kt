@@ -63,7 +63,6 @@ object Robot : TimedRobot() {
     }
 
     override fun robotPeriodic() {
-        println(Intake.Distance())
         CommandScheduler.getInstance().run()
     }
 
