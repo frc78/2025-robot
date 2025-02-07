@@ -5,15 +5,13 @@ import edu.wpi.first.units.Units
 import edu.wpi.first.wpilibj2.command.Subsystem
 
 object Intake : Subsystem {
-    val canRange: CANrange = CANrange(0)
+    private val canRange: CANrange = CANrange(0)
 
-    const val sidePlateThickness = 0.5 // Measured in cm.
-    const val intakeWidth = 52.0 // Measured in cm.
+    private const val SIDE_PLATE_THICKNESS = 0.5 // Measured in cm.
+    private const val INTAKE_WIDTH = 52.0 // Measured in cm.
 
-    var hasCoral: Boolean = false
-
-    fun HasCoral(): Boolean {
-        return canRange.getIsDetected().value
+    fun hasCoral(): Boolean {
+        return canRange.isDetected.value
     }
 
     // Returns the distance from the center of the intake to the center of the coral.
@@ -27,8 +25,8 @@ object Intake : Subsystem {
 
     // Returns the distance from the sensor to the nearest object's edge.
     // Usually returns around +/- 1cm.
-    fun rawDistance(): Double {
-        var original = canRange.getDistance().value.`in`(Units.Centimeter)
+    private fun rawDistance(): Double {
+        val original = canRange.distance.value.`in`(Units.Centimeter)
 
         return original - offsetError(original) - sidePlateThickness
     }
