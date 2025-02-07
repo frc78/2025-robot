@@ -19,7 +19,9 @@ object Intake : Subsystem {
 
     // Returns the distance from the center of the intake to the center of the coral.
     fun Distance(): Double {
-        if (!HasCoral()) { return 0.0 }
+        if (!HasCoral()) {
+            return 0.0
+        }
 
         return RawDistance() - (intakeWidth / 2) + 5.715
     }
