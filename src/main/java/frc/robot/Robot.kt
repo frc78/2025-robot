@@ -33,7 +33,8 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-val IS_TEST = "TEST" == System.getenv("frc_bot")
+//val IS_TEST = "TEST" == System.getenv("frc_bot")
+val IS_TEST = true
 
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
@@ -56,13 +57,15 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
 
-        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
-            .whileTrue(Alignments.snapAngleToReef())
+//        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+//            .whileTrue(Alignments.snapAngleToReef())
+        driveController.y().whileTrue(Alignments.snapAngleToReef())
         driveController.leftBumper().whileTrue(Alignments.snapToReefLeft())
         driveController.rightBumper().whileTrue(Alignments.snapToReefRight())
 
         SmartDashboard.putData(Alignments.snapToReefLeft())
         SmartDashboard.putData(Alignments.snapToReefRight())
+        Logger.recordOutput("IS_TEST ?", IS_TEST)
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")

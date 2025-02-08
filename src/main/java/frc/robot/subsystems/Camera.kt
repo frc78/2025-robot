@@ -15,10 +15,10 @@ import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.PhotonTrackedTarget
 
-class Camera(val name: String, val pose: Transform3d) {
+class Camera(val name: String, val transform: Transform3d) {
     val cam = PhotonCamera(name)
     val robotToCamera2d =
-        Transform2d(pose.translation.toTranslation2d(), pose.rotation.toRotation2d())
+        Transform2d(transform.translation.toTranslation2d(), transform.rotation.toRotation2d())
 
     companion object {
         private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
@@ -28,12 +28,12 @@ class Camera(val name: String, val pose: Transform3d) {
         PhotonPoseEstimator(
             field,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-            pose,
+            transform,
         )
 
     // TODO guessed values, should tune one day
-    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 1.0)
-    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.3, 0.3, 0.5)
+    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(1.0, 1.0, 1.0)
+    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 0.5)
 
     var currentStds: Matrix<N3, N1> = singleTagStds
         private set
@@ -73,9 +73,10 @@ class Camera(val name: String, val pose: Transform3d) {
             if (validTargets.size > 1) currentStds = multiTagStds
 
             currentStds =
-                if (validTargets.size == 1 && avgDist > 4)
+                if (/*validTargets.size == 1 && avgDist > 7*/ false)
                     VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
                 else currentStds.times(1 + (avgDist.pow(2) / 30))
+//            currentStds.times(1 + (avgDist.pow(2) / 30))
         }
     }
 }

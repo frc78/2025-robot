@@ -48,7 +48,7 @@ object Vision {
                     -camXNew,
                     camYNew,
                     camZ,
-                    Rotation3d(camRoll, camPitchNew, 180.degrees - camYawNew),
+                    Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
                 ),
             ),
             Camera(
@@ -76,16 +76,16 @@ object Vision {
                 topics[cam]?.set(
                     it.targetsUsed
                         .map {
-                            (Chassis.state.Pose +
-                                cam.robotToCamera2d) +
-                                    Transform2d(
-                                        it.bestCameraToTarget.translation.toTranslation2d(),
-                                        it.bestCameraToTarget.rotation.toRotation2d(),
-                                    )
+                            (Chassis.state.Pose + cam.robotToCamera2d) +
+                                Transform2d(
+                                    it.bestCameraToTarget.translation.toTranslation2d(),
+                                    it.bestCameraToTarget.rotation.toRotation2d(),
+                                )
                         }
                         .toTypedArray()
                 )
-            }
+            } ?: run { Logger.recordOutput(cam.cam.name + " est", Pose2d())
+            topics[cam]?.set(emptyArray())}
         }
     }
 
@@ -100,7 +100,7 @@ object Vision {
                 fps = 25.0
             }
 
-        cams.forEach { visionSim.addCamera(PhotonCameraSim(it.cam, camProps), it.pose) }
+        cams.forEach { visionSim.addCamera(PhotonCameraSim(it.cam, camProps), it.transform) }
 
         Notifier { visionSim.update(Chassis.state.Pose) }.startPeriodic(0.020)
     }

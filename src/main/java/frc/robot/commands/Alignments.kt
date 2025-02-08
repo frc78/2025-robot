@@ -1,6 +1,7 @@
 package frc.robot.commands
 
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.pathplanner.lib.config.PIDConstants
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Rotation2d
@@ -15,6 +16,8 @@ import frc.robot.subsystems.drivetrain.Chassis
 import java.util.function.Supplier
 
 object Alignments {
+    val headingPID = PIDConstants(5.0, 0.0, 0.0)
+
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
     private val reefPoses
         get() =
@@ -24,6 +27,14 @@ object Alignments {
                     intArrayOf(6, 7, 8, 9, 10, 11)
                 })
                 .map { field.getTagPose(it).get().toPose2d() }
+
+    private val snapAngleRequest =
+        SwerveRequest.FieldCentricFacingAngle()
+            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
+
+    init {
+        snapAngleRequest.HeadingController.setPID(headingPID.kP, headingPID.kI, headingPID.kD)
+    }
 
     private fun snapToReef(relativePose: Supplier<Transform2d>): Command {
         return DriveToPose(
@@ -36,18 +47,14 @@ object Alignments {
             val pose = Chassis.state.Pose.nearest(reefPoses)
             val speeds = Robot.driveController.hid.calculateSpeeds()
 
-            SwerveRequest.FieldCentricFacingAngle()
+            snapAngleRequest
                 .withVelocityX(speeds.vxMetersPerSecond)
                 .withVelocityY(speeds.vyMetersPerSecond)
-                .withTargetDirection(pose.rotation.rotateBy(Rotation2d.k180deg))
+                .withTargetDirection(pose.rotation)
         }
     }
 
-    fun snapToReefLeft() = snapToReef {
-        Transform2d((-0.5).meters, (-0.5).meters, Rotation2d.kZero)
-    }
+    fun snapToReefLeft() = snapToReef { Transform2d((0.4).meters, (-0.3).meters, Rotation2d.kZero) }
 
-    fun snapToReefRight() = snapToReef {
-        Transform2d((0.5).meters, (-0.5).meters, Rotation2d.kZero)
-    }
+    fun snapToReefRight() = snapToReef { Transform2d((0.4).meters, (0.3).meters, Rotation2d.kZero) }
 }
