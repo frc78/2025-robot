@@ -14,9 +14,7 @@ import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.Alignments
-import frc.robot.lib.REEF_POSITION
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -33,7 +31,7 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-//val IS_TEST = "TEST" == System.getenv("frc_bot")
+// val IS_TEST = "TEST" == System.getenv("frc_bot")
 val IS_TEST = true
 
 object Robot : LoggedRobot() {
@@ -57,8 +55,8 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
 
-//        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
-//            .whileTrue(Alignments.snapAngleToReef())
+        //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+        //            .whileTrue(Alignments.snapAngleToReef())
         driveController.y().whileTrue(Alignments.snapAngleToReef())
         driveController.leftBumper().whileTrue(Alignments.snapToReefLeft())
         driveController.rightBumper().whileTrue(Alignments.snapToReefRight())

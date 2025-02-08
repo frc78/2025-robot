@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
+import frc.robot.IS_TEST
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.drivetrain.Chassis
@@ -33,34 +34,42 @@ object Vision {
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
     private val cams: List<Camera> =
-        listOf(
-            Camera(
-                "FL",
-                Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
-            ),
-            Camera(
-                "FR",
-                Transform3d(camXOld, -camYOld, camZ, Rotation3d(camRoll, camPitchOld, -camYawOld)),
-            ),
-            Camera(
-                "BL",
-                Transform3d(
-                    -camXNew,
-                    camYNew,
-                    camZ,
-                    Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
+        if (!IS_TEST) {
+            listOf(Camera("PLACEHOLDER", Transform3d()))
+        } else
+            listOf(
+                Camera(
+                    "FL",
+                    Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
                 ),
-            ),
-            Camera(
-                "BR",
-                Transform3d(
-                    -camXOld,
-                    -camYOld,
-                    camZ,
-                    Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
+                Camera(
+                    "FR",
+                    Transform3d(
+                        camXOld,
+                        -camYOld,
+                        camZ,
+                        Rotation3d(camRoll, camPitchOld, -camYawOld),
+                    ),
                 ),
-            ),
-        )
+                Camera(
+                    "BL",
+                    Transform3d(
+                        -camXNew,
+                        camYNew,
+                        camZ,
+                        Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
+                    ),
+                ),
+                Camera(
+                    "BR",
+                    Transform3d(
+                        -camXOld,
+                        -camYOld,
+                        camZ,
+                        Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
+                    ),
+                ),
+            )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
     private val topics =
@@ -84,8 +93,11 @@ object Vision {
                         }
                         .toTypedArray()
                 )
-            } ?: run { Logger.recordOutput(cam.cam.name + " est", Pose2d())
-            topics[cam]?.set(emptyArray())}
+            }
+                ?: run {
+                    Logger.recordOutput(cam.cam.name + " est", Pose2d())
+                    topics[cam]?.set(emptyArray())
+                }
         }
     }
 

@@ -76,7 +76,7 @@ class Camera(val name: String, val transform: Transform3d) {
                 if (/*validTargets.size == 1 && avgDist > 7*/ false)
                     VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
                 else currentStds.times(1 + (avgDist.pow(2) / 30))
-//            currentStds.times(1 + (avgDist.pow(2) / 30))
+            //            currentStds.times(1 + (avgDist.pow(2) / 30))
         }
     }
 }
