@@ -10,8 +10,8 @@ import java.util.function.Supplier
 
 class DriveToPose(pose: Supplier<Pose2d>) : Command() {
     private val request = SwerveRequest.FieldCentricFacingAngle()
-    private val xController = ProfiledPIDController(1.0, 0.0, 0.0, Constraints(1.0, 1.0))
-    private val yController = ProfiledPIDController(1.0, 0.0, 0.0, Constraints(1.0, 1.0))
+    private val xController = ProfiledPIDController(10.0, 0.0, 0.0, Constraints(1.0, 1.0))
+    private val yController = ProfiledPIDController(10.0, 0.0, 0.0, Constraints(1.0, 1.0))
     private val targetPose = pose
 
     init {
@@ -28,11 +28,11 @@ class DriveToPose(pose: Supplier<Pose2d>) : Command() {
         val robot = Chassis.state.Pose
         val target = targetPose.get()
 
-        Chassis.applyRequest({
+        Chassis.setControl(
             request
                 .withVelocityX(xController.calculate(robot.translation.x, target.x))
                 .withVelocityY(yController.calculate(robot.translation.y, target.y))
                 .withTargetDirection(target.rotation)
-        })
+        )
     }
 }

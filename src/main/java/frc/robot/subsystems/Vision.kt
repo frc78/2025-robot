@@ -19,13 +19,16 @@ import org.photonvision.simulation.VisionSystemSim
 
 object Vision {
     // Measured from CAD
-    private val camX = (21 / 2).inches
-    private val camY = (18 / 2).inches
-    private val camZ = 8.inches
+    private val camXOld = 10.383.inches
+    private val camXNew = 9.263.inches
+    private val camYOld = 8.672.inches
+    private val camYNew = 9.769.inches
+    private val camZ = 8.5.inches
     private val camRoll = 0.degrees
-    private val camPitchOld = (-61.875).degrees
+    private val camPitchOld = (-28.125).degrees
     private val camPitchNew = (-14).degrees
-    private val camYawOffset = (90 - 73.535).degrees
+    private val camYawOld = 60.degrees
+    private val camYawNew = 28.579.degrees
 
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
@@ -33,38 +36,28 @@ object Vision {
         listOf(
             Camera(
                 "FL",
-                Transform3d(
-                    camX,
-                    camY,
-                    camZ,
-                    Rotation3d(camRoll, camPitchNew, (-45).degrees + camYawOffset),
-                ),
+                Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
             ),
             Camera(
                 "FR",
-                Transform3d(
-                    camX,
-                    -camY,
-                    camZ,
-                    Rotation3d(camRoll, camPitchOld, (-135).degrees + camYawOffset),
-                ),
+                Transform3d(camXOld, -camYOld, camZ, Rotation3d(camRoll, camPitchOld, -camYawOld)),
             ),
             Camera(
                 "BL",
                 Transform3d(
-                    -camX,
-                    camY,
+                    -camXNew,
+                    camYNew,
                     camZ,
-                    Rotation3d(camRoll, camPitchNew, (-225).degrees + camYawOffset),
+                    Rotation3d(camRoll, camPitchNew, 180.degrees - camYawNew),
                 ),
             ),
             Camera(
                 "BR",
                 Transform3d(
-                    -camX,
-                    -camY,
+                    -camXOld,
+                    -camYOld,
                     camZ,
-                    Rotation3d(camRoll, camPitchOld, (-315).degrees + camYawOffset),
+                    Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
                 ),
             ),
         )
@@ -83,12 +76,12 @@ object Vision {
                 topics[cam]?.set(
                     it.targetsUsed
                         .map {
-                            Chassis.state.Pose +
-                                cam.robotToCamera2d +
-                                Transform2d(
-                                    it.bestCameraToTarget.translation.toTranslation2d(),
-                                    it.bestCameraToTarget.rotation.toRotation2d(),
-                                )
+                            (Chassis.state.Pose +
+                                cam.robotToCamera2d) +
+                                    Transform2d(
+                                        it.bestCameraToTarget.translation.toTranslation2d(),
+                                        it.bestCameraToTarget.rotation.toRotation2d(),
+                                    )
                         }
                         .toTypedArray()
                 )

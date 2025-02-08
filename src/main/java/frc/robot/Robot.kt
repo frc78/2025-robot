@@ -33,6 +33,8 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
+val IS_TEST = "TEST" == System.getenv("frc_bot")
+
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
@@ -58,6 +60,9 @@ object Robot : LoggedRobot() {
             .whileTrue(Alignments.snapAngleToReef())
         driveController.leftBumper().whileTrue(Alignments.snapToReefLeft())
         driveController.rightBumper().whileTrue(Alignments.snapToReefRight())
+
+        SmartDashboard.putData(Alignments.snapToReefLeft())
+        SmartDashboard.putData(Alignments.snapToReefRight())
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")

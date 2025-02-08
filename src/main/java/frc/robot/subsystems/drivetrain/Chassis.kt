@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
+import frc.robot.IS_TEST
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import java.io.IOException
@@ -39,17 +40,24 @@ import kotlin.math.PI
  * Class that extends the Phoenix 6 SwSendable1etrain class and implements Subsystem so it can
  * easily be used in command-based projects.
  */
+val drivetrainConstants =
+    if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
+val frontLeft = if (IS_TEST) TestBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
+val frontRight = if (IS_TEST) TestBotTunerConstants.FrontRight else TunerConstants.FrontRight
+val backLeft = if (IS_TEST) TestBotTunerConstants.BackLeft else TunerConstants.BackLeft
+val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants.BackRight
+
 object Chassis :
     SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
         ::TalonFX,
         ::TalonFX,
         ::CANcoder,
-        TunerConstants.DrivetrainConstants,
+        drivetrainConstants,
         0.0,
-        TunerConstants.FrontLeft,
-        TunerConstants.FrontRight,
-        TunerConstants.BackLeft,
-        TunerConstants.BackRight,
+        frontLeft,
+        frontRight,
+        backLeft,
+        backRight,
     ),
     Subsystem {
 
