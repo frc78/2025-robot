@@ -12,9 +12,12 @@ import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.util.DriveFeedforwards
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
@@ -30,10 +33,16 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
+import frc.robot.Robot
+import frc.robot.commands.driveToPose
+import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.inches
+import frc.robot.lib.meters
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import java.io.IOException
 import java.text.ParseException
+import java.util.function.Supplier
 import kotlin.math.PI
 
 /**
@@ -100,6 +109,14 @@ object Chassis :
 
     private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
 
+    val fieldCentricFacingAngle =
+        SwerveRequest.FieldCentricFacingAngle()
+            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
+
+    init {
+        fieldCentricFacingAngle.HeadingController.setPID(3.0, 0.0, 0.0)
+    }
+
     fun configureAutoBuilder() {
         try {
             val config = RobotConfig.fromGUISettings()
@@ -120,9 +137,8 @@ object Chassis :
                     PIDConstants(10.0, 0.0, 0.0), // PID constants for rotation
                     PIDConstants(7.0, 0.0, 0.0),
                 ),
-                config, // Assume the path needs to be flipped for Red vs Blue, this is normally the
-                // case
-                { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
+                config,
+                { false },
                 this, // Subsystem for requirements
             )
         } catch (ex: IOException) {
@@ -270,6 +286,43 @@ object Chassis :
                 )
                 hasAppliedOperatorPerspective = true
             }
+        }
+    }
+
+    object Alignments {
+        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+        private val blueReefPoses =
+            intArrayOf(17, 18, 19, 20, 21, 22).map { field.getTagPose(it).get().toPose2d() }
+        private val redReefPoses =
+            intArrayOf(6, 7, 8, 9, 10, 11).map { field.getTagPose(it).get().toPose2d() }
+        private val reefPoses
+            get() =
+                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue)
+                    blueReefPoses
+                else redReefPoses
+
+        private fun snapToReef(relativePose: Supplier<Transform2d>) = driveToPose {
+            Chassis.state.Pose.nearest(reefPoses).transformBy(relativePose.get())
+        }
+
+        fun snapAngleToReef(): Command {
+            return Chassis.applyRequest {
+                val pose = Chassis.state.Pose.nearest(reefPoses)
+                val speeds = Robot.driveController.hid.calculateSpeeds()
+
+                fieldCentricFacingAngle
+                    .withVelocityX(speeds.vxMetersPerSecond)
+                    .withVelocityY(speeds.vyMetersPerSecond)
+                    .withTargetDirection(pose.rotation)
+            }
+        }
+
+        fun snapToReefLeft() = snapToReef {
+            Transform2d((0.4).meters, (-13 / 2).inches, Rotation2d.kZero)
+        }
+
+        fun snapToReefRight() = snapToReef {
+            Transform2d((0.4).meters, (13 / 2).inches, Rotation2d.kZero)
         }
     }
 }

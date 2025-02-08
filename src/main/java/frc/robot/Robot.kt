@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.commands.Alignments
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -31,9 +30,8 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-// val IS_TEST = "TEST" == System.getenv("frc_bot")
-const val IS_TEST = true
-
+// Might have to be manually set when testing on SkibJr
+val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
@@ -57,12 +55,12 @@ object Robot : LoggedRobot() {
 
         //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
-        driveController.y().whileTrue(Alignments.snapAngleToReef())
-        driveController.leftBumper().whileTrue(Alignments.snapToReefLeft())
-        driveController.rightBumper().whileTrue(Alignments.snapToReefRight())
+        driveController.y().whileTrue(Chassis.Alignments.snapAngleToReef())
+        driveController.leftBumper().whileTrue(Chassis.Alignments.snapToReefLeft())
+        driveController.rightBumper().whileTrue(Chassis.Alignments.snapToReefRight())
 
-        SmartDashboard.putData(Alignments.snapToReefLeft())
-        SmartDashboard.putData(Alignments.snapToReefRight())
+        SmartDashboard.putData(Chassis.Alignments.snapToReefLeft())
+        SmartDashboard.putData(Chassis.Alignments.snapToReefRight())
         Logger.recordOutput("IS_TEST ?", IS_TEST)
     }
 
