@@ -32,7 +32,7 @@ import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 // val IS_TEST = "TEST" == System.getenv("frc_bot")
-val IS_TEST = true
+const val IS_TEST = true
 
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
