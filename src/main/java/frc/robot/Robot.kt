@@ -3,29 +3,50 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
-import edu.wpi.first.wpilibj.TimedRobot
+import com.ctre.phoenix6.swerve.SwerveRequest
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
 import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.drivetrain.Chassis
+import frc.robot.subsystems.drivetrain.Telemetry
+import org.littletonrobotics.junction.LoggedRobot
+import org.littletonrobotics.junction.Logger
+import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-object Robot : TimedRobot() {
+object Robot : LoggedRobot() {
+    private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    private val driveController = CommandXboxController(0)
 
     init {
+        if (isReal()) {
+            // Log to a USB stick ("/U/logs")
+            Logger.addDataReceiver(WPILOGWriter())
+        }
+        // Publish data to NetworkTables
+        Logger.addDataReceiver(NT4Publisher())
+        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
+        Logger.start()
+        Chassis.registerTelemetry(Telemetry::telemeterize)
+
         // Initializing Subsystems
         SuperStructure
         Intake
-        Drivetrain
         Pivot
     }
 
@@ -59,10 +80,12 @@ object Robot : TimedRobot() {
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
+        Vision.setupSimulation()
     }
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
+        Vision.update()
     }
 
     override fun simulationPeriodic() {
@@ -73,6 +96,19 @@ object Robot : TimedRobot() {
         // of 30 inches
         elevatorMech.length = (30.inches + Elevator.height).inches
         wristMech.angle = -Wrist.angle.degrees
+    }
+
+    override fun teleopInit() {
+        CommandScheduler.getInstance().cancelAll()
+        Chassis.defaultCommand =
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
+    }
+
+    override fun teleopExit() {
+        // Stop logging at the end of the match
+        if (DriverStation.isFMSAttached()) {
+            Logger.end()
+        }
     }
 
     override fun testInit() {
