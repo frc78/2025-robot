@@ -1,13 +1,6 @@
 package frc.robot.lib
 
-import edu.wpi.first.units.Units.Centimeters
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Inches
-import edu.wpi.first.units.Units.MetersPerSecond
-import edu.wpi.first.units.Units.RadiansPerSecond
-import edu.wpi.first.units.Units.RotationsPerSecond
-import edu.wpi.first.units.Units.Second
-import edu.wpi.first.units.Units.Volts
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.VoltageUnit
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
@@ -38,6 +31,8 @@ val Number.volts: Voltage
     get() = Volts.of(this.toDouble())
 val Number.voltsPerSecond: Velocity<VoltageUnit>
     get() = Volts.of(this.toDouble()).per(Second)
+val Number.rotations: Angle
+    get() = Rotations.of(this.toDouble())
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
@@ -57,3 +52,5 @@ val AngularVelocity.radiansPerSecond
     get() = this.`in`(RadiansPerSecond)
 val Voltage.volts
     get() = this.`in`(Volts)
+val Angle.rotations
+    get() = this.`in`(Rotations)
