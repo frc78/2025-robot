@@ -63,17 +63,21 @@ class Camera(val name: String, val transform: Transform3d) {
         val validTargets =
             targets.mapNotNull { estimator.fieldTags.getTagPose(it.fiducialId).getOrNull() }
         val totalDistance =
-            validTargets.sumOf { it.translation.getDistance(pose.estimatedPose.translation) }
+            validTargets.sumOf {
+                it.translation
+                    .toTranslation2d()
+                    .getDistance(pose.estimatedPose.translation.toTranslation2d())
+            }
 
         if (validTargets.isEmpty()) {
             currentStds = singleTagStds
-        } else {
-            val avgDist = totalDistance / validTargets.size
-
-            if (validTargets.size > 1) currentStds = multiTagStds
-
-            // We need to improve standard deviation calculations
-            currentStds.times(1 + (avgDist.pow(2) / 30))
+            return
         }
+        val avgDist = totalDistance / validTargets.size
+
+        if (validTargets.size > 1) currentStds = multiTagStds
+
+        // We need to improve standard deviation calculations
+        currentStds.times(1 + (avgDist.pow(2) / 15))
     }
 }
