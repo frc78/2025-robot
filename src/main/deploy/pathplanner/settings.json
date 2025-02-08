@@ -2,8 +2,21 @@
   "robotWidth": 0.9,
   "robotLength": 0.9,
   "holonomicMode": true,
-  "pathFolders": [],
-  "autoFolders": [],
+  "pathFolders": [
+    "Big Mac Manuever ",
+    "Boiled B ",
+    "Moving Off starting Path",
+    "Pathfinder Path #1",
+    "Pathfinder Path #2",
+    "Scoring Coral",
+    "Starting to Reef"
+  ],
+  "autoFolders": [
+    "Basic Autos",
+    "Big Mac Manuever",
+    "Boiled B",
+    "Upper Autos"
+  ],
   "defaultMaxVel": 3.0,
   "defaultMaxAccel": 3.0,
   "defaultMaxAngVel": 540.0,

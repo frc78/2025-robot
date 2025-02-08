@@ -1,0 +1,25 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Move 1 BigMac Single Score"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Move 2 BigMac Single Score"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Basic Autos",
+  "choreoAuto": false
+}

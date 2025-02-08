@@ -5,7 +5,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints
 import edu.wpi.first.wpilibj2.command.Command
-import frc.robot.subsystems.Chassis
+import frc.robot.subsystems.drivetrain.Chassis
 import java.util.function.Supplier
 
 class DriveToPose(pose: Supplier<Pose2d>) : Command() {

@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 7.722307692307692,
+        "y": 6.305833333333334
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 8.085792935513888,
+        "y": 6.373007900047049
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 5.431153846153845,
+        "y": 5.356346153846154
+      },
+      "prevControl": {
+        "x": 5.185534253329401,
+        "y": 5.309751995191294
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -123.11134196037196
+  },
+  "reversed": false,
+  "folder": "Big Mac Manuever ",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 178.7546357332317
+  },
+  "useDefaultConstraints": true
+}

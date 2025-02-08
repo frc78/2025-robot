@@ -3,6 +3,7 @@ plugins {
     id "edu.wpi.first.GradleRIO" version "2025.2.1"
     id 'org.jetbrains.kotlin.jvm' version '2.1.0'
     id 'com.diffplug.spotless' version '7.0.1'
+    id 'io.gitlab.arturbosch.detekt' version '1.23.7'
 }
 
 java {
@@ -106,11 +107,6 @@ wpi.java.configureTestTasks(test)
 // Configure string concat to always inline compile
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
-}
-
-task(replayWatch, type: JavaExec) {
-    mainClass = "org.littletonrobotics.junction.ReplayWatch"
-    classpath = sourceSets.main.runtimeClasspath
 }
 
 spotless {
