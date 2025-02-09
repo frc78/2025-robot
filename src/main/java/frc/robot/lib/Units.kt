@@ -67,7 +67,6 @@ val Number.voltsPerSecond: Velocity<VoltageUnit>
     get() = Volts.of(this.toDouble()).per(Second)
 val Number.rotations: Angle
     get() = Rotations.of(this.toDouble())
-    get() = this.volts.per(Second)
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
@@ -81,8 +80,6 @@ val Distance.meters
     get() = this.`in`(Meters)
 val Distance.centimeters
     get() = this.`in`(Centimeters)
-val Angle.rotations
-    get() = this.`in`(Rotations)
 val LinearVelocity.metersPerSecond
     get() = this.`in`(MetersPerSecond)
 val AngularVelocity.radiansPerSecond
@@ -97,6 +94,8 @@ val Angle.radians
     get() = this.`in`(Radians)
 val Angle.degrees
     get() = this.`in`(Degrees)
+val Angle.rotations
+    get() = this.`in`(Rotations)
 val Current.amps
     get() = this.`in`(Amps)
 val Mass.kilograms
@@ -106,5 +105,3 @@ fun Angle.toDistance(radius: Distance): Distance = radius * this.radians
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
-val Angle.rotations
-    get() = this.`in`(Rotations)
