@@ -15,35 +15,46 @@ import com.pathplanner.lib.util.DriveFeedforwards
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.math.trajectory.TrapezoidProfile
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
 import frc.robot.Robot
-import frc.robot.commands.driveToPose
 import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestBranch
+import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestCoralStation
+import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestReef
 import java.io.IOException
 import java.text.ParseException
-import java.util.function.Supplier
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
+import org.littletonrobotics.junction.Logger
 
 /**
  * Class that extends the Phoenix 6 SwSendable1etrain class and implements Subsystem so it can
@@ -69,6 +80,12 @@ object Chassis :
         backRight,
     ),
     Subsystem {
+
+    private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
+    private val closestReefPub = table.getStructTopic("closest_reef", Pose2d.struct).publish()
+    private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
+    private val closestCoralStationPub =
+        table.getStructTopic("closest_coral", Pose2d.struct).publish()
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -114,7 +131,7 @@ object Chassis :
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
 
     init {
-        fieldCentricFacingAngle.HeadingController.setPID(3.0, 0.0, 0.0)
+        fieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
     }
 
     fun configureAutoBuilder() {
@@ -287,27 +304,94 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
+        closestReefPub.set(closestReef)
+        closestBranchPub.set(closestBranch)
+        closestCoralStationPub.set(closestCoralStation)
     }
 
+    private val xController =
+        ProfiledPIDController(
+            10.0,
+            0.0,
+            0.0,
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+        )
+    private val yController =
+        ProfiledPIDController(
+            10.0,
+            0.0,
+            0.0,
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+        )
+
+    fun driveToPose(pose: () -> Pose2d): Command =
+        Commands.runOnce({
+                xController.reset(state.Pose.translation.x, state.Speeds.vxMetersPerSecond)
+                yController.reset(state.Pose.translation.y, state.Speeds.vyMetersPerSecond)
+                val target = pose()
+                Logger.recordOutput("DriveToPose target", target)
+                xController.goal = TrapezoidProfile.State(target.x, 0.0)
+                yController.goal = TrapezoidProfile.State(target.y, 0.0)
+                fieldCentricFacingAngle.withTargetDirection(target.rotation)
+            })
+            .andThen(
+                applyRequest {
+                    val robot = Chassis.state.Pose
+                    fieldCentricFacingAngle
+                        .withVelocityX(xController.calculate(robot.translation.x))
+                        .withVelocityY(yController.calculate(robot.translation.y))
+                }
+            )
+            .until {
+                xController.atGoal() &&
+                    yController.atGoal() &&
+                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+            }
+
     object Alignments {
-        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
-        private val blueReefPoses =
-            intArrayOf(17, 18, 19, 20, 21, 22).map { field.getTagPose(it).get().toPose2d() }
-        private val redReefPoses =
-            intArrayOf(6, 7, 8, 9, 10, 11).map { field.getTagPose(it).get().toPose2d() }
+
+        private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+
+        private val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
+        private val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
+        private val REEF_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.kZero)
+
+        private val BLUE_REEF_POSES =
+            intArrayOf(17, 18, 19, 20, 21, 22).map {
+                aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+            }
+        private val BLUE_BRANCH_POSES =
+            BLUE_REEF_POSES.flatMap {
+                listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
+            }
+        private val RED_REEF_POSES =
+            intArrayOf(6, 7, 8, 9, 10, 11).map { aprilTags.getTagPose(it).get().toPose2d() }
+        private val RED_BRANCH_POSES =
+            RED_REEF_POSES.flatMap {
+                listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
+            }
+
         private val reefPoses
             get() =
                 if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue)
-                    blueReefPoses
-                else redReefPoses
+                    BLUE_REEF_POSES
+                else RED_REEF_POSES
 
-        private fun snapToReef(relativePose: Supplier<Transform2d>) = driveToPose {
-            Chassis.state.Pose.nearest(reefPoses).transformBy(relativePose.get())
-        }
+        private val branchPoses
+            get() =
+                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
+                    BLUE_BRANCH_POSES
+                } else RED_BRANCH_POSES
 
-        fun snapAngleToReef(): Command {
-            return Chassis.applyRequest {
-                val pose = Chassis.state.Pose.nearest(reefPoses)
+        val closestReef
+            get() = state.Pose.nearest(reefPoses)
+
+        val closestBranch
+            get() = state.Pose.nearest(branchPoses)
+
+        val snapToReef by command {
+            applyRequest {
+                val pose = state.Pose.nearest(reefPoses)
                 val speeds = Robot.driveController.hid.calculateSpeeds()
 
                 fieldCentricFacingAngle
@@ -317,12 +401,64 @@ object Chassis :
             }
         }
 
-        fun snapToReefLeft() = snapToReef {
-            Transform2d((0.4).meters, (-13 / 2).inches, Rotation2d.kZero)
+        val driveToClosestReef by command { driveToPose { closestReef } }
+
+        val driveToLeftBranch by command {
+            driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
+                .withName("Drive to branch left")
         }
 
-        fun snapToReefRight() = snapToReef {
-            Transform2d((0.4).meters, (13 / 2).inches, Rotation2d.kZero)
+        val driveToRightBranch by command {
+            driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
+                .withName("Drive to branch right")
+        }
+
+        val driveToClosestBranch by command { driveToPose { closestBranch } }
+
+        private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
+        private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
+
+        private val Pose2d.coralPosesFromTag
+            get() =
+                listOf(
+                    this,
+                    this.transformBy(CORAL_STATION_LEFT),
+                    this.transformBy(CORAL_STATION_RIGHT),
+                )
+
+        private val BLUE_CORAL_STATION_LOCATIONS =
+            intArrayOf(12, 13).flatMap {
+                aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag
+            }
+        private val RED_CORAL_STATION_LOCATIONS =
+            intArrayOf(1, 2).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+
+        val closestCoralStation: Pose2d
+            get() {
+                val alliance = DriverStation.getAlliance().getOrNull() ?: return Pose2d.kZero
+                val allianceCoralStations =
+                    when (alliance) {
+                        Alliance.Red -> RED_CORAL_STATION_LOCATIONS
+                        Alliance.Blue -> BLUE_CORAL_STATION_LOCATIONS
+                    }
+                return state.Pose.nearest(allianceCoralStations)
+            }
+
+        private val driveToClosestCoralStation by command {
+            driveToPose {
+                    closestCoralStation.transformBy(
+                        Transform2d(0.5.meters, 0.meters, Rotation2d.kPi)
+                    )
+                }
+                .withName("Drive to coral station")
+        }
+
+        init {
+            SmartDashboard.putData(driveToRightBranch)
+            SmartDashboard.putData(driveToLeftBranch)
+            SmartDashboard.putData(driveToClosestBranch)
+            SmartDashboard.putData(driveToClosestReef)
+            SmartDashboard.putData(driveToClosestCoralStation)
         }
     }
 }
