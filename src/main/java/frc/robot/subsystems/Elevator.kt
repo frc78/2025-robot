@@ -19,10 +19,14 @@ object Elevator : SubsystemBase("Elevator") {
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(runOnce {
-                height = state.elevatorHeight
-                leader.setControl(motionMagic.withPosition(convertHeightToRotations(state.elevatorHeight)))
-            })
+            .alongWith(
+                runOnce {
+                    height = state.elevatorHeight
+                    leader.setControl(
+                        motionMagic.withPosition(convertHeightToRotations(state.elevatorHeight))
+                    )
+                }
+            )
 
     var height = 0.inches
 
@@ -45,7 +49,7 @@ object Elevator : SubsystemBase("Elevator") {
     private const val FOLLOWER_MOTOR_ID = 12
 
     private const val GEAR_RATIO = 5.0
-    private const val DRUM_RADIUS = 1.75/2.0
+    private const val DRUM_RADIUS = 1.75 / 2.0
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -71,7 +75,7 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.kA = K_A
                     Slot0.kG = K_G
                     Slot0.kP = K_P
-                    Slot0.kI = K_P
+                    Slot0.kI = K_I
                     Slot0.kD = K_D
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
