@@ -12,8 +12,6 @@ import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.util.DriveFeedforwards
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
@@ -40,19 +38,19 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
 import frc.robot.Robot
+import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
+import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
+import frc.robot.lib.Alignments.closestBranch
+import frc.robot.lib.Alignments.closestCoralStation
+import frc.robot.lib.Alignments.closestReef
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.command
-import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestBranch
-import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestCoralStation
-import frc.robot.subsystems.drivetrain.Chassis.Alignments.closestReef
 import java.io.IOException
 import java.text.ParseException
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
 import org.littletonrobotics.junction.Logger
 
@@ -348,117 +346,44 @@ object Chassis :
                     fieldCentricFacingAngle.HeadingController.atSetpoint()
             }
 
-    object Alignments {
+    val snapToReef by command {
+        applyRequest {
+            val pose = closestReef
+            val speeds = Robot.driveController.hid.calculateSpeeds()
 
-        private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
-
-        private val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
-        private val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
-        private val REEF_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.kZero)
-
-        private val BLUE_REEF_POSES =
-            intArrayOf(17, 18, 19, 20, 21, 22).map {
-                aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
-            }
-        private val BLUE_BRANCH_POSES =
-            BLUE_REEF_POSES.flatMap {
-                listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
-            }
-        private val RED_REEF_POSES =
-            intArrayOf(6, 7, 8, 9, 10, 11).map { aprilTags.getTagPose(it).get().toPose2d() }
-        private val RED_BRANCH_POSES =
-            RED_REEF_POSES.flatMap {
-                listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
-            }
-
-        private val reefPoses
-            get() =
-                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue)
-                    BLUE_REEF_POSES
-                else RED_REEF_POSES
-
-        private val branchPoses
-            get() =
-                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
-                    BLUE_BRANCH_POSES
-                } else RED_BRANCH_POSES
-
-        val closestReef
-            get() = state.Pose.nearest(reefPoses)
-
-        val closestBranch
-            get() = state.Pose.nearest(branchPoses)
-
-        val snapToReef by command {
-            applyRequest {
-                val pose = state.Pose.nearest(reefPoses)
-                val speeds = Robot.driveController.hid.calculateSpeeds()
-
-                fieldCentricFacingAngle
-                    .withVelocityX(speeds.vxMetersPerSecond)
-                    .withVelocityY(speeds.vyMetersPerSecond)
-                    .withTargetDirection(pose.rotation)
-            }
+            fieldCentricFacingAngle
+                .withVelocityX(speeds.vxMetersPerSecond)
+                .withVelocityY(speeds.vyMetersPerSecond)
+                .withTargetDirection(pose.rotation)
         }
+    }
 
-        val driveToClosestReef by command { driveToPose { closestReef } }
+    val driveToClosestReef by command { driveToPose { closestReef } }
 
-        val driveToLeftBranch by command {
-            driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
-                .withName("Drive to branch left")
-        }
+    val driveToLeftBranch by command {
+        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
+            .withName("Drive to branch left")
+    }
 
-        val driveToRightBranch by command {
-            driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
-                .withName("Drive to branch right")
-        }
+    val driveToRightBranch by command {
+        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
+            .withName("Drive to branch right")
+    }
 
-        val driveToClosestBranch by command { driveToPose { closestBranch } }
+    val driveToClosestBranch by command { driveToPose { closestBranch } }
 
-        private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
-        private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
-
-        private val Pose2d.coralPosesFromTag
-            get() =
-                listOf(
-                    this,
-                    this.transformBy(CORAL_STATION_LEFT),
-                    this.transformBy(CORAL_STATION_RIGHT),
-                )
-
-        private val BLUE_CORAL_STATION_LOCATIONS =
-            intArrayOf(12, 13).flatMap {
-                aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag
+    private val driveToClosestCoralStation by command {
+        driveToPose {
+                closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
             }
-        private val RED_CORAL_STATION_LOCATIONS =
-            intArrayOf(1, 2).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+            .withName("Drive to coral station")
+    }
 
-        val closestCoralStation: Pose2d
-            get() {
-                val alliance = DriverStation.getAlliance().getOrNull() ?: return Pose2d.kZero
-                val allianceCoralStations =
-                    when (alliance) {
-                        Alliance.Red -> RED_CORAL_STATION_LOCATIONS
-                        Alliance.Blue -> BLUE_CORAL_STATION_LOCATIONS
-                    }
-                return state.Pose.nearest(allianceCoralStations)
-            }
-
-        private val driveToClosestCoralStation by command {
-            driveToPose {
-                    closestCoralStation.transformBy(
-                        Transform2d(0.5.meters, 0.meters, Rotation2d.kPi)
-                    )
-                }
-                .withName("Drive to coral station")
-        }
-
-        init {
-            SmartDashboard.putData(driveToRightBranch)
-            SmartDashboard.putData(driveToLeftBranch)
-            SmartDashboard.putData(driveToClosestBranch)
-            SmartDashboard.putData(driveToClosestReef)
-            SmartDashboard.putData(driveToClosestCoralStation)
-        }
+    init {
+        SmartDashboard.putData(driveToRightBranch)
+        SmartDashboard.putData(driveToLeftBranch)
+        SmartDashboard.putData(driveToClosestBranch)
+        SmartDashboard.putData(driveToClosestReef)
+        SmartDashboard.putData(driveToClosestCoralStation)
     }
 }
