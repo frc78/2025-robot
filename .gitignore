@@ -263,3 +263,5 @@ gradle-app.setting
 /simgui.json
 /simgui-ds.json
 /simgui-window.json
+/ctre_sim
+/bin
