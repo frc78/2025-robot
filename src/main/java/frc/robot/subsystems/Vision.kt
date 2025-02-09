@@ -9,7 +9,7 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
-import edu.wpi.first.wpilibj.RobotBase
+import frc.robot.IS_TEST
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.drivetrain.Chassis
@@ -19,21 +19,57 @@ import org.photonvision.simulation.SimCameraProperties
 import org.photonvision.simulation.VisionSystemSim
 
 object Vision {
+    // Measured from CAD
+    private val camXOld = 10.383.inches
+    private val camXNew = 9.263.inches
+    private val camYOld = 8.672.inches
+    private val camYNew = 9.769.inches
+    private val camZ = 8.5.inches
+    private val camRoll = 0.degrees
+    private val camPitchOld = (-28.125).degrees
+    private val camPitchNew = (-14).degrees
+    private val camYawOld = 60.degrees
+    private val camYawNew = 28.579.degrees
+
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
     private val cams: List<Camera> =
-        listOfNotNull(
-            Camera(
-                    "Front",
+        if (!IS_TEST) {
+            listOf(Camera("PLACEHOLDER", Transform3d()))
+        } else
+            listOf(
+                Camera(
+                    "FL",
+                    Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
+                ),
+                Camera(
+                    "FR",
                     Transform3d(
-                        0.inches,
-                        0.inches,
-                        0.inches,
-                        Rotation3d(0.degrees, (-15).degrees, 0.degrees),
+                        camXOld,
+                        -camYOld,
+                        camZ,
+                        Rotation3d(camRoll, camPitchOld, -camYawOld),
                     ),
-                )
-                .takeIf { RobotBase.isSimulation() }
-        )
+                ),
+                Camera(
+                    "BL",
+                    Transform3d(
+                        -camXNew,
+                        camYNew,
+                        camZ,
+                        Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
+                    ),
+                ),
+                Camera(
+                    "BR",
+                    Transform3d(
+                        -camXOld,
+                        -camYOld,
+                        camZ,
+                        Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
+                    ),
+                ),
+            )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
     private val topics =
@@ -49,8 +85,7 @@ object Vision {
                 topics[cam]?.set(
                     it.targetsUsed
                         .map {
-                            Chassis.state.Pose +
-                                cam.robotToCamera2d +
+                            (Chassis.state.Pose + cam.robotToCamera2d) +
                                 Transform2d(
                                     it.bestCameraToTarget.translation.toTranslation2d(),
                                     it.bestCameraToTarget.rotation.toRotation2d(),
@@ -59,6 +94,10 @@ object Vision {
                         .toTypedArray()
                 )
             }
+                ?: run {
+                    Logger.recordOutput(cam.cam.name + " est", Pose2d())
+                    topics[cam]?.set(emptyArray())
+                }
         }
     }
 
@@ -73,7 +112,7 @@ object Vision {
                 fps = 25.0
             }
 
-        cams.forEach { visionSim.addCamera(PhotonCameraSim(it.cam, camProps), it.pose) }
+        cams.forEach { visionSim.addCamera(PhotonCameraSim(it.cam, camProps), it.transform) }
 
         Notifier { visionSim.update(Chassis.state.Pose) }.startPeriodic(0.020)
     }

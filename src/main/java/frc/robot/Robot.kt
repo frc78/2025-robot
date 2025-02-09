@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -29,11 +30,15 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
+// Might have to be manually set when testing on SkibJr
+val IS_TEST = "TEST" == System.getenv("frc_bot")
+
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
-    private val driveController = CommandXboxController(0)
+    val driveController = CommandXboxController(0)
 
     init {
+        Logger.recordMetadata("IS_TEST ?", "$IS_TEST")
         if (isReal()) {
             // Log to a USB stick ("/U/logs")
             Logger.addDataReceiver(WPILOGWriter())
@@ -42,12 +47,25 @@ object Robot : LoggedRobot() {
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+        Chassis.configureAutoBuilder()
         Chassis.registerTelemetry(Telemetry::telemeterize)
 
         // Initializing Subsystems
         SuperStructure
         Intake
         Pivot
+
+        //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+        //            .whileTrue(Alignments.snapAngleToReef())
+        driveController.y().whileTrue(Chassis.snapToReef)
+        driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
+        driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+    }
+
+    private val autoChooser = AutoBuilder.buildAutoChooser("test")
+
+    init {
+        SmartDashboard.putData("Auto Mode", autoChooser)
     }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
@@ -113,5 +131,10 @@ object Robot : LoggedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
+    }
+
+    override fun autonomousInit() {
+        CommandScheduler.getInstance().cancelAll()
+        autoChooser.selected.let { CommandScheduler.getInstance().schedule(it) }
     }
 }
