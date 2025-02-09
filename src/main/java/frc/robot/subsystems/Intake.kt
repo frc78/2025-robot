@@ -1,7 +1,6 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.hardware.CANrange
-import edu.wpi.first.units.Units
 import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.lib.centimeters
 
