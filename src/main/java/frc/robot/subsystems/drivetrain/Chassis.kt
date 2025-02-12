@@ -40,7 +40,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
 import frc.robot.Robot
-import frc.robot.commands.driveToPose
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch

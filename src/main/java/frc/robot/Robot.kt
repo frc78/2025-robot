@@ -5,7 +5,6 @@ package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
-import edu.wpi.first.math.proto.System
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
