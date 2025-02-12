@@ -12,8 +12,6 @@ import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.util.DriveFeedforwards
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
@@ -47,16 +45,14 @@ import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.command
-import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import org.littletonrobotics.junction.Logger
 import java.io.IOException
 import java.text.ParseException
-import java.util.function.Supplier
 import kotlin.math.PI
+import org.littletonrobotics.junction.Logger
 
 val drivetrainConstants =
     if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
@@ -389,42 +385,5 @@ object Chassis :
         SmartDashboard.putData(driveToClosestBranch)
         SmartDashboard.putData(driveToClosestReef)
         SmartDashboard.putData(driveToClosestCoralStation)
-    }
-
-    object Alignments {
-        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
-        private val blueReefPoses =
-            intArrayOf(17, 18, 19, 20, 21, 22).map { field.getTagPose(it).get().toPose2d() }
-        private val redReefPoses =
-            intArrayOf(6, 7, 8, 9, 10, 11).map { field.getTagPose(it).get().toPose2d() }
-        private val reefPoses
-            get() =
-                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue)
-                    blueReefPoses
-                else redReefPoses
-
-        private fun snapToReef(relativePose: Supplier<Transform2d>) = driveToPose {
-            Chassis.state.Pose.nearest(reefPoses).transformBy(relativePose.get())
-        }
-
-        fun snapAngleToReef(): Command {
-            return Chassis.applyRequest {
-                val pose = Chassis.state.Pose.nearest(reefPoses)
-                val speeds = Robot.driveController.hid.calculateSpeeds()
-
-                fieldCentricFacingAngle
-                    .withVelocityX(speeds.vxMetersPerSecond)
-                    .withVelocityY(speeds.vyMetersPerSecond)
-                    .withTargetDirection(pose.rotation)
-            }
-        }
-
-        fun snapToReefLeft() = snapToReef {
-            Transform2d((0.4).meters, (-13 / 2).inches, Rotation2d.kZero)
-        }
-
-        fun snapToReefRight() = snapToReef {
-            Transform2d((0.4).meters, (13 / 2).inches, Rotation2d.kZero)
-        }
     }
 }
