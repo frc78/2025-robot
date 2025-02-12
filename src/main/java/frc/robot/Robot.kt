@@ -5,6 +5,8 @@ package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.path.PathConstraints
+import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -14,9 +16,7 @@ import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.calculateSpeeds
-import frc.robot.lib.degrees
-import frc.robot.lib.inches
+import frc.robot.lib.*
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -65,6 +65,18 @@ object Robot : LoggedRobot() {
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
 
     init {
+        autoChooser.addOption(
+            "Generate from current to backreef",
+            AutoBuilder.pathfindThenFollowPath(
+                PathPlannerPath.fromPathFile("test"),
+                PathConstraints(
+                    0.25.metersPerSecond,
+                    0.25.metersPerSecondPerSecond,
+                    0.25.radiansPerSecond,
+                    0.25.radiansPerSecondPerSecond,
+                ),
+            ),
+        )
         SmartDashboard.putData("Auto Mode", autoChooser)
     }
 
