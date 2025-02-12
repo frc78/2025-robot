@@ -52,16 +52,12 @@ import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import org.littletonrobotics.junction.Logger
 import java.io.IOException
 import java.text.ParseException
 import java.util.function.Supplier
 import kotlin.math.PI
-import org.littletonrobotics.junction.Logger
 
-/**
- * Class that extends the Phoenix 6 SwSendable1etrain class and implements Subsystem so it can
- * easily be used in command-based projects.
- */
 val drivetrainConstants =
     if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
 val frontLeft = if (IS_TEST) TestBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
@@ -69,6 +65,10 @@ val frontRight = if (IS_TEST) TestBotTunerConstants.FrontRight else TunerConstan
 val backLeft = if (IS_TEST) TestBotTunerConstants.BackLeft else TunerConstants.BackLeft
 val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants.BackRight
 
+/**
+ * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
+ * be used in command-based projects.
+ */
 object Chassis :
     SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
         ::TalonFX,

@@ -34,15 +34,13 @@ object Vision {
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
 
     private val cams: List<Camera> =
-        if (!IS_TEST) {
-            listOf(Camera("PLACEHOLDER", Transform3d()))
-        } else
-            listOf(
-                Camera(
+        listOfNotNull(
+            Camera(
                     "FL",
                     Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
-                ),
-                Camera(
+                )
+                .takeIf { IS_TEST },
+            Camera(
                     "FR",
                     Transform3d(
                         camXOld,
@@ -50,8 +48,9 @@ object Vision {
                         camZ,
                         Rotation3d(camRoll, camPitchOld, -camYawOld),
                     ),
-                ),
-                Camera(
+                )
+                .takeIf { IS_TEST },
+            Camera(
                     "BL",
                     Transform3d(
                         -camXNew,
@@ -59,8 +58,9 @@ object Vision {
                         camZ,
                         Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
                     ),
-                ),
-                Camera(
+                )
+                .takeIf { IS_TEST },
+            Camera(
                     "BR",
                     Transform3d(
                         -camXOld,
@@ -68,8 +68,10 @@ object Vision {
                         camZ,
                         Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
                     ),
-                ),
-            )
+                )
+                .takeIf { IS_TEST },
+            Camera("PLACEHOLDER", Transform3d()).takeIf { !IS_TEST },
+        )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
     private val topics =
