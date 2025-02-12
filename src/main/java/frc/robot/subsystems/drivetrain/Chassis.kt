@@ -15,35 +15,49 @@ import com.pathplanner.lib.util.DriveFeedforwards
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.math.trajectory.TrapezoidProfile
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
 import frc.robot.Robot
 import frc.robot.commands.driveToPose
+import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
+import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
+import frc.robot.lib.Alignments.closestBranch
+import frc.robot.lib.Alignments.closestCoralStation
+import frc.robot.lib.Alignments.closestReef
 import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import java.io.IOException
 import java.text.ParseException
 import java.util.function.Supplier
 import kotlin.math.PI
+import org.littletonrobotics.junction.Logger
 
 /**
  * Class that extends the Phoenix 6 SwSendable1etrain class and implements Subsystem so it can
@@ -69,6 +83,12 @@ object Chassis :
         backRight,
     ),
     Subsystem {
+
+    private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
+    private val closestReefPub = table.getStructTopic("closest_reef", Pose2d.struct).publish()
+    private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
+    private val closestCoralStationPub =
+        table.getStructTopic("closest_coral", Pose2d.struct).publish()
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -114,7 +134,7 @@ object Chassis :
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
 
     init {
-        fieldCentricFacingAngle.HeadingController.setPID(3.0, 0.0, 0.0)
+        fieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
     }
 
     fun configureAutoBuilder() {
@@ -287,6 +307,89 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
+        closestReefPub.set(closestReef)
+        closestBranchPub.set(closestBranch)
+        closestCoralStationPub.set(closestCoralStation)
+    }
+
+    private val xController =
+        ProfiledPIDController(
+            10.0,
+            0.0,
+            0.0,
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+        )
+    private val yController =
+        ProfiledPIDController(
+            10.0,
+            0.0,
+            0.0,
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+        )
+
+    fun driveToPose(pose: () -> Pose2d): Command =
+        Commands.runOnce({
+                xController.reset(state.Pose.translation.x, state.Speeds.vxMetersPerSecond)
+                yController.reset(state.Pose.translation.y, state.Speeds.vyMetersPerSecond)
+                val target = pose()
+                Logger.recordOutput("DriveToPose target", target)
+                xController.goal = TrapezoidProfile.State(target.x, 0.0)
+                yController.goal = TrapezoidProfile.State(target.y, 0.0)
+                fieldCentricFacingAngle.withTargetDirection(target.rotation)
+            })
+            .andThen(
+                applyRequest {
+                    val robot = Chassis.state.Pose
+                    fieldCentricFacingAngle
+                        .withVelocityX(xController.calculate(robot.translation.x))
+                        .withVelocityY(yController.calculate(robot.translation.y))
+                }
+            )
+            .until {
+                xController.atGoal() &&
+                    yController.atGoal() &&
+                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+            }
+
+    val snapToReef by command {
+        applyRequest {
+            val pose = closestReef
+            val speeds = Robot.driveController.hid.calculateSpeeds()
+
+            fieldCentricFacingAngle
+                .withVelocityX(speeds.vxMetersPerSecond)
+                .withVelocityY(speeds.vyMetersPerSecond)
+                .withTargetDirection(pose.rotation)
+        }
+    }
+
+    val driveToClosestReef by command { driveToPose { closestReef } }
+
+    val driveToLeftBranch by command {
+        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
+            .withName("Drive to branch left")
+    }
+
+    val driveToRightBranch by command {
+        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
+            .withName("Drive to branch right")
+    }
+
+    val driveToClosestBranch by command { driveToPose { closestBranch } }
+
+    private val driveToClosestCoralStation by command {
+        driveToPose {
+                closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
+            }
+            .withName("Drive to coral station")
+    }
+
+    init {
+        SmartDashboard.putData(driveToRightBranch)
+        SmartDashboard.putData(driveToLeftBranch)
+        SmartDashboard.putData(driveToClosestBranch)
+        SmartDashboard.putData(driveToClosestReef)
+        SmartDashboard.putData(driveToClosestCoralStation)
     }
 
     object Alignments {

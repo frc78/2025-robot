@@ -5,6 +5,7 @@ package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.math.proto.System
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -38,6 +39,7 @@ object Robot : LoggedRobot() {
     val driveController = CommandXboxController(0)
 
     init {
+        Logger.recordMetadata("IS_TEST ?", "$IS_TEST")
         if (isReal()) {
             // Log to a USB stick ("/U/logs")
             Logger.addDataReceiver(WPILOGWriter())
@@ -56,13 +58,9 @@ object Robot : LoggedRobot() {
 
         //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
-        driveController.y().whileTrue(Chassis.Alignments.snapAngleToReef())
-        driveController.leftBumper().whileTrue(Chassis.Alignments.snapToReefLeft())
-        driveController.rightBumper().whileTrue(Chassis.Alignments.snapToReefRight())
-
-        SmartDashboard.putData(Chassis.Alignments.snapToReefLeft())
-        SmartDashboard.putData(Chassis.Alignments.snapToReefRight())
-        Logger.recordOutput("IS_TEST ?", IS_TEST)
+        driveController.y().whileTrue(Chassis.snapToReef)
+        driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
+        driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
