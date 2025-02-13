@@ -58,5 +58,5 @@ object Pivot : SubsystemBase("Pivot") {
                 }
             )
 
-    var angle = 45.degrees
+    var angle = 90.degrees
 }

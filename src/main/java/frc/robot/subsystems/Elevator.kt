@@ -1,44 +1,76 @@
 package frc.robot.subsystems
 
+import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.DifferentialFollower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
+import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.simulation.ElevatorSim
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.lib.amps
+import frc.robot.lib.command
 import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.rotations
 import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
+import kotlin.math.abs
 
 object Elevator : SubsystemBase("Elevator") {
-    val motionMagic = MotionMagicVoltage(0.0)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
                 runOnce {
-                    height = state.elevatorHeight
                     leader.setControl(
-                        motionMagic.withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withLimitForwardMotion(shouldLimitForwardMotion)
+                            .withLimitReverseMotion(!zeroed)
                     )
                 }
             )
 
-    var height = 0.inches
+    private val shouldLimitForwardMotion
+        get() = !zeroed
+
+    private val shouldLimitReverseMotion
+        get() = !zeroed
+
+    val position
+        get() = leader.position.value.toElevatorHeight()
+
+    private var zeroed = false
+    private val motionMagic = MotionMagicVoltage(0.0)
 
     // Constants for the feedforward calculation
-    private const val K_S = 0.070936
-    private const val K_V = 0.79005
-    private const val K_A = 0.086892
-    private const val K_G = 0.088056
+    private const val K_S = 0.031252
+    private const val K_V = 0.60626
+    private const val K_A = 0.013507
+    private const val K_G = 0.50576
 
     // PID gains
-    private const val K_P = 4.572
+    private const val K_P = 9.7457
     private const val K_I = 0.0
-    private const val K_D = 0.0
+    private const val K_D = 0.22583
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
@@ -46,6 +78,15 @@ object Elevator : SubsystemBase("Elevator") {
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
+    private val MAX_HEIGHT = 53.inches
+
+    private val softwareLimitSwitchConfigs =
+        SoftwareLimitSwitchConfigs().apply {
+            ForwardSoftLimitEnable = true
+            ForwardSoftLimitThreshold = 0.0
+            ReverseSoftLimitEnable = false
+            ReverseSoftLimitThreshold = 0.0
+        }
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
             val leaderMotorConfiguration =
@@ -54,7 +95,7 @@ object Elevator : SubsystemBase("Elevator") {
                     SoftwareLimitSwitch.ForwardSoftLimitEnable = true
                     // Do not allow the motor to move upwards until after zeroing
                     SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0
-                    // Allow the motor to move downwards until the limit switch is pressed
+                    // Allow the motor to move downwards until the current limit is reached
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
 
@@ -84,4 +125,106 @@ object Elevator : SubsystemBase("Elevator") {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply {
             setControl(DifferentialFollower(LEADER_MOTOR_ID, true))
         }
+
+    val zeroElevator by command {
+        runOnce { leader.set(-.1) }
+            .andThen(Commands.idle().until { abs(leader.torqueCurrent.value.amps) > 10 })
+            .andThen(
+                runOnce {
+                    leader.setPosition(0.inches.toDrumRotations())
+                    leader.configurator.apply(
+                        softwareLimitSwitchConfigs
+                            .withForwardSoftLimitThreshold(MAX_HEIGHT.toDrumRotations())
+                            .withReverseSoftLimitEnable(true)
+                    )
+                    zeroed = true
+                }
+            )
+            .withName("Zero Elevator")
+    }
+
+    init {
+        SmartDashboard.putData(zeroElevator)
+    }
+
+    private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)
+
+    private fun Angle.toElevatorHeight() = this.toDistance(DRUM_RADIUS)
+
+    private val elevatorSim by lazy {
+        ElevatorSim(
+            DCMotor.getKrakenX60Foc(2),
+            5.0,
+            35.132.pounds.kilograms,
+            DRUM_RADIUS.meters,
+            0.0.inches.meters,
+            53.inches.meters,
+            true,
+            5.inches.meters,
+        )
+    }
+    private val leaderSim by lazy { leader.simState }
+
+    override fun periodic() {
+        SmartDashboard.putBoolean("elevator/zeroed", zeroed)
+    }
+
+    private val voltageOut = VoltageOut(0.volts)
+    private val sysIdRoutine =
+        SysIdRoutine(
+            SysIdRoutine.Config(null, null, null, { SignalLogger.writeString("state", "$it") }),
+            SysIdRoutine.Mechanism(
+                { leader.setControl(voltageOut.withOutput(it)) },
+                null,
+                this,
+                "elevator",
+            ),
+        )
+
+    private val sysId by command {
+        Commands.sequence(
+                runOnce {
+                    SignalLogger.start()
+                    leader.configurator.apply(
+                        SoftwareLimitSwitchConfigs().apply {
+                            ForwardSoftLimitEnable = true
+                            ForwardSoftLimitThreshold = 53.inches.toDrumRotations().rotations
+                            ReverseSoftLimitEnable = true
+                            ReverseSoftLimitThreshold = 0.0
+                        }
+                    )
+                },
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
+                    leader.position.value > 50.inches.toDrumRotations()
+                },
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
+                    leader.position.value < 1.inches.toDrumRotations()
+                },
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
+                    leader.position.value > 50.inches.toDrumRotations()
+                },
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
+                    leader.position.value < 1.inches.toDrumRotations()
+                },
+                runOnce { SignalLogger.stop() },
+            )
+            .withName("Elevator sysId")
+    }
+
+    init {
+        SmartDashboard.putData(sysId)
+    }
+
+    override fun simulationPeriodic() {
+        val motorVoltage = leaderSim.motorVoltage
+        elevatorSim.setInputVoltage(motorVoltage)
+        elevatorSim.update(0.02)
+        leaderSim.setRawRotorPosition(
+            elevatorSim.positionMeters.meters.toAngle(DRUM_RADIUS) * GEAR_RATIO
+        )
+        leaderSim.setRotorVelocity(
+            elevatorSim.velocityMetersPerSecond.metersPerSecond.toAngularVelocity(DRUM_RADIUS) *
+                GEAR_RATIO
+        )
+    }
 }

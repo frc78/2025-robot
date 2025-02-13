@@ -8,6 +8,7 @@ import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.Units.MetersPerSecondPerSecond
+import edu.wpi.first.units.Units.Pounds
 import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
@@ -69,6 +70,8 @@ val Number.voltsPerSecond: Velocity<VoltageUnit>
     get() = Volts.of(this.toDouble()).per(Second)
 val Number.rotations: Angle
     get() = Rotations.of(this.toDouble())
+val Number.pounds: Mass
+    get() = Pounds.of(this.toDouble())
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
@@ -106,6 +109,9 @@ val Mass.kilograms
 fun Angle.toDistance(radius: Distance): Distance = radius * this.radians
 
 fun Distance.toAngle(radius: Distance): Angle = Radians.of((this / radius).magnitude())
+
+fun LinearVelocity.toAngularVelocity(radius: Distance): AngularVelocity =
+    RadiansPerSecond.of(this.metersPerSecond / radius.meters)
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
