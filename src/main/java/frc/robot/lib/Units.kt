@@ -53,6 +53,8 @@ val Number.amps: Current
     get() = Amps.of(this.toDouble())
 val Number.metersPerSecondPerSecond: LinearAcceleration
     get() = MetersPerSecondPerSecond.of(this.toDouble())
+val Number.radians: Angle
+    get() = Radians.of(this.toDouble())
 val Number.radiansPerSecond: AngularVelocity
     get() = RadiansPerSecond.of(this.toDouble())
 val Number.radiansPerSecondPerSecond: AngularAcceleration
@@ -102,6 +104,8 @@ val Mass.kilograms
     get() = this.`in`(Kilograms)
 
 fun Angle.toDistance(radius: Distance): Distance = radius * this.radians
+
+fun Distance.toAngle(radius: Distance): Angle = Radians.of((this / radius).magnitude())
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
