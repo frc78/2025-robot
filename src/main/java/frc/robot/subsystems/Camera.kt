@@ -8,12 +8,12 @@ import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
-import kotlin.jvm.optionals.getOrNull
-import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
 import org.photonvision.targeting.PhotonTrackedTarget
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.pow
 
 class Camera(val name: String, val transform: Transform3d) {
     val cam = PhotonCamera(name)
@@ -67,13 +67,13 @@ class Camera(val name: String, val transform: Transform3d) {
 
         if (validTargets.isEmpty()) {
             currentStds = singleTagStds
-        } else {
-            val avgDist = totalDistance / validTargets.size
-
-            if (validTargets.size > 1) currentStds = multiTagStds
-
-            // We need to improve standard deviation calculations
-            currentStds.times(1 + (avgDist.pow(2) / 30))
+            return
         }
+        val avgDist = totalDistance / validTargets.size
+
+        if (validTargets.size > 1) currentStds = multiTagStds
+
+        // We need to improve standard deviation calculations
+        currentStds.times(1 + (avgDist.pow(2) / 15))
     }
 }
