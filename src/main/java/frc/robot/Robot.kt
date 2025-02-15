@@ -58,9 +58,11 @@ object Robot : LoggedRobot() {
 
         //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
-        driveController.y().whileTrue(Chassis.snapToReef)
+        // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+        driveController.y().whileTrue(Elevator.manualUp)
+        driveController.a().whileTrue(Elevator.manualDown)
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
@@ -113,7 +115,7 @@ object Robot : LoggedRobot() {
         elevatorMech.angle = Pivot.angle.degrees
         // Elevator.length is 0 when the elevator is retracted, but the elevator has a fixed length
         // of 30 inches
-        elevatorMech.length = (30.inches + Elevator.height).inches
+        elevatorMech.length = (30.inches + Elevator.position).inches
         wristMech.angle = -Wrist.angle.degrees
     }
 
