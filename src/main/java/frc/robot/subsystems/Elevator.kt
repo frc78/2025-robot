@@ -3,7 +3,7 @@ package frc.robot.subsystems
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.DifferentialFollower
+import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
@@ -20,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
@@ -32,34 +31,37 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import kotlin.math.abs
 
 object Elevator : SubsystemBase("Elevator") {
+    val motionMagic = MotionMagicVoltage(0.0)
+    val voltage = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
                 runOnce {
                     leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withLimitForwardMotion(shouldLimitForwardMotion)
-                            .withLimitReverseMotion(!zeroed)
+                        motionMagic.withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
                     )
                 }
             )
 
-    private val shouldLimitForwardMotion
-        get() = !zeroed
+    fun manualUp(): Command {
+        return startEnd(
+            { leader.setControl(voltage.withOutput(2.0.volts)) },
+            { leader.setControl(voltage.withOutput(0.0.volts)) },
+        )
+    }
 
-    private val shouldLimitReverseMotion
-        get() = !zeroed
+    fun manualDown(): Command {
+        return startEnd(
+            { leader.setControl(voltage.withOutput(-2.0.volts)) },
+            { leader.setControl(voltage.withOutput(0.0.volts)) },
+        )
+    }
 
     val position
         get() = leader.position.value.toElevatorHeight()
-
-    private var zeroed = false
-    private val motionMagic = MotionMagicVoltage(0.0)
 
     // Constants for the feedforward calculation
     private const val K_S = 0.031252
@@ -80,13 +82,6 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val MAX_HEIGHT = 53.inches
 
-    private val softwareLimitSwitchConfigs =
-        SoftwareLimitSwitchConfigs().apply {
-            ForwardSoftLimitEnable = true
-            ForwardSoftLimitThreshold = 0.0
-            ReverseSoftLimitEnable = false
-            ReverseSoftLimitThreshold = 0.0
-        }
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
             val leaderMotorConfiguration =
@@ -94,7 +89,7 @@ object Elevator : SubsystemBase("Elevator") {
                     Feedback.SensorToMechanismRatio = GEAR_RATIO
                     SoftwareLimitSwitch.ForwardSoftLimitEnable = true
                     // Do not allow the motor to move upwards until after zeroing
-                    SoftwareLimitSwitch.ForwardSoftLimitThreshold = 0.0
+                    SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
                     // Allow the motor to move downwards until the current limit is reached
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
@@ -110,9 +105,6 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.kD = K_D
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
-
-                    MotionMagic.MotionMagicAcceleration = 80.0
-                    MotionMagic.MotionMagicCruiseVelocity = 15.0
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
@@ -121,30 +113,8 @@ object Elevator : SubsystemBase("Elevator") {
             closedLoopError.setUpdateFrequency(100.0)
         }
 
-    val follower =
-        TalonFX(FOLLOWER_MOTOR_ID, "*").apply {
-            setControl(DifferentialFollower(LEADER_MOTOR_ID, true))
-        }
-
-    val zeroElevator by command {
-        runOnce { leader.set(-.1) }
-            .andThen(Commands.idle().until { abs(leader.torqueCurrent.value.amps) > 10 })
-            .andThen(
-                runOnce {
-                    leader.setPosition(0.inches.toDrumRotations())
-                    leader.configurator.apply(
-                        softwareLimitSwitchConfigs
-                            .withForwardSoftLimitThreshold(MAX_HEIGHT.toDrumRotations())
-                            .withReverseSoftLimitEnable(true)
-                    )
-                    zeroed = true
-                }
-            )
-            .withName("Zero Elevator")
-    }
-
     init {
-        SmartDashboard.putData(zeroElevator)
+        TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)
@@ -165,11 +135,8 @@ object Elevator : SubsystemBase("Elevator") {
     }
     private val leaderSim by lazy { leader.simState }
 
-    override fun periodic() {
-        SmartDashboard.putBoolean("elevator/zeroed", zeroed)
-    }
-
     private val voltageOut = VoltageOut(0.volts)
+
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(null, null, null, { SignalLogger.writeString("state", "$it") }),
@@ -188,7 +155,7 @@ object Elevator : SubsystemBase("Elevator") {
                     leader.configurator.apply(
                         SoftwareLimitSwitchConfigs().apply {
                             ForwardSoftLimitEnable = true
-                            ForwardSoftLimitThreshold = 53.inches.toDrumRotations().rotations
+                            ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
                             ReverseSoftLimitEnable = true
                             ReverseSoftLimitThreshold = 0.0
                         }

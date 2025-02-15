@@ -57,9 +57,11 @@ object Robot : LoggedRobot() {
 
         //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
-        driveController.y().whileTrue(Chassis.snapToReef)
+        // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+        driveController.y().whileTrue(Elevator.manualUp())
+        driveController.a().whileTrue(Elevator.manualDown())
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
