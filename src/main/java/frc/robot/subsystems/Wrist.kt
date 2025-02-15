@@ -1,7 +1,9 @@
 package frc.robot.subsystems
 
+import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -11,7 +13,10 @@ import frc.robot.lib.degrees
 import frc.robot.lib.volts
 
 object Wrist : SubsystemBase("Wrist") {
-    val leader = TalonFX(-1, "*")
+    val leader =
+        TalonFX(13, "*").apply {
+            configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
+        }
     var lowerLimit = 0.degrees
     var upperLimit = 0.degrees
 

@@ -1,6 +1,7 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
@@ -9,6 +10,7 @@ import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
+import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
@@ -96,6 +98,7 @@ object Elevator : SubsystemBase("Elevator") {
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
 
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     Slot0.kS = K_S
                     Slot0.kV = K_V
@@ -115,7 +118,10 @@ object Elevator : SubsystemBase("Elevator") {
         }
 
     init {
-        TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
+        TalonFX(FOLLOWER_MOTOR_ID, "*").apply {
+            configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
+            setControl(Follower(LEADER_MOTOR_ID, true))
+        }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)

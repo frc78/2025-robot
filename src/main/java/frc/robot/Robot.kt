@@ -57,6 +57,7 @@ object Robot : LoggedRobot() {
         SuperStructure
         Intake
         Pivot
+        Wrist
 
         //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
@@ -72,9 +73,8 @@ object Robot : LoggedRobot() {
         joystick.button(8).whileTrue(Intake.outtakeCoral)
         joystick.button(9).whileTrue(Intake.intakeAlgae)
         joystick.button(10).whileTrue(Intake.outtakeAlgae)
-
-        driveController.y().whileTrue(Elevator.manualUp)
-        driveController.a().whileTrue(Elevator.manualDown)
+        joystick.button(11).whileTrue(Wrist.manualUp())
+        joystick.button(12).whileTrue(Wrist.manualDown())
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
