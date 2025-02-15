@@ -36,6 +36,7 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
+    val manipController = CommandXboxController(1)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
