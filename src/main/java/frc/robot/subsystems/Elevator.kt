@@ -35,7 +35,7 @@ import frc.robot.lib.toDistance
 import frc.robot.lib.volts
 
 object Elevator : SubsystemBase("Elevator") {
-    private val motionMagic = MotionMagicVoltage(0.0)
+    private val motionMagic = MotionMagicVoltage(0.0).withSlot(0)
     private val voltage = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
@@ -57,7 +57,7 @@ object Elevator : SubsystemBase("Elevator") {
 
     val manualDown by command {
         startEnd(
-            { leader.setControl(voltage.withOutput(-2.0.volts)) },
+            { leader.setControl(voltage.withOutput((-2.0).volts)) },
             { leader.setControl(voltage.withOutput(0.0.volts)) },
         )
     }

@@ -18,12 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Elevator
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Vision
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -74,7 +69,8 @@ object Robot : LoggedRobot() {
         joystick.button(9).whileTrue(Intake.intakeAlgae)
         joystick.button(10).whileTrue(Intake.outtakeAlgae)
         joystick.button(11).whileTrue(Wrist.manualUp())
-        joystick.button(12).whileTrue(Wrist.manualDown())
+        //joystick.button(12).whileTrue(Wrist.manualDown())
+        joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
