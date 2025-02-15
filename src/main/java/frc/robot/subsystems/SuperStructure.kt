@@ -5,12 +5,10 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.Robot
+import frc.robot.Robot.manipController
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.Robot.driveController
-import frc.robot.Robot.manipController
+import org.littletonrobotics.junction.Logger
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
@@ -32,37 +30,46 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 }
 
 /* There probably is a better way to structure this, but the reason why I
-* made this a separate enum is because this is meant as a selection value/logic state
-* while the one above is meant to represent robot state*/
-enum class Level(val state: RobotState) {
-    L1(RobotState.L1),
-    L2(RobotState.L2),
-    L3(RobotState.L3),
-    L4(RobotState.L4),
+ * made this a separate enum is because this is meant as a selection value/logic state
+ * while the one above is meant to represent robot state*/
+enum class Level(val state: RobotState, val display: String) {
+    L1(RobotState.L1, "L1"),
+    L2(RobotState.L2, "L2"),
+    L3(RobotState.L3, "L3"),
+    L4(RobotState.L4, "L4"),
 }
 
-fun Level.next(){
+/** Cycles to next level */
+fun Level.next() {
     return Level.entries.indexOf(this).let {
-        if (it == Level.entries.lastIndex) Level.entries.first()
-        else Level.entries[it + 1]
+        if (it == Level.entries.lastIndex) Level.entries.first() else Level.entries[it + 1]
     }
 }
 
-fun Level.previous(){
+/** Cycles to previous level */
+fun Level.previous() {
     return Level.entries.indexOf(this).let {
-        if (it == 0) Level.entries.last()
-        else Level.entries[it - 1]
+        if (it == 0) Level.entries.last() else Level.entries[it - 1]
     }
 }
 
-enum class Branch {
-    LEFT,
-    RIGHT,
+enum class Branch(val display: String) {
+    LEFT("Left"),
+    RIGHT("Right"),
 }
 
 object SuperStructure {
     var selectedLevel: Level = Level.L2
+        set(value) {
+            field = value
+            Logger.recordOutput("selectedLevel", value.display)
+        }
+
     var selectedBranch: Branch = Branch.LEFT
+        set(value) {
+            field = value
+            Logger.recordOutput("selectedBranchSide", value.display)
+        }
 
     init {
         RobotState.entries.forEach { SmartDashboard.putData(goTo(it)) }
@@ -70,15 +77,46 @@ object SuperStructure {
         configureSimpleLayout()
     }
 
+    // Uses D-Pad to cycle level, bumpers to select branch
     fun configureSimpleLayout() {
-        manipController.povUp().onTrue(Commands.runOnce({ selectedLevel.next()}))
-        manipController.povDown().onTrue(Commands.runOnce({ selectedLevel.previous()}))
+        manipController.povUp().onTrue(Commands.runOnce({ selectedLevel.next() }))
+        manipController.povDown().onTrue(Commands.runOnce({ selectedLevel.previous() }))
         manipController.leftBumper().onTrue(Commands.runOnce({ selectedBranch = Branch.LEFT }))
         manipController.rightBumper().onTrue(Commands.runOnce({ selectedBranch = Branch.RIGHT }))
     }
 
+    // Uses sticks to
     fun configureIntuitiveLayout() {
+        manipController
+            .leftBumper()
+            .onTrue(
+                Commands.runOnce({
+                    selectedBranch = Branch.LEFT
+                    stickSelectLevel()
+                })
+            )
+        manipController
+            .rightBumper()
+            .onTrue(
+                Commands.runOnce({
+                    selectedBranch = Branch.RIGHT
+                    stickSelectLevel()
+                })
+            )
+    }
 
+    private fun stickSelectLevel() {
+        if (manipController.leftY > 0.0) {
+            selectedLevel = Level.L4
+        } else if (manipController.leftY == 0.0) {
+            /* Assumes an applied deadband, and yes it could just be an else, but I think it is nice to
+            have this be more explicit */
+            selectedLevel = Level.L3
+        } else if (manipController.leftY < 0.0) {
+            selectedLevel = Level.L2
+        } else if (manipController.leftY < 0.0 && manipController.rightY < 0.0) {
+            selectedLevel = Level.L1
+        }
     }
 
     // Command factory to go to a specific robot state
