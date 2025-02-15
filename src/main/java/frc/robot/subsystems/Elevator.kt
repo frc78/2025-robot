@@ -66,15 +66,15 @@ object Elevator : SubsystemBase("Elevator") {
         get() = leader.position.value.toElevatorHeight()
 
     // Constants for the feedforward calculation
-    private const val K_S = 0.031252
-    private const val K_V = 0.60626
-    private const val K_A = 0.013507
-    private const val K_G = 0.50576
+    private const val K_S = 0.23487
+    private const val K_V = 0.60823
+    private const val K_A = 0.034044
+    private const val K_G = 0.55356
 
     // PID gains
-    private const val K_P = 9.7457
+    private const val K_P = 34.887
     private const val K_I = 0.0
-    private const val K_D = 0.22583
+    private const val K_D = 1.2611
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
@@ -97,7 +97,7 @@ object Elevator : SubsystemBase("Elevator") {
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
 
-                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     Slot0.kS = K_S
@@ -119,7 +119,6 @@ object Elevator : SubsystemBase("Elevator") {
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply {
-            configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
             setControl(Follower(LEADER_MOTOR_ID, true))
         }
     }
@@ -169,16 +168,16 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 30.inches.toDrumRotations()
+                    leader.position.value > 40.inches.toDrumRotations()
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 12.inches.toDrumRotations()
+                    leader.position.value < 6.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 30.inches.toDrumRotations()
+                    leader.position.value > 40.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 12.inches.toDrumRotations()
+                    leader.position.value < 6.inches.toDrumRotations()
                 },
                 runOnce { SignalLogger.stop() },
             )

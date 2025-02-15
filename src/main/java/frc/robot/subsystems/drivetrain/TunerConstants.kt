@@ -265,7 +265,16 @@ object TunerConstants {
         constructor(
             drivetrainConstants: SwerveDrivetrainConstants,
             vararg modules: SwerveModuleConstants<*, *, *>?,
-        ) : super(::TalonFX, ::TalonFX, ::CANcoder, drivetrainConstants, *modules)
+        ) : super(
+            ::TalonFX,
+            ::TalonFX,
+            ::CANcoder,
+            drivetrainConstants,
+            modules[0],
+            modules[1],
+            modules[2],
+            modules[3],
+        )
 
         /**
          * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -289,7 +298,10 @@ object TunerConstants {
             ::CANcoder,
             drivetrainConstants,
             odometryUpdateFrequency,
-            *modules,
+            modules[0],
+            modules[1],
+            modules[2],
+            modules[3],
         )
 
         /**
@@ -322,7 +334,10 @@ object TunerConstants {
             odometryUpdateFrequency,
             odometryStandardDeviation,
             visionStandardDeviation,
-            *modules,
+            modules[0],
+            modules[1],
+            modules[2],
+            modules[3],
         )
     }
 }
