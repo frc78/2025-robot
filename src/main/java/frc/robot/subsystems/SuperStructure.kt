@@ -32,6 +32,11 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     CoralStorage(0.degrees, 0.inches, 0.degrees),
 }
 
+enum class Branch(val display: String) {
+    LEFT("Left"),
+    RIGHT("Right"),
+}
+
 /* There probably is a better way to structure this, but the reason why I
  * made this a separate enum is because this is meant as a selection value/logic state
  * while the one above is meant to represent robot state*/
@@ -54,11 +59,6 @@ fun Level.previous() {
     return Level.entries.indexOf(this).let {
         if (it == 0) Level.entries.last() else Level.entries[it - 1]
     }
-}
-
-enum class Branch(val display: String) {
-    LEFT("Left"),
-    RIGHT("Right"),
 }
 
 object SuperStructure {
