@@ -33,8 +33,8 @@ import frc.robot.lib.toDistance
 import frc.robot.lib.volts
 
 object Elevator : SubsystemBase("Elevator") {
-    val motionMagic = MotionMagicVoltage(0.0)
-    val voltage = VoltageOut(0.0)
+    private val motionMagic = MotionMagicVoltage(0.0)
+    private val voltage = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
@@ -46,15 +46,15 @@ object Elevator : SubsystemBase("Elevator") {
                 }
             )
 
-    fun manualUp(): Command {
-        return startEnd(
+    val manualUp by command {
+        startEnd(
             { leader.setControl(voltage.withOutput(2.0.volts)) },
             { leader.setControl(voltage.withOutput(0.0.volts)) },
         )
     }
 
-    fun manualDown(): Command {
-        return startEnd(
+    val manualDown by command {
+        startEnd(
             { leader.setControl(voltage.withOutput(-2.0.volts)) },
             { leader.setControl(voltage.withOutput(0.0.volts)) },
         )
@@ -89,7 +89,8 @@ object Elevator : SubsystemBase("Elevator") {
                     Feedback.SensorToMechanismRatio = GEAR_RATIO
                     SoftwareLimitSwitch.ForwardSoftLimitEnable = true
                     // Do not allow the motor to move upwards until after zeroing
-                    SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
+                    SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+                        MAX_HEIGHT.toDrumRotations().rotations
                     // Allow the motor to move downwards until the current limit is reached
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
