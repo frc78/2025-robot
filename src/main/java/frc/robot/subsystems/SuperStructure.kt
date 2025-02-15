@@ -5,13 +5,16 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import frc.robot.Robot.driveController
 import frc.robot.Robot.manipController
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
+import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
+    Stow(0.degrees, 0.inches, 0.degrees), // TODO
     L1(60.degrees, 0.inches, (-120).degrees),
     L2(75.degrees, 6.inches, (-110).degrees),
     L3(78.degrees, 20.inches, (-100).degrees),
@@ -75,6 +78,14 @@ object SuperStructure {
         RobotState.entries.forEach { SmartDashboard.putData(goTo(it)) }
 
         configureSimpleLayout()
+
+        driveController
+            .rightBumper()
+            .whileTrue(
+                (if (selectedBranch == Branch.LEFT) Chassis.driveToLeftBranch
+                    else Chassis.driveToRightBranch)
+                    .andThen(goTo(selectedLevel.state).andThen(Intake.scoreCoral).andThen(goTo(RobotState.Stow)))
+            )
     }
 
     // Uses D-Pad to cycle level, bumpers to select branch
