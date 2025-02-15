@@ -80,7 +80,7 @@ object Elevator : SubsystemBase("Elevator") {
     private const val FOLLOWER_MOTOR_ID = 12
 
     private const val GEAR_RATIO = 5.0
-    private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
+    private val DRUM_RADIUS = (1.75.inches + .125.inches) / 2.0
 
     private val MAX_HEIGHT = 53.inches
 
@@ -169,16 +169,16 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
+                    leader.position.value > 30.inches.toDrumRotations()
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 1.inches.toDrumRotations()
+                    leader.position.value < 12.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
+                    leader.position.value > 30.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 1.inches.toDrumRotations()
+                    leader.position.value < 12.inches.toDrumRotations()
                 },
                 runOnce { SignalLogger.stop() },
             )
