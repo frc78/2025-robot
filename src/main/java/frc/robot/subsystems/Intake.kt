@@ -77,10 +77,19 @@ object Intake : Subsystem {
             .raceWith(Commands.waitUntil { hasBranchCoral }.andThen(Commands.waitSeconds(0.25)))
             .withName("Intake Coral")
     }
+
+    val outtakeCoral by command {
+        startEnd({ coralIntake.set(-0.3) }, { coralIntake.set(0.0) }).withName("Intake Coral")
+    }
+
     val intakeAlgae by command {
         startEnd({ algaeIntake.set(0.3) }, { algaeIntake.set(0.0) })
             .until { algaeIntake.torqueCurrent.value > 20.amps }
             .withName("Intake Algae")
+    }
+
+    val outtakeAlgae by command {
+        startEnd({ algaeIntake.set(-0.3) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
     }
 
     init {

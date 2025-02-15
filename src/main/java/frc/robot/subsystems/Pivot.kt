@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
@@ -42,8 +43,8 @@ object Pivot : SubsystemBase("Pivot") {
                 TalonFXConfiguration().apply {
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
                     // Set soft limits to avoid breaking the pivot
-                    SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
-                        .withReverseSoftLimitEnable(true)
+                    SoftwareLimitSwitch.withForwardSoftLimitEnable(false)
+                        .withReverseSoftLimitEnable(false)
                         .withForwardSoftLimitThreshold(90.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
                     // Set feedback to encoder
@@ -98,7 +99,19 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     private val voltageOut = VoltageOut(0.0)
+    val moveUp by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput(2.volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
 
+    val moveDown by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput((-2).volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(

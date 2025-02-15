@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
@@ -36,6 +37,7 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
+    val joystick = CommandJoystick(5)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -61,6 +63,16 @@ object Robot : LoggedRobot() {
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+
+        joystick.button(5).whileTrue(Pivot.moveUp)
+        joystick.button(3).whileTrue(Pivot.moveDown)
+        joystick.button(6).whileTrue(Elevator.manualUp)
+        joystick.button(4).whileTrue(Elevator.manualDown)
+        joystick.button(7).whileTrue(Intake.intakeCoral)
+        joystick.button(8).whileTrue(Intake.outtakeCoral)
+        joystick.button(9).whileTrue(Intake.intakeAlgae)
+        joystick.button(10).whileTrue(Intake.outtakeAlgae)
+
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
     }
