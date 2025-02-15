@@ -38,6 +38,7 @@ object Robot : LoggedRobot() {
     val driveController = CommandXboxController(0)
 
     init {
+        DriverStation.silenceJoystickConnectionWarning(true)
         Logger.recordMetadata("IS_TEST ?", "$IS_TEST")
         if (isReal()) {
             // Log to a USB stick ("/U/logs")

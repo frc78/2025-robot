@@ -28,15 +28,13 @@ import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.lib.radians
 import frc.robot.lib.radiansPerSecond
-import frc.robot.lib.radiansPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import kotlin.math.PI
 
 object Pivot : SubsystemBase("Pivot") {
 
-    private const val GEAR_RATIO = ((5 * 5 * 64 * 60) / (30 * 12)).toDouble()
+    private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
     private val leader =
         TalonFX(9, "*").apply {
@@ -58,8 +56,6 @@ object Pivot : SubsystemBase("Pivot") {
                         .withKA(1.4567)
                         .withKG(0.11413)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
-                    MotionMagic.withMotionMagicCruiseVelocity(PI.radiansPerSecond)
-                    MotionMagic.withMotionMagicAcceleration((2 * PI).radiansPerSecondPerSecond)
                 }
             configurator.apply(config)
         }
@@ -95,6 +91,7 @@ object Pivot : SubsystemBase("Pivot") {
             /* startingAngleRads = */ 45.degrees.radians,
         )
     }
+
     private val leaderSimState by lazy { leader.simState }
     private val encoderSim by lazy {
         cancoder.simState.apply { Orientation = ChassisReference.CounterClockwise_Positive }
