@@ -31,7 +31,7 @@ object Vision {
     private val camYawOld = 60.degrees
     private val camYawNew = 28.579.degrees
 
-    private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+    private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
 
     private val cams: List<Camera> =
         listOfNotNull(

@@ -59,6 +59,8 @@ object Robot : LoggedRobot() {
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+        driveController.y().whileTrue(Elevator.manualUp)
+        driveController.a().whileTrue(Elevator.manualDown)
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
