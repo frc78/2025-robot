@@ -93,6 +93,8 @@ val AngularVelocity.rotationsPerSecond
     get() = this.`in`(RotationsPerSecond)
 val AngularVelocity.rpm
     get() = this.`in`(RPM)
+val AngularAcceleration.radiansPerSecondPerSecond
+    get() = this.`in`(RadiansPerSecondPerSecond)
 val Voltage.volts
     get() = this.`in`(Volts)
 val Angle.radians

@@ -41,6 +41,7 @@ object Pivot : SubsystemBase("Pivot") {
                 TalonFXConfiguration().apply {
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
                     // Set soft limits to avoid breaking the pivot
+
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                         .withReverseSoftLimitEnable(true)
                         .withForwardSoftLimitThreshold(150.degrees)
@@ -100,7 +101,19 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     private val voltageOut = VoltageOut(0.0)
+    val moveUp by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput(2.volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
 
+    val moveDown by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput((-2).volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(

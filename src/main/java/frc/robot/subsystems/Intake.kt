@@ -7,12 +7,15 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
-import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import org.littletonrobotics.junction.Logger
 
 object Intake : Subsystem {
+    init {
+        defaultCommand = Commands.idle(this)
+    }
+
     private val canRange: CANrange = CANrange(0)
 
     private val canRangeOffsetEntry =
@@ -25,7 +28,7 @@ object Intake : Subsystem {
     private const val INTAKE_WIDTH = 52.0 // Measured in cm.
 
     private val coralIntake =
-        TalonFX(13).apply {
+        TalonFX(14, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
@@ -34,7 +37,7 @@ object Intake : Subsystem {
             )
         }
     private val algaeIntake =
-        TalonFX(14).apply {
+        TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
@@ -42,6 +45,11 @@ object Intake : Subsystem {
                 }
             )
         }
+
+    init {
+        coralIntake.set(0.0)
+        algaeIntake
+    }
 
     /**
      * Returns true if a coral is detected in the path of the CANrange. Only corals that are
@@ -73,14 +81,19 @@ object Intake : Subsystem {
     }
 
     val intakeCoral by command {
-        startEnd({ coralIntake.set(0.3) }, { coralIntake.set(0.0) })
-            .raceWith(Commands.waitUntil { hasBranchCoral }.andThen(Commands.waitSeconds(0.25)))
-            .withName("Intake Coral")
+        startEnd({ coralIntake.set(0.3) }, { coralIntake.set(0.0) }).withName("Intake Coral")
     }
+
+    val outtakeCoral by command {
+        startEnd({ coralIntake.set(-0.3) }, { coralIntake.set(0.0) }).withName("Outtake Coral")
+    }
+
     val intakeAlgae by command {
-        startEnd({ algaeIntake.set(0.3) }, { algaeIntake.set(0.0) })
-            .until { algaeIntake.torqueCurrent.value > 20.amps }
-            .withName("Intake Algae")
+        startEnd({ algaeIntake.set(0.3) }, { algaeIntake.set(0.0) }).withName("Intake Algae")
+    }
+
+    val outtakeAlgae by command {
+        startEnd({ algaeIntake.set(-0.3) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
     }
 
     init {

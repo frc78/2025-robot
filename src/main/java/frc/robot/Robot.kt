@@ -13,16 +13,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Elevator
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Vision
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -36,6 +32,7 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
+    val joystick = CommandJoystick(5)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -55,15 +52,31 @@ object Robot : LoggedRobot() {
         SuperStructure
         Intake
         Pivot
+        Wrist
 
           //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
-        driveController.y().whileTrue(Pivot.manualUp)
-        driveController.a().whileTrue(Pivot.manualDown)
-        driveController.b().whileTrue(Pivot.sysId)
+        driveController.y().whileTrue(Elevator.manualUp)
+        driveController.a().whileTrue(Elevator.manualDown)
+
+        joystick.button(5).whileTrue(Pivot.moveUp)
+        joystick.button(3).whileTrue(Pivot.moveDown)
+        joystick.button(6).whileTrue(Elevator.manualUp)
+        joystick.button(4).whileTrue(Elevator.manualDown)
+        joystick.button(7).whileTrue(Intake.intakeCoral)
+        joystick.button(8).whileTrue(Intake.outtakeCoral)
+        joystick.button(9).whileTrue(Intake.intakeAlgae)
+        joystick.button(10).whileTrue(Intake.outtakeAlgae)
+        joystick.button(11).whileTrue(Wrist.manualUp())
+        joystick.button(12).whileTrue(Wrist.manualDown())
+        // joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
+        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
+        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
+        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
+        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")

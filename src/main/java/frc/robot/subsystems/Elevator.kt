@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
+import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
@@ -20,17 +21,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.command
-import frc.robot.lib.inches
-import frc.robot.lib.kilograms
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.pounds
-import frc.robot.lib.rotations
-import frc.robot.lib.toAngle
-import frc.robot.lib.toAngularVelocity
-import frc.robot.lib.toDistance
-import frc.robot.lib.volts
+import frc.robot.lib.*
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -41,7 +32,10 @@ object Elevator : SubsystemBase("Elevator") {
             .alongWith(
                 runOnce {
                     leader.setControl(
-                        motionMagic.withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
                     )
                 }
             )
@@ -55,7 +49,7 @@ object Elevator : SubsystemBase("Elevator") {
 
     val manualDown by command {
         startEnd(
-            { leader.setControl(voltage.withOutput(-2.0.volts)) },
+            { leader.setControl(voltage.withOutput((-2.0).volts)) },
             { leader.setControl(voltage.withOutput(0.0.volts)) },
         )
     }
@@ -64,15 +58,15 @@ object Elevator : SubsystemBase("Elevator") {
         get() = leader.position.value.toElevatorHeight()
 
     // Constants for the feedforward calculation
-    private const val K_S = 0.031252
-    private const val K_V = 0.60626
-    private const val K_A = 0.013507
-    private const val K_G = 0.50576
+    private const val K_S = 0.23487
+    private const val K_V = 0.60823
+    private const val K_A = 0.034044
+    private const val K_G = 0.55356
 
     // PID gains
-    private const val K_P = 9.7457
+    private const val K_P = 34.887
     private const val K_I = 0.0
-    private const val K_D = 0.22583
+    private const val K_D = 1.2611
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
@@ -95,7 +89,8 @@ object Elevator : SubsystemBase("Elevator") {
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
 
-                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                    MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     Slot0.kS = K_S
                     Slot0.kV = K_V
@@ -106,6 +101,9 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.kD = K_D
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
+
+                    MotionMagic.withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
+                        .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
@@ -163,16 +161,16 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
+                    leader.position.value > 40.inches.toDrumRotations()
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 1.inches.toDrumRotations()
+                    leader.position.value < 6.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
+                    leader.position.value > 40.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 1.inches.toDrumRotations()
+                    leader.position.value < 6.inches.toDrumRotations()
                 },
                 runOnce { SignalLogger.stop() },
             )
