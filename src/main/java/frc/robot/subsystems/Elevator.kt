@@ -149,31 +149,31 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val sysId by command {
         Commands.sequence(
-            runOnce {
-                SignalLogger.start()
-                leader.configurator.apply(
-                    SoftwareLimitSwitchConfigs().apply {
-                        ForwardSoftLimitEnable = true
-                        ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
-                        ReverseSoftLimitEnable = true
-                        ReverseSoftLimitThreshold = 0.0
-                    }
-                )
-            },
-            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                leader.position.value > 40.inches.toDrumRotations()
-            },
-            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                leader.position.value < 6.inches.toDrumRotations()
-            },
-            sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                leader.position.value > 40.inches.toDrumRotations()
-            },
-            sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                leader.position.value < 6.inches.toDrumRotations()
-            },
-            runOnce { SignalLogger.stop() },
-        )
+                runOnce {
+                    SignalLogger.start()
+                    leader.configurator.apply(
+                        SoftwareLimitSwitchConfigs().apply {
+                            ForwardSoftLimitEnable = true
+                            ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
+                            ReverseSoftLimitEnable = true
+                            ReverseSoftLimitThreshold = 0.0
+                        }
+                    )
+                },
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
+                    leader.position.value > 40.inches.toDrumRotations()
+                },
+                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
+                    leader.position.value < 6.inches.toDrumRotations()
+                },
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
+                    leader.position.value > 40.inches.toDrumRotations()
+                },
+                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
+                    leader.position.value < 6.inches.toDrumRotations()
+                },
+                runOnce { SignalLogger.stop() },
+            )
             .withName("Elevator sysId")
     }
 
@@ -190,7 +190,7 @@ object Elevator : SubsystemBase("Elevator") {
         )
         leaderSim.setRotorVelocity(
             elevatorSim.velocityMetersPerSecond.metersPerSecond.toAngularVelocity(DRUM_RADIUS) *
-                    GEAR_RATIO
+                GEAR_RATIO
         )
     }
 }
