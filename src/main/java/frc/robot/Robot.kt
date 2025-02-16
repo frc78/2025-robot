@@ -56,13 +56,14 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
 
-        //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+          //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
-        driveController.y().whileTrue(Elevator.manualUp)
-        driveController.a().whileTrue(Elevator.manualDown)
+        driveController.y().whileTrue(Pivot.manualUp)
+        driveController.a().whileTrue(Pivot.manualDown)
+        driveController.b().whileTrue(Pivot.sysId)
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
