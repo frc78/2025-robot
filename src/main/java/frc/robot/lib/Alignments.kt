@@ -12,7 +12,7 @@ import kotlin.jvm.optionals.getOrNull
 
 /** Poses that the robot can auto-align to */
 object Alignments {
-    private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+    private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
 
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)

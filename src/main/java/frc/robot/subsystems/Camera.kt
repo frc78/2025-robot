@@ -21,7 +21,7 @@ class Camera(val name: String, val transform: Transform3d) {
         Transform2d(transform.translation.toTranslation2d(), transform.rotation.toRotation2d())
 
     companion object {
-        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape)
+        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
     }
 
     private val estimator =
