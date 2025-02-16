@@ -11,7 +11,7 @@ import frc.robot.lib.degrees
 import frc.robot.lib.volts
 
 object Wrist : SubsystemBase("Wrist") {
-    val leader = TalonFX(-1, "*")
+    val leader = TalonFX(13, "*")
     var lowerLimit = 0.degrees
     var upperLimit = 0.degrees
 
