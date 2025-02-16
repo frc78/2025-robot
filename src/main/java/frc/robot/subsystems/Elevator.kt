@@ -1,7 +1,6 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
-import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
@@ -22,20 +21,10 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.command
-import frc.robot.lib.inches
-import frc.robot.lib.kilograms
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.pounds
-import frc.robot.lib.rotations
-import frc.robot.lib.toAngle
-import frc.robot.lib.toAngularVelocity
-import frc.robot.lib.toDistance
-import frc.robot.lib.volts
+import frc.robot.lib.*
 
 object Elevator : SubsystemBase("Elevator") {
-    private val motionMagic = MotionMagicVoltage(0.0).withSlot(0)
+    private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
@@ -43,7 +32,10 @@ object Elevator : SubsystemBase("Elevator") {
             .alongWith(
                 runOnce {
                     leader.setControl(
-                        motionMagic.withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
                     )
                 }
             )
@@ -80,7 +72,7 @@ object Elevator : SubsystemBase("Elevator") {
     private const val FOLLOWER_MOTOR_ID = 12
 
     private const val GEAR_RATIO = 5.0
-    private val DRUM_RADIUS = (1.75.inches + .125.inches) / 2.0
+    private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     private val MAX_HEIGHT = 53.inches
 
@@ -109,6 +101,9 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.kD = K_D
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
+
+                    MotionMagic.withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
+                        .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
@@ -118,9 +113,7 @@ object Elevator : SubsystemBase("Elevator") {
         }
 
     init {
-        TalonFX(FOLLOWER_MOTOR_ID, "*").apply {
-            setControl(Follower(LEADER_MOTOR_ID, true))
-        }
+        TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)

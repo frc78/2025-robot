@@ -69,8 +69,12 @@ object Robot : LoggedRobot() {
         joystick.button(9).whileTrue(Intake.intakeAlgae)
         joystick.button(10).whileTrue(Intake.outtakeAlgae)
         joystick.button(11).whileTrue(Wrist.manualUp())
-        //joystick.button(12).whileTrue(Wrist.manualDown())
-        joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
+        joystick.button(12).whileTrue(Wrist.manualDown())
+        // joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
+        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
+        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
+        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
+        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")
