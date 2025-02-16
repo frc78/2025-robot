@@ -54,7 +54,7 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-          //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
+        //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
         //            .whileTrue(Alignments.snapAngleToReef())
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
