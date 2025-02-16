@@ -8,10 +8,8 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.TalonFX
-import com.ctre.phoenix6.signals.ForwardLimitValue
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.NeutralModeValue
-import com.ctre.phoenix6.signals.ReverseLimitValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
@@ -23,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
@@ -42,20 +41,24 @@ object Pivot : SubsystemBase("Pivot") {
                 TalonFXConfiguration().apply {
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
                     // Set soft limits to avoid breaking the pivot
+
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                         .withReverseSoftLimitEnable(true)
-                        .withForwardSoftLimitThreshold(90.degrees)
+                        .withForwardSoftLimitThreshold(150.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
+                    Feedback.SensorToMechanismRatio = GEAR_RATIO
                     // Set feedback to encoder
-                    Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    // Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
-                    Slot0.withKP(61.0)
-                        .withKD(6.0)
-                        .withKS(0.072818)
-                        .withKV(18.665)
-                        .withKA(1.4567)
-                        .withKG(0.11413)
+                    Slot0.withKP(38.77)
+                        .withKD(14.947)
+                        .withKS(0.13503)
+                        .withKV(32.70)
+                        .withKA(0.69849)
+                        .withKG(0.2816)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
+                    MotionMagic.MotionMagicCruiseVelocity = .25
+                    MotionMagic.MotionMagicAcceleration = 2.5
                 }
             configurator.apply(config)
         }
@@ -86,7 +89,7 @@ object Pivot : SubsystemBase("Pivot") {
             /* jKgMetersSquared = */ 2.730,
             /* armLengthMeters = */ 40.inches.meters,
             /* minAngleRads = */ 0.degrees.radians,
-            /* maxAngleRads = */ 90.degrees.radians,
+            /* maxAngleRads = */ 180.degrees.radians,
             /* simulateGravity = */ true,
             /* startingAngleRads = */ 45.degrees.radians,
         )
@@ -98,7 +101,19 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     private val voltageOut = VoltageOut(0.0)
+    val moveUp by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput(2.volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
 
+    val moveDown by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput((-2).volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(
@@ -115,24 +130,38 @@ object Pivot : SubsystemBase("Pivot") {
             ),
         )
 
-    private val sysId =
+    val sysId =
         Commands.sequence(
                 runOnce { SignalLogger.start() },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.forwardLimit.value == ForwardLimitValue.ClosedToGround
+                    leader.position.value >= 150.degrees
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.reverseLimit.value == ReverseLimitValue.ClosedToGround
+                    leader.position.value <= 30.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.forwardLimit.value == ForwardLimitValue.ClosedToGround
+                    leader.position.value >= 150.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.reverseLimit.value == ReverseLimitValue.ClosedToGround
+                    leader.position.value <= 30.degrees
                 },
                 runOnce { SignalLogger.stop() },
             )
             .withName("Pivot SysId")
+
+    val manualUp by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput(2.volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
+
+    val manualDown by command {
+        startEnd(
+            { leader.setControl(voltageOut.withOutput((-2).volts)) },
+            { leader.setControl(voltageOut.withOutput(0.volts)) },
+        )
+    }
 
     init {
         SmartDashboard.putData(this)

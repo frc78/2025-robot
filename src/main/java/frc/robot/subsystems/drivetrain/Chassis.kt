@@ -2,9 +2,6 @@ package frc.robot.subsystems.drivetrain
 
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
-import com.ctre.phoenix6.hardware.CANcoder
-import com.ctre.phoenix6.hardware.TalonFX
-import com.ctre.phoenix6.swerve.SwerveDrivetrain
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
@@ -38,6 +35,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
 import frc.robot.Robot
+import frc.robot.generated.TestBotTunerConstants
+import frc.robot.generated.TunerConstants
+import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
@@ -66,17 +66,7 @@ val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants
  * be used in command-based projects.
  */
 object Chassis :
-    SwerveDrivetrain<TalonFX, TalonFX, CANcoder>(
-        ::TalonFX,
-        ::TalonFX,
-        ::CANcoder,
-        drivetrainConstants,
-        0.0,
-        frontLeft,
-        frontRight,
-        backLeft,
-        backRight,
-    ),
+    TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
     Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")

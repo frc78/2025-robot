@@ -8,6 +8,7 @@ import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.Units.MetersPerSecondPerSecond
+import edu.wpi.first.units.Units.Pounds
 import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
@@ -66,7 +67,11 @@ val Number.degrees: Angle
 val Number.rotationsPerSecond: AngularVelocity
     get() = RotationsPerSecond.of(this.toDouble())
 val Number.voltsPerSecond: Velocity<VoltageUnit>
-    get() = this.volts.per(Second)
+    get() = Volts.of(this.toDouble()).per(Second)
+val Number.rotations: Angle
+    get() = Rotations.of(this.toDouble())
+val Number.pounds: Mass
+    get() = Pounds.of(this.toDouble())
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
@@ -80,8 +85,6 @@ val Distance.meters
     get() = this.`in`(Meters)
 val Distance.centimeters
     get() = this.`in`(Centimeters)
-val Angle.rotations
-    get() = this.`in`(Rotations)
 val LinearVelocity.metersPerSecond
     get() = this.`in`(MetersPerSecond)
 val AngularVelocity.radiansPerSecond
@@ -90,18 +93,27 @@ val AngularVelocity.rotationsPerSecond
     get() = this.`in`(RotationsPerSecond)
 val AngularVelocity.rpm
     get() = this.`in`(RPM)
+val AngularAcceleration.radiansPerSecondPerSecond
+    get() = this.`in`(RadiansPerSecondPerSecond)
 val Voltage.volts
     get() = this.`in`(Volts)
 val Angle.radians
     get() = this.`in`(Radians)
 val Angle.degrees
     get() = this.`in`(Degrees)
+val Angle.rotations
+    get() = this.`in`(Rotations)
 val Current.amps
     get() = this.`in`(Amps)
 val Mass.kilograms
     get() = this.`in`(Kilograms)
 
 fun Angle.toDistance(radius: Distance): Distance = radius * this.radians
+
+fun Distance.toAngle(radius: Distance): Angle = Radians.of((this / radius).magnitude())
+
+fun LinearVelocity.toAngularVelocity(radius: Distance): AngularVelocity =
+    RadiansPerSecond.of(this.metersPerSecond / radius.meters)
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
