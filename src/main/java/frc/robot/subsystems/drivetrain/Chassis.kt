@@ -49,10 +49,10 @@ import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import org.littletonrobotics.junction.Logger
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
+import org.littletonrobotics.junction.Logger
 
 val drivetrainConstants =
     if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
@@ -66,14 +66,7 @@ val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants
  * be used in command-based projects.
  */
 object Chassis :
-    TunerSwerveDrivetrain(
-        drivetrainConstants,
-        0.0,
-        frontLeft,
-        frontRight,
-        backLeft,
-        backRight,
-    ),
+    TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
     Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
