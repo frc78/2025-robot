@@ -3,6 +3,7 @@ package frc.robot.subsystems
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
+import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -42,6 +43,7 @@ object Intake : Subsystem {
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
+                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
                 }
             )
         }
@@ -93,7 +95,7 @@ object Intake : Subsystem {
     }
 
     val outtakeAlgae by command {
-        startEnd({ algaeIntake.set(-0.3) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
+        startEnd({ algaeIntake.set(-1.0) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
     }
 
     init {
