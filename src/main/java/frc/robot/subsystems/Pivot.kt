@@ -83,7 +83,7 @@ object Pivot : SubsystemBase("Pivot") {
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle} and waiting until vertical")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) }).until(isVertical)
+            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) }).andThen(Commands.idle()).until(isVertical)
 
     val angle: Angle
         get() = cancoder.position.value

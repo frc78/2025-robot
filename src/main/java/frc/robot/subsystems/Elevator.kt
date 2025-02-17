@@ -55,6 +55,7 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 }
             )
+            .andThen(Commands.idle())
             .until(isDown)
 
     val manualUp by command {
