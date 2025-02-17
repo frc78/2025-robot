@@ -77,11 +77,6 @@ object Pivot : SubsystemBase("Pivot") {
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
     //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
     // Pivot.angle < 95.degrees}
 
@@ -95,7 +90,6 @@ object Pivot : SubsystemBase("Pivot") {
                 (angle - state.pivotAngle < 3.degrees) && (angle - state.pivotAngle > (-3).degrees)
             }
 
->>>>>>> Stashed changes
     val angle: Angle
         get() = cancoder.position.value
 
