@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -64,7 +65,7 @@ object Robot : LoggedRobot() {
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
-        driveController.start().onTrue(Commands.runOnce({Chassis.resetRotation(Rotation2d()) }))
+        driveController.start().onTrue(Commands.runOnce({Chassis.resetRotation(Chassis.operatorForwardDirection) }))
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
