@@ -37,4 +37,24 @@ object SuperStructure {
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
+<<<<<<< Updated upstream
+=======
+
+    // Command factory to go to a specific robot state
+    fun smartGoTo(state: RobotState): Command =
+        ConditionalCommand(goToElevatorIsDown(state), goToElevatorIsUp(state), Elevator.isDown)
+            .withName("Go to $state")
+
+    fun goToElevatorIsUp(state: RobotState): Command =
+        Wrist.goTo(state)
+            .andThen(Elevator.goToAndWaitUntilDown(state))
+            .andThen(Pivot.goTo(state))
+            .withName("Go to $state")
+
+    fun goToElevatorIsDown(state: RobotState): Command =
+        Wrist.goTo(state)
+            .andThen(Pivot.goToAndWaitUntilVertical(state))
+            .andThen(Elevator.goTo(state))
+            .withName("Go to $state")
+>>>>>>> Stashed changes
 }
