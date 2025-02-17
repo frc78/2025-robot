@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
+import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -20,11 +21,29 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
+import frc.robot.lib.amps
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.radiansPerSecondPerSecond
+import frc.robot.lib.rotations
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
 
 object Elevator : SubsystemBase("Elevator") {
+    private var zeroed = false
+
     private val motionMagic = MotionMagicVoltage(0.0)
+
     private val voltage = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
@@ -34,8 +53,8 @@ object Elevator : SubsystemBase("Elevator") {
                     leader.setControl(
                         motionMagic
                             .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
+                            .withLimitForwardMotion(!zeroed)
+                            .withLimitReverseMotion(!zeroed)
                     )
                 }
             )
@@ -76,35 +95,46 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val MAX_HEIGHT = 53.inches
 
+    private val PreZeroSoftwareLimits =
+        SoftwareLimitSwitchConfigs().apply {
+            ForwardSoftLimitEnable = false
+            ForwardSoftLimitThreshold = 0.0
+            ReverseSoftLimitEnable = false
+        }
+
+    private val PostZeroSoftwareLimits =
+        SoftwareLimitSwitchConfigs().apply {
+            ForwardSoftLimitEnable = true
+            ForwardSoftLimitThreshold = 50.inches.toDrumRotations().rotations
+            ReverseSoftLimitEnable = true
+            ReverseSoftLimitThreshold = 0.inches.toDrumRotations().rotations
+        }
+
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
             val leaderMotorConfiguration =
-                TalonFXConfiguration().apply {
-                    Feedback.SensorToMechanismRatio = GEAR_RATIO
-                    SoftwareLimitSwitch.ForwardSoftLimitEnable = true
-                    // Do not allow the motor to move upwards until after zeroing
-                    SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-                        MAX_HEIGHT.toDrumRotations().rotations
-                    // Allow the motor to move downwards until the current limit is reached
-                    SoftwareLimitSwitch.ReverseSoftLimitEnable = false
-                    SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
+                TalonFXConfiguration()
+                    .apply {
+                        Feedback.SensorToMechanismRatio = GEAR_RATIO
 
-                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
-                    MotorOutput.NeutralMode = NeutralModeValue.Brake
+                        MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                        MotorOutput.NeutralMode = NeutralModeValue.Brake
+                        OpenLoopRamps.VoltageOpenLoopRampPeriod = 1.0
 
-                    Slot0.kS = K_S
-                    Slot0.kV = K_V
-                    Slot0.kA = K_A
-                    Slot0.kG = K_G
-                    Slot0.kP = K_P
-                    Slot0.kI = K_I
-                    Slot0.kD = K_D
-                    Slot0.GravityType = GravityTypeValue.Elevator_Static
-                    Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
+                        Slot0.kS = K_S
+                        Slot0.kV = K_V
+                        Slot0.kA = K_A
+                        Slot0.kG = K_G
+                        Slot0.kP = K_P
+                        Slot0.kI = K_I
+                        Slot0.kD = K_D
+                        Slot0.GravityType = GravityTypeValue.Elevator_Static
+                        Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
-                    MotionMagic.withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
-                        .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
-                }
+                        MotionMagic.withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
+                            .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
+                    }
+                    .withSoftwareLimitSwitch(PreZeroSoftwareLimits)
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
             velocity.setUpdateFrequency(100.0)
@@ -128,11 +158,13 @@ object Elevator : SubsystemBase("Elevator") {
             DRUM_RADIUS.meters,
             0.0.inches.meters,
             53.inches.meters,
-            true,
-            5.inches.meters,
+            false,
+            10.inches.meters,
         )
     }
-    private val leaderSim by lazy { leader.simState }
+    private val leaderSim by lazy {
+        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+    }
 
     private val voltageOut = VoltageOut(0.volts)
 
@@ -177,8 +209,30 @@ object Elevator : SubsystemBase("Elevator") {
             .withName("Elevator sysId")
     }
 
+    val zeroElevator by command {
+        runOnce { leader.configurator.apply(PreZeroSoftwareLimits) }
+            .andThen(
+                startEnd(
+                    { leader.setControl(voltageOut.withOutput((-2).volts)) },
+                    { leader.stopMotor() },
+                )
+            )
+            .until {
+                leader.torqueCurrent.value < (-30).amps &&
+                    leader.velocity.value < 0.5.rotationsPerSecond
+            }
+            .andThen(
+                runOnce {
+                    zeroed = true
+                    leader.setPosition(0.inches.toDrumRotations())
+                    leader.configurator.apply(PostZeroSoftwareLimits)
+                }
+            )
+    }
+
     init {
         SmartDashboard.putData(sysId)
+        RobotModeTriggers.disabled().negate().and { !zeroed }.onTrue(zeroElevator)
     }
 
     override fun simulationPeriodic() {
