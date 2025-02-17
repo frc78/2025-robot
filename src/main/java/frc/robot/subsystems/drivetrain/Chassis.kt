@@ -253,6 +253,8 @@ object Chassis :
         return run { setControl(requestSupplier()) }
     }
 
+    val zeroHeading: Command = Commands.runOnce({ resetRotation(Chassis.operatorForwardDirection) })
+
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine specified by
      * [.m_sysIdRoutineToApply].
