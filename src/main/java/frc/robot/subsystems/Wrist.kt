@@ -59,7 +59,7 @@ object Wrist : SubsystemBase("Wrist") {
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
             .alongWith(
                 runOnce {
-                    leader.setControl(positionVoltage.withPosition(state.wristAngle)) //motionMagic.withPosition(state.wristAngle.wristToMotor()))
+                    leader.setControl(positionVoltage.withPosition(state.wristAngle)) // Do we need to do .wristToMotor()?
                 }
             )
 
