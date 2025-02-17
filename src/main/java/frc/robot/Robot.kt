@@ -5,6 +5,8 @@ package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
@@ -61,6 +64,7 @@ object Robot : LoggedRobot() {
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
+        driveController.start().onTrue(Commands.runOnce({Chassis.resetRotation(Rotation2d()) }))
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
