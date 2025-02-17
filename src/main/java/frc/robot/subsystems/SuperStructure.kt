@@ -77,7 +77,7 @@ object SuperStructure {
     init {
         RobotState.entries.forEach { SmartDashboard.putData(goTo(it)) }
 
-        configureSimpleLayout()
+        configureDpadLayout()
 
         driveController
             .rightBumper()
@@ -89,7 +89,7 @@ object SuperStructure {
     }
 
     // Uses D-Pad to cycle level, bumpers to select branch
-    fun configureSimpleLayout() {
+    fun configureDpadLayout() {
         manipController.povUp().onTrue(Commands.runOnce({ selectedLevel.next() }))
         manipController.povDown().onTrue(Commands.runOnce({ selectedLevel.previous() }))
         manipController.leftBumper().onTrue(Commands.runOnce({ selectedBranch = Branch.LEFT }))
@@ -97,13 +97,12 @@ object SuperStructure {
     }
 
     // Uses sticks to
-    fun configureIntuitiveLayout() {
+    fun configureButtonLayout() {
         manipController
             .leftBumper()
             .onTrue(
                 Commands.runOnce({
                     selectedBranch = Branch.LEFT
-                    stickSelectLevel()
                 })
             )
         manipController
@@ -111,23 +110,12 @@ object SuperStructure {
             .onTrue(
                 Commands.runOnce({
                     selectedBranch = Branch.RIGHT
-                    stickSelectLevel()
                 })
             )
-    }
-
-    private fun stickSelectLevel() {
-        if (manipController.leftY > 0.0) {
-            selectedLevel = Level.L4
-        } else if (manipController.leftY == 0.0) {
-            /* Assumes an applied deadband, and yes it could just be an else, but I think it is nice to
-            have this be more explicit */
-            selectedLevel = Level.L3
-        } else if (manipController.leftY < 0.0) {
-            selectedLevel = Level.L2
-        } else if (manipController.leftY < 0.0 && manipController.rightY < 0.0) {
-            selectedLevel = Level.L1
-        }
+        manipController.y().onTrue(Commands.runOnce({ selectedLevel = Level.L4 }))
+        manipController.a().onTrue(Commands.runOnce({ selectedLevel = Level.L3 }))
+        manipController.x().onTrue(Commands.runOnce({ selectedLevel = Level.L2 }))
+        manipController.b().onTrue(Commands.runOnce({ selectedLevel = Level.L1 }))
     }
 
     // Command factory to go to a specific robot state
