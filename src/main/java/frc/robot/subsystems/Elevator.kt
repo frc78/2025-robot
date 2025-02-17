@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
+import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -39,6 +40,22 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 }
             )
+
+    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
+
+    fun goToAndWaitUntilDown(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                runOnce {
+                    leader.setControl(
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
+                    )
+                }
+            )
+            .until(isDown)
 
     val manualUp by command {
         startEnd(

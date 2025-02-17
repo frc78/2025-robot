@@ -4,9 +4,9 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import java.util.function.BooleanSupplier
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
@@ -29,7 +29,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 
 object SuperStructure {
     init {
-        RobotState.entries.forEach { SmartDashboard.putData(goTo(it)) }
+        RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
     }
 
     // Command factory to go to a specific robot state
@@ -39,12 +39,22 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
 
-    fun pivotIsVertical(): BooleanSupplier? {
-        return Pivot.angle > 80.degrees && Pivot.angle < 95.degrees
-    }
-
     // Command factory to go to a specific robot state
-    fun smartGoTo(state: RobotState): Command =
-        Wrist.goTo(state).andThen(Pivot.goTo(state).until(pivotIsVertical())).andThen(Elevator.goTo(state)).withName("Go to $state")
+    fun smartGoTo(state: RobotState): ConditionalCommand = ConditionalCommand(
+        goToElevatorIsDown(state),
+        goToElevatorIsUp(state),
+        Elevator.isDown
+    )
 
+    fun goToElevatorIsUp(state: RobotState): Command =
+        Wrist.goTo(state)
+            .andThen(Elevator.goToAndWaitUntilDown(state))
+            .andThen(Pivot.goTo(state))
+            .withName("Go to $state")
+
+    fun goToElevatorIsDown(state: RobotState): Command =
+        Wrist.goTo(state)
+            .andThen(Pivot.goToAndWaitUntilVertical(state))
+            .andThen(Elevator.goTo(state))
+            .withName("Go to $state")
 }
