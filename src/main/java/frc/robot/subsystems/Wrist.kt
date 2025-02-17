@@ -12,6 +12,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.*
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
+import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.wpilibj2.command.*
+import frc.robot.lib.amps
+import frc.robot.lib.degrees
+import frc.robot.lib.volts
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 0.degrees
@@ -75,7 +80,9 @@ object Wrist : SubsystemBase("Wrist") {
         )
     }
 
-    fun zeroPosition(): Command {
+    val resetPosition: Command = Commands.runOnce({ leader.setPosition(0.0) })
+
+    fun zeroRoutines(): Command {
         return SequentialCommandGroup(
             manualDown()
                 .until({ leader.torqueCurrent.value > 10.0.amps })
