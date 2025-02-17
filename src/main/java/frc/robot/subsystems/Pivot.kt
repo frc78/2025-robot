@@ -31,6 +31,7 @@ import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import java.util.function.BooleanSupplier
+import kotlin.math.abs
 
 object Pivot : SubsystemBase("Pivot") {
 
@@ -79,11 +80,14 @@ object Pivot : SubsystemBase("Pivot") {
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
-    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees && Pivot.angle < 95.degrees}
+//    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees && Pivot.angle < 95.degrees}
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle} and waiting until vertical")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) }).andThen(Commands.idle()).until(isVertical)
+            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) }).andThen(Commands.idle())
+            .until {
+                angle - state.pivotAngle < 3.degrees
+            }
 
     val angle: Angle
         get() = cancoder.position.value
