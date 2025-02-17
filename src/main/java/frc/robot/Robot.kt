@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.lib.rotations
 import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
@@ -63,10 +62,8 @@ object Robot : LoggedRobot() {
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
-        driveController
-            .start()
-            .onTrue(Commands.runOnce({ Chassis.resetRotation(Chassis.operatorForwardDirection) }))
-        SmartDashboard.putData("Zero wrist", Commands.runOnce({ Wrist.resetPosition(0.rotations) }))
+        driveController.start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
+        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
