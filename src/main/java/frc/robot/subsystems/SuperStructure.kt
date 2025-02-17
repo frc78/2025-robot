@@ -77,15 +77,14 @@ object SuperStructure {
     init {
         RobotState.entries.forEach { SmartDashboard.putData(goTo(it)) }
 
-        configureDpadLayout()
+        configureManualLayout()
+    }
 
-        driveController
-            .rightBumper()
-            .whileTrue(
-                (if (selectedBranch == Branch.LEFT) Chassis.driveToLeftBranch
-                    else Chassis.driveToRightBranch)
-                    .andThen(goTo(selectedLevel.state).andThen(Intake.scoreCoral).andThen(goTo(RobotState.Stow)))
-            )
+    fun configureManualLayout() {
+        manipController.y().onTrue(Commands.runOnce({goTo(RobotState.L4)}))
+        manipController.x().onTrue(Commands.runOnce({goTo(RobotState.L3)}))
+        manipController.b().onTrue(Commands.runOnce({goTo(RobotState.L2)}))
+        manipController.a().onTrue(Commands.runOnce({goTo(RobotState.L1)}))
     }
 
     // Uses D-Pad to cycle level, bumpers to select branch
@@ -116,6 +115,16 @@ object SuperStructure {
         manipController.a().onTrue(Commands.runOnce({ selectedLevel = Level.L3 }))
         manipController.x().onTrue(Commands.runOnce({ selectedLevel = Level.L2 }))
         manipController.b().onTrue(Commands.runOnce({ selectedLevel = Level.L1 }))
+    }
+
+    fun configureAutoDriverControls() {
+        driveController
+            .rightBumper()
+            .whileTrue(
+                (if (selectedBranch == Branch.LEFT) Chassis.driveToLeftBranch
+                else Chassis.driveToRightBranch)
+                    .andThen(goTo(selectedLevel.state).andThen(Intake.scoreCoral).andThen(goTo(RobotState.Stow)))
+            )
     }
 
     // Command factory to go to a specific robot state
