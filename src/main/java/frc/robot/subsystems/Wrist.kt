@@ -20,7 +20,7 @@ import frc.robot.lib.volts
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 0.degrees
-    private var upperLimit = 150.degrees
+    private var upperLimit = 120.degrees
     private const val MOTOR_TO_WRIST = 104.1429
 
     private val leader =
