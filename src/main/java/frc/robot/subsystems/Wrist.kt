@@ -4,10 +4,7 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.PrintCommand
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
-import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.*
 import frc.robot.lib.amps
 import frc.robot.lib.degrees
 import frc.robot.lib.volts
@@ -36,12 +33,12 @@ object Wrist : SubsystemBase("Wrist") {
 
     fun manualDown(): Command {
         return startEnd(
-            { leader.setControl(voltage.withOutput(-2.0.volts)) },
+            { leader.setControl(voltage.withOutput((-2.0).volts)) },
             { leader.setControl(voltage.withOutput(0.0.volts)) },
         )
     }
 
-    fun zeroPosition(): Command {
+    fun zeroRoutines(): Command {
         return SequentialCommandGroup(
             manualUp()
                 .until({ leader.torqueCurrent.value > 10.0.amps })
@@ -51,4 +48,6 @@ object Wrist : SubsystemBase("Wrist") {
                 .andThen({ lowerLimit = leader.position.value }),
         )
     }
+
+    val resetPosition: Command = Commands.runOnce({ leader.setPosition(0.0) })
 }
