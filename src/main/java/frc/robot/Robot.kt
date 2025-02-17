@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -83,6 +84,8 @@ object Robot : LoggedRobot() {
         SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
         SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
 
+        sysIdController.start().onTrue(Commands.runOnce({ SignalLogger.start() }))
+        sysIdController.back().onTrue(Commands.runOnce({ SignalLogger.stop() }))
         sysIdController.y().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
         sysIdController.x().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
         sysIdController.b().whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
