@@ -4,6 +4,7 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -41,7 +42,7 @@ object Wrist : SubsystemBase("Wrist") {
         )
     }
 
-    fun zeroPosition(): Command {
+    fun zeroRoutines(): Command {
         return SequentialCommandGroup(
             manualUp()
                 .until({ leader.torqueCurrent.value > 10.0.amps })
@@ -50,5 +51,9 @@ object Wrist : SubsystemBase("Wrist") {
                 .until({ leader.torqueCurrent.value > 10.0.amps })
                 .andThen({ lowerLimit = leader.position.value }),
         )
+    }
+
+    fun resetPosition(position: Angle) {
+        leader.setPosition(position)
     }
 }

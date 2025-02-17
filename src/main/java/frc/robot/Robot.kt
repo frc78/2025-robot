@@ -4,10 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
-import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue
 import com.pathplanner.lib.auto.AutoBuilder
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -22,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
+import frc.robot.lib.rotations
 import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
@@ -65,7 +63,10 @@ object Robot : LoggedRobot() {
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
-        driveController.start().onTrue(Commands.runOnce({Chassis.resetRotation(Chassis.operatorForwardDirection) }))
+        driveController
+            .start()
+            .onTrue(Commands.runOnce({ Chassis.resetRotation(Chassis.operatorForwardDirection) }))
+        SmartDashboard.putData("Zero wrist", Commands.runOnce({ Wrist.resetPosition(0.rotations) }))
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
