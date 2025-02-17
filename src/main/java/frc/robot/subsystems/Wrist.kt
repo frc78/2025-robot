@@ -3,6 +3,7 @@ package frc.robot.subsystems
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
+import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.*
@@ -33,9 +34,9 @@ object Wrist : SubsystemBase("Wrist") {
                     Slot0.withKP(62.105)
                         .withKD(19.613)
                         .withKS(0.0)
-                        .withKV(2.73)
-                        .withKA(0.02)
-                        .withKG(0.062237)
+                        .withKV(0.0)
+                        .withKA(0.0)
+                        .withKG(0.0)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
 
                     MotionMagic.MotionMagicCruiseVelocity = .25
@@ -46,13 +47,14 @@ object Wrist : SubsystemBase("Wrist") {
         }
 
     val motionMagic = MotionMagicVoltage(0.degrees)
+    val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
             .alongWith(
                 runOnce {
-                    leader.setControl(motionMagic.withPosition(state.wristAngle.wristToMotor()))
+                    leader.setControl(positionVoltage.withPosition(state.wristAngle)) //motionMagic.withPosition(state.wristAngle.wristToMotor()))
                 }
             )
 
