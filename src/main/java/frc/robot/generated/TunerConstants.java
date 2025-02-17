@@ -22,15 +22,38 @@ public class TunerConstants {
 
     // The steer motor uses any SwerveModule.SteerRequestType control request with the
     // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
-    private static final Slot0Configs steerGains = new Slot0Configs()
-        .withKP(100).withKI(0).withKD(0.5)
-        .withKS(0.1).withKV(2.33).withKA(0)
-        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+    private static final Slot0Configs[] steerGains = {
+            new Slot0Configs()
+                .withKP(61.164).withKI(0).withKD(4.7009)
+                .withKS(0.19404).withKV(2.287).withKA(0.17289)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
+            new Slot0Configs()
+                .withKP(61.811).withKI(0).withKD(4.9383)
+                .withKS(0.16402).withKV(2.3274).withKA(0.19342)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
+            new Slot0Configs()
+                .withKP(61.811).withKI(0).withKD(0.5)
+                .withKS(0.16402).withKV(2.3274).withKA(0.19342)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
+            new Slot0Configs()
+                .withKP(61.046).withKI(0).withKD(0.5)
+                .withKS(0.15539).withKV(2.3222).withKA(0.1629)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)};
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
-    private static final Slot0Configs driveGains = new Slot0Configs()
-        .withKP(0.1).withKI(0).withKD(0)
-        .withKS(0).withKV(0.124);
+    private static final Slot0Configs[] driveGains = {
+            new Slot0Configs()
+                    .withKP(0.17245).withKI(0).withKD(0)
+                    .withKS(0.1203).withKV(0.12056).withKA(0.015584),
+            new Slot0Configs()
+                    .withKP(0.1797).withKI(0).withKD(0)
+                    .withKS(0.083733).withKV(0.12208).withKA(0.027232), // TODO might have to redo this one
+            new Slot0Configs()
+                    .withKP(0.18066).withKI(0).withKD(0.5)
+                    .withKS(0.0024204).withKV(0.12299).withKA(0.036075),
+            new Slot0Configs()
+                    .withKP(0.17585).withKI(0).withKD(0.5)
+                    .withKS(0.11987).withKV(0.12159).withKA(0.019339)};
 
     // The closed-loop output type to use for the steer motors;
     // This affects the PID/FF gains for the steer motors
@@ -106,8 +129,6 @@ public class TunerConstants {
             .withSteerMotorGearRatio(kSteerGearRatio)
             .withCouplingGearRatio(kCoupleRatio)
             .withWheelRadius(kWheelRadius)
-            .withSteerMotorGains(steerGains)
-            .withDriveMotorGains(driveGains)
             .withSteerMotorClosedLoopOutput(kSteerClosedLoopOutput)
             .withDriveMotorClosedLoopOutput(kDriveClosedLoopOutput)
             .withSlipCurrent(kSlipCurrent)
@@ -173,22 +194,22 @@ public class TunerConstants {
         ConstantCreator.createModuleConstants(
             kFrontLeftSteerMotorId, kFrontLeftDriveMotorId, kFrontLeftEncoderId, kFrontLeftEncoderOffset,
             kFrontLeftXPos, kFrontLeftYPos, kInvertLeftSide, kFrontLeftSteerMotorInverted, kFrontLeftEncoderInverted
-        );
+        ).withSteerMotorGains(steerGains[0]).withDriveMotorGains(driveGains[0]);
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontRight =
         ConstantCreator.createModuleConstants(
             kFrontRightSteerMotorId, kFrontRightDriveMotorId, kFrontRightEncoderId, kFrontRightEncoderOffset,
             kFrontRightXPos, kFrontRightYPos, kInvertRightSide, kFrontRightSteerMotorInverted, kFrontRightEncoderInverted
-        );
+        ).withSteerMotorGains(steerGains[1]).withDriveMotorGains(driveGains[1]);
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackLeft =
         ConstantCreator.createModuleConstants(
             kBackLeftSteerMotorId, kBackLeftDriveMotorId, kBackLeftEncoderId, kBackLeftEncoderOffset,
             kBackLeftXPos, kBackLeftYPos, kInvertLeftSide, kBackLeftSteerMotorInverted, kBackLeftEncoderInverted
-        );
+        ).withSteerMotorGains(steerGains[2]).withDriveMotorGains(driveGains[2]);
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackRight =
         ConstantCreator.createModuleConstants(
             kBackRightSteerMotorId, kBackRightDriveMotorId, kBackRightEncoderId, kBackRightEncoderOffset,
             kBackRightXPos, kBackRightYPos, kInvertRightSide, kBackRightSteerMotorInverted, kBackRightEncoderInverted
-        );
+        ).withSteerMotorGains(steerGains[3]).withDriveMotorGains(driveGains[3]);
 
     /**
      * Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected device types.
