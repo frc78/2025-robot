@@ -5,6 +5,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.ConditionalCommand
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
@@ -40,11 +41,26 @@ object SuperStructure {
             .withName("Go to $state")
 
     // Command factory to go to a specific robot state
-    fun smartGoTo(state: RobotState): Command = ConditionalCommand(
-        goToElevatorIsDown(state),
-        goToElevatorIsUp(state),
-        Elevator.isDown
-    ).withName("Go to $state")
+//    fun smartGoTo(state: RobotState): Command = ConditionalCommand(
+//        goToElevatorIsDown(state),
+//        goToElevatorIsUp(state),
+//        Elevator.isDown
+//    ).withName("Go to $state")
+
+    fun smartGoTo(state: RobotState): Command = InstantCommand(
+        {
+            if (Elevator.isDown.asBoolean) {
+                // if elevator is down, move pivot before raising it
+                goToElevatorIsDown(state)
+            } else if ((73.degrees < state.pivotAngle) && (state.pivotAngle < 90.degrees)) {
+                // if elevator is up but the pivot is staying "vertical", can move everything at once
+                goTo(state)
+            } else {
+                // if elevator is up and the pivot is not staying vertical, lower elevator before moving pivot
+                goToElevatorIsUp(state)
+            }
+        }
+    )
 
     fun goToElevatorIsUp(state: RobotState): Command =
         Wrist.goTo(state)
