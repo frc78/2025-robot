@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.swerve.SwerveModule
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -33,7 +34,11 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
-    private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    private val swerveRequest =
+        SwerveRequest.ApplyFieldSpeeds()
+            .withDesaturateWheelSpeeds(true)
+            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
+            .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
     val driveController = CommandXboxController(0)
     val sysIdController = CommandXboxController(4)
     val joystick = CommandJoystick(5)
