@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
+import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -150,7 +151,7 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-    private val leaderSim by lazy { leader.simState }
+    private val leaderSim by lazy { leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive } }
 
     private val voltageOut = VoltageOut(0.volts)
 

@@ -40,11 +40,11 @@ object SuperStructure {
             .withName("Go to $state")
 
     // Command factory to go to a specific robot state
-    fun smartGoTo(state: RobotState): ConditionalCommand = ConditionalCommand(
+    fun smartGoTo(state: RobotState): Command = ConditionalCommand(
         goToElevatorIsDown(state),
         goToElevatorIsUp(state),
         Elevator.isDown
-    )
+    ).withName("Go to $state")
 
     fun goToElevatorIsUp(state: RobotState): Command =
         Wrist.goTo(state)
