@@ -84,8 +84,8 @@ object Robot : LoggedRobot() {
         SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
         SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
 
-        sysIdController.start().onTrue(Commands.runOnce({ SignalLogger.start() }))
-        sysIdController.back().onTrue(Commands.runOnce({ SignalLogger.stop() }))
+        sysIdController.leftBumper().onTrue(Commands.runOnce({ SignalLogger.start() }))
+        sysIdController.rightBumper().onTrue(Commands.runOnce({ SignalLogger.stop() }))
         sysIdController.y().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
         sysIdController.x().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
         sysIdController.b().whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
