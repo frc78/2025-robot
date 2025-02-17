@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
+import java.util.function.BooleanSupplier
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
@@ -37,4 +38,13 @@ object SuperStructure {
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
+
+    fun pivotIsVertical(): BooleanSupplier? {
+        return Pivot.angle > 80.degrees && Pivot.angle < 95.degrees
+    }
+
+    // Command factory to go to a specific robot state
+    fun smartGoTo(state: RobotState): Command =
+        Wrist.goTo(state).andThen(Pivot.goTo(state).until(pivotIsVertical())).andThen(Elevator.goTo(state)).withName("Go to $state")
+
 }
