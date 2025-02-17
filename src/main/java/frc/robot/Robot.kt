@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.calculateSpeeds
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -33,6 +34,7 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
+    val sysIdController = CommandXboxController(4)
     val joystick = CommandJoystick(5)
 
     init {
@@ -80,6 +82,11 @@ object Robot : LoggedRobot() {
         SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
         SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
         SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
+
+        sysIdController.y().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+        sysIdController.x().whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+        sysIdController.b().whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+        sysIdController.a().whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
     }
 
     private val autoChooser = AutoBuilder.buildAutoChooser("test")

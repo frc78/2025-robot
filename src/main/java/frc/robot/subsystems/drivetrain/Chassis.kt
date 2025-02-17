@@ -304,14 +304,14 @@ object Chassis :
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
     private val yController =
         ProfiledPIDController(
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
 
     fun driveToPose(pose: () -> Pose2d): Command =
@@ -332,11 +332,12 @@ object Chassis :
                         .withVelocityY(yController.calculate(robot.translation.y))
                 }
             )
-            .until {
-                xController.atGoal() &&
-                    yController.atGoal() &&
-                    fieldCentricFacingAngle.HeadingController.atSetpoint()
-            }
+
+    //            .until {
+    //                xController.atGoal() &&
+    //                    yController.atGoal() &&
+    //                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+    //            }
 
     val snapToReef by command {
         applyRequest {
