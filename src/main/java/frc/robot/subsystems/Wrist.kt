@@ -7,13 +7,12 @@ import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.*
+import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.*
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
-import com.ctre.phoenix6.signals.NeutralModeValue
-import edu.wpi.first.wpilibj2.command.*
 import frc.robot.lib.amps
 import frc.robot.lib.degrees
 import frc.robot.lib.volts
@@ -59,7 +58,9 @@ object Wrist : SubsystemBase("Wrist") {
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
             .alongWith(
                 runOnce {
-                    leader.setControl(positionVoltage.withPosition(state.wristAngle)) // Do we need to do .wristToMotor()?
+                    leader.setControl(
+                        positionVoltage.withPosition(state.wristAngle)
+                    ) // Do we need to do .wristToMotor()
                 }
             )
 
@@ -111,7 +112,6 @@ object Wrist : SubsystemBase("Wrist") {
                 "wrist",
             ),
         )
-
 
     private val sysId =
         Commands.sequence(
