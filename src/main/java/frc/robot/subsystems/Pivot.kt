@@ -78,7 +78,10 @@ object Pivot : SubsystemBase("Pivot") {
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
     //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
     // Pivot.angle < 95.degrees}
 

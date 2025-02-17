@@ -133,7 +133,13 @@ object Elevator : SubsystemBase("Elevator") {
         )
     }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     private val leaderSim by lazy { leader.simState }
+=======
+    private val leaderSim by lazy {
+        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+    }
+>>>>>>> Stashed changes
 =======
     private val leaderSim by lazy {
         leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
