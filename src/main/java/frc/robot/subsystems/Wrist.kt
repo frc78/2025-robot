@@ -6,27 +6,34 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
-import com.ctre.phoenix6.signals.*
+import com.ctre.phoenix6.signals.GravityTypeValue
+import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.*
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.PrintCommand
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
 import frc.robot.lib.amps
 import frc.robot.lib.degrees
+import frc.robot.lib.seconds
 import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 0.degrees
     private var upperLimit = 120.degrees
-    private const val MOTOR_TO_WRIST = 104.1429
+    private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
 
     private val leader =
         TalonFX(13, "*").apply {
             val config =
                 TalonFXConfiguration().apply {
-                    Feedback.SensorToMechanismRatio = MOTOR_TO_WRIST
+                    Feedback.SensorToMechanismRatio = GEAR_RATIO
+
                     MotorOutput.Inverted = InvertedValue.Clockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
@@ -136,8 +143,4 @@ object Wrist : SubsystemBase("Wrist") {
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
     }
-
-    fun Angle.motorToWrist() = this / MOTOR_TO_WRIST
-
-    fun Angle.wristToMotor() = this * MOTOR_TO_WRIST
 }
