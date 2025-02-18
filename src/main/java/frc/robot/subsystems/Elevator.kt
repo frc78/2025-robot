@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
+import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -21,36 +22,45 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.radiansPerSecondPerSecond
+import frc.robot.lib.rotations
+import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
 
+    init {
+        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
+    }
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
+                Commands.runOnce({ currentSetpoint = state.elevatorHeight.toDrumRotations() })
             )
 
     val manualUp by command {
         startEnd(
             { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     val manualDown by command {
         startEnd(
             { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
@@ -112,6 +122,8 @@ object Elevator : SubsystemBase("Elevator") {
             closedLoopError.setUpdateFrequency(100.0)
         }
 
+    private var currentSetpoint: Angle = leader.position.value
+
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
     }
@@ -132,7 +144,9 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-    private val leaderSim by lazy { leader.simState }
+    private val leaderSim by lazy {
+        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+    }
 
     private val voltageOut = VoltageOut(0.volts)
 

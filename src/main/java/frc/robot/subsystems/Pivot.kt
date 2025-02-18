@@ -30,11 +30,13 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import org.littletonrobotics.junction.Logger
 
 object Pivot : SubsystemBase("Pivot") {
 
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
+
     private val leader =
         TalonFX(9, "*").apply {
             val config =
@@ -49,7 +51,7 @@ object Pivot : SubsystemBase("Pivot") {
                     // Set feedback to encoder
                     Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
-                    Slot0.withKP(38.77)
+                    Slot0.withKP(100.77)
                         .withKD(14.947)
                         .withKS(0.13503)
                         .withKV(32.70)
@@ -61,6 +63,9 @@ object Pivot : SubsystemBase("Pivot") {
                 }
             configurator.apply(config)
         }
+
+    private var currentSetpoint = cancoder.position.value
+
     private val follower =
         TalonFX(10, "*").apply {
             configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
@@ -70,15 +75,15 @@ object Pivot : SubsystemBase("Pivot") {
 
     init {
         follower.setControl(Follower(9, true))
-        defaultCommand = Commands.idle(this)
+        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
+            .alongWith(Commands.runOnce({ currentSetpoint = state.pivotAngle }))
 
     val angle: Angle
-        get() = cancoder.position.value
+        get() = leader.position.value
 
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {
@@ -103,14 +108,14 @@ object Pivot : SubsystemBase("Pivot") {
     val moveUp by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput(2.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     val moveDown by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
     private val sysIdRoutine =
@@ -148,23 +153,15 @@ object Pivot : SubsystemBase("Pivot") {
             )
             .withName("Pivot SysId")
 
-    val manualUp by command {
-        startEnd(
-            { leader.setControl(voltageOut.withOutput(2.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
-        )
-    }
-
-    val manualDown by command {
-        startEnd(
-            { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
-        )
-    }
-
     init {
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
+    }
+
+    override fun periodic() {
+        Logger.recordOutput("pivot/position", cancoder.position.value)
+        Logger.recordOutput("pivot/setpoint", currentSetpoint)
+        Logger.recordOutput("pivot/error", leader.closedLoopError.value)
     }
 
     override fun simulationPeriodic() {

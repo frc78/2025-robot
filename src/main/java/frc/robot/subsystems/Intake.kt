@@ -17,7 +17,7 @@ object Intake : Subsystem {
         defaultCommand = Commands.idle(this)
     }
 
-    private val canRange: CANrange = CANrange(0)
+    private val canRange: CANrange = CANrange(0, "*")
 
     private val canRangeOffsetEntry =
         NetworkTableInstance.getDefault().getEntry("intake/canRangeOffset")
