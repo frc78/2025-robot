@@ -17,10 +17,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.amps
 import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
@@ -28,14 +26,15 @@ import frc.robot.lib.voltsPerSecond
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 0.degrees
-    private var upperLimit = 150.degrees
-    private const val MOTOR_TO_WRIST = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 16.0)
+    private var upperLimit = 120.degrees
+    private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
 
     private val leader =
         TalonFX(13, "*").apply {
             val config =
                 TalonFXConfiguration().apply {
-                    Feedback.SensorToMechanismRatio = MOTOR_TO_WRIST
+                    Feedback.SensorToMechanismRatio = GEAR_RATIO
+
                     MotorOutput.Inverted = InvertedValue.Clockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
@@ -62,7 +61,6 @@ object Wrist : SubsystemBase("Wrist") {
     private var currentSetpoint: Angle = leader.position.value
         set(value) {
             field = value
-            angle
         }
 
     init {
@@ -99,20 +97,6 @@ object Wrist : SubsystemBase("Wrist") {
             leader.setPosition(0.0)
             currentSetpoint = 0.degrees
         })
-
-    fun zeroRoutines(): Command {
-        return SequentialCommandGroup(
-            manualDown()
-                .until({ leader.torqueCurrent.value > 10.0.amps })
-                .andThen({
-                    leader.setPosition(0.0.degrees)
-                    lowerLimit = leader.position.value + 5.degrees
-                }),
-            manualUp()
-                .until({ leader.torqueCurrent.value > 10.0.amps })
-                .andThen({ upperLimit = leader.position.value - 5.degrees }),
-        )
-    }
 
     private val sysIdRoutine =
         SysIdRoutine(
@@ -155,16 +139,7 @@ object Wrist : SubsystemBase("Wrist") {
     }
 
     private val wristSim =
-        SingleJointedArmSim(
-            DCMotor.getKrakenX60Foc(1),
-            MOTOR_TO_WRIST,
-            1.0,
-            .5,
-            0.0,
-            2.0,
-            false,
-            0.0,
-        )
+        SingleJointedArmSim(DCMotor.getKrakenX60Foc(1), GEAR_RATIO, 1.0, .5, 0.0, 2.0, false, 0.0)
 
     private val motorSim by lazy { leader.simState }
 
@@ -172,7 +147,7 @@ object Wrist : SubsystemBase("Wrist") {
         motorSim.setSupplyVoltage(RobotController.getBatteryVoltage())
         wristSim.setInput(motorSim.motorVoltage)
         wristSim.update(0.02)
-        motorSim.setRawRotorPosition(wristSim.angleRads * MOTOR_TO_WRIST)
-        motorSim.setRotorVelocity(wristSim.velocityRadPerSec * MOTOR_TO_WRIST)
+        motorSim.setRawRotorPosition(wristSim.angleRads * GEAR_RATIO)
+        motorSim.setRotorVelocity(wristSim.velocityRadPerSec * GEAR_RATIO)
     }
 }
