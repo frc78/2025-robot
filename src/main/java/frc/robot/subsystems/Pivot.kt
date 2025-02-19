@@ -48,9 +48,8 @@ object Pivot : SubsystemBase("Pivot") {
                         .withReverseSoftLimitEnable(true)
                         .withForwardSoftLimitThreshold(150.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
-                    Feedback.SensorToMechanismRatio = GEAR_RATIO
                     // Set feedback to encoder
-                    // Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
                     Slot0.withKP(38.77)
                         .withKD(14.947)
