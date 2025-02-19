@@ -2,6 +2,7 @@ package frc.robot.subsystems.drivetrain
 
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
+import com.ctre.phoenix6.swerve.SwerveModule
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
@@ -30,11 +31,11 @@ import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.IS_TEST
-import frc.robot.Robot
 import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
@@ -43,16 +44,19 @@ import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
-import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.Branch
+import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.command
+import frc.robot.lib.feetPerSecond
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
+import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import org.littletonrobotics.junction.Logger
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
-import org.littletonrobotics.junction.Logger
 
 val drivetrainConstants =
     if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
@@ -114,12 +118,29 @@ object Chassis :
 
     private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
 
-    val fieldCentricFacingAngle =
+    val FieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
 
+    val FieldCentric =
+        SwerveRequest.FieldCentric()
+            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
+            .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
+
+    // Create these once to avoid memory allocation
+    private val StrafeLeft =
+        ApplyRobotSpeeds()
+            .withSpeeds(
+                ChassisSpeeds(0.0.metersPerSecond, 1.0.feetPerSecond, 0.0.rotationsPerSecond)
+            )
+    private val StrafeRight =
+        ApplyRobotSpeeds()
+            .withSpeeds(
+                ChassisSpeeds(0.0.metersPerSecond, (-1.0).feetPerSecond, 0.0.rotationsPerSecond)
+            )
+
     init {
-        fieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
+        FieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
     }
 
     fun configureAutoBuilder() {
@@ -322,33 +343,22 @@ object Chassis :
                 Logger.recordOutput("DriveToPose target", target)
                 xController.goal = TrapezoidProfile.State(target.x, 0.0)
                 yController.goal = TrapezoidProfile.State(target.y, 0.0)
-                fieldCentricFacingAngle.withTargetDirection(target.rotation)
+                FieldCentricFacingAngle.withTargetDirection(target.rotation)
             })
             .andThen(
                 applyRequest {
                     val robot = Chassis.state.Pose
-                    fieldCentricFacingAngle
-                        .withVelocityX(xController.calculate(robot.translation.x))
+                    FieldCentricFacingAngle.withVelocityX(
+                            xController.calculate(robot.translation.x)
+                        )
                         .withVelocityY(yController.calculate(robot.translation.y))
                 }
             )
             .until {
                 xController.atGoal() &&
                     yController.atGoal() &&
-                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+                    FieldCentricFacingAngle.HeadingController.atSetpoint()
             }
-
-    val snapToReef by command {
-        applyRequest {
-            val pose = closestReef
-            val speeds = Robot.driveController.hid.calculateSpeeds()
-
-            fieldCentricFacingAngle
-                .withVelocityX(speeds.vxMetersPerSecond)
-                .withVelocityY(speeds.vyMetersPerSecond)
-                .withTargetDirection(pose.rotation)
-        }
-    }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
@@ -363,6 +373,27 @@ object Chassis :
     }
 
     val driveToClosestBranch by command { driveToPose { closestBranch } }
+
+    val driveToSelectedBranch by command {
+        ConditionalCommand(driveToLeftBranch, driveToRightBranch, { SelectedBranch == Branch.LEFT })
+    }
+
+    fun snapToReef(
+        block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
+    ): Command {
+        return applyRequest {
+            FieldCentricFacingAngle.withTargetDirection(closestReef.rotation).block()
+        }
+    }
+
+    fun fieldCentricDrive(
+        block: SwerveRequest.FieldCentric.() -> SwerveRequest.FieldCentric
+    ): Command {
+        return applyRequest { FieldCentric.block() }
+    }
+
+    val strafeLeft by command { applyRequest { StrafeLeft } }
+    val strafeRight by command { applyRequest { StrafeRight } }
 
     private val driveToClosestCoralStation by command {
         driveToPose {
