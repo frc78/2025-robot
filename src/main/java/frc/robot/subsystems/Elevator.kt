@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
+import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -40,6 +41,23 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 }
             )
+
+    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
+
+    fun goToAndWaitUntilDown(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                runOnce {
+                    leader.setControl(
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
+                    )
+                }
+            )
+            .andThen(Commands.idle())
+            .until(isDown)
 
     val manualUp by command {
         startEnd(
@@ -133,7 +151,6 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-
     private val leaderSim by lazy {
         leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
     }
@@ -153,31 +170,31 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val sysId by command {
         Commands.sequence(
-                runOnce {
-                    SignalLogger.start()
-                    leader.configurator.apply(
-                        SoftwareLimitSwitchConfigs().apply {
-                            ForwardSoftLimitEnable = true
-                            ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
-                            ReverseSoftLimitEnable = true
-                            ReverseSoftLimitThreshold = 0.0
-                        }
-                    )
-                },
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 40.inches.toDrumRotations()
-                },
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 6.inches.toDrumRotations()
-                },
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 40.inches.toDrumRotations()
-                },
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 6.inches.toDrumRotations()
-                },
-                runOnce { SignalLogger.stop() },
-            )
+            runOnce {
+                SignalLogger.start()
+                leader.configurator.apply(
+                    SoftwareLimitSwitchConfigs().apply {
+                        ForwardSoftLimitEnable = true
+                        ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
+                        ReverseSoftLimitEnable = true
+                        ReverseSoftLimitThreshold = 0.0
+                    }
+                )
+            },
+            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
+                leader.position.value > 40.inches.toDrumRotations()
+            },
+            sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
+                leader.position.value < 6.inches.toDrumRotations()
+            },
+            sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
+                leader.position.value > 40.inches.toDrumRotations()
+            },
+            sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
+                leader.position.value < 6.inches.toDrumRotations()
+            },
+            runOnce { SignalLogger.stop() },
+        )
             .withName("Elevator sysId")
     }
 
@@ -194,7 +211,7 @@ object Elevator : SubsystemBase("Elevator") {
         )
         leaderSim.setRotorVelocity(
             elevatorSim.velocityMetersPerSecond.metersPerSecond.toAngularVelocity(DRUM_RADIUS) *
-                GEAR_RATIO
+                    GEAR_RATIO
         )
     }
 }

@@ -4,6 +4,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
@@ -37,8 +38,6 @@ object SuperStructure {
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
-<<<<<<< Updated upstream
-=======
 
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
@@ -56,5 +55,4 @@ object SuperStructure {
             .andThen(Pivot.goToAndWaitUntilVertical(state))
             .andThen(Elevator.goTo(state))
             .withName("Go to $state")
->>>>>>> Stashed changes
 }
