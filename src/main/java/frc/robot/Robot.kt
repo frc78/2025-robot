@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.ScoreSelector
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.*
@@ -125,6 +126,7 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
+        ScoreSelector.telemeterize()
     }
 
     override fun simulationPeriodic() {
