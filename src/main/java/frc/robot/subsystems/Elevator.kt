@@ -151,7 +151,9 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-    private val leaderSim by lazy { leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive } }
+    private val leaderSim by lazy {
+        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+    }
 
     private val voltageOut = VoltageOut(0.volts)
 
