@@ -77,6 +77,19 @@ object Pivot : SubsystemBase("Pivot") {
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
+    //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
+    // Pivot.angle < 95.degrees}
+
+    fun goToAndWaitUntilVertical(state: RobotState): Command =
+        PrintCommand(
+                "Pivot going to $state - ${state.pivotAngle} from $angle and waiting until vertical"
+            )
+            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
+            .andThen(Commands.idle())
+            .until {
+                (angle - state.pivotAngle < 3.degrees) && (angle - state.pivotAngle > (-3).degrees)
+            }
+
     val angle: Angle
         get() = cancoder.position.value
 
