@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
+import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
+import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -39,6 +41,23 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 }
             )
+
+    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
+
+    fun goToAndWaitUntilDown(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                runOnce {
+                    leader.setControl(
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
+                    )
+                }
+            )
+            .andThen(Commands.idle())
+            .until(isDown)
 
     val manualUp by command {
         startEnd(
@@ -132,7 +151,9 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-    private val leaderSim by lazy { leader.simState }
+    private val leaderSim by lazy {
+        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+    }
 
     private val voltageOut = VoltageOut(0.volts)
 
