@@ -25,21 +25,26 @@ object Vision {
 
     private val camPitch = (-14).degrees
     private val camRoll = 0.degrees
-    private val camX = (51.5/2).centimeters
+    private val camX = (51.5 / 2).centimeters
     private val camZ = 8.5.inches
 
     private val cams: List<Camera> =
         listOfNotNull(
             Camera(
                     "FL",
-                    Transform3d(camX, (50/2).centimeters, camZ, Rotation3d(camRoll, camPitch, (-28.579 - 270).degrees)),
+                    Transform3d(
+                        camX,
+                        (50 / 2).centimeters,
+                        camZ,
+                        Rotation3d(camRoll, camPitch, (-28.579 - 270).degrees),
+                    ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "FR",
                     Transform3d(
                         camX,
-                        (-50/2).centimeters,
+                        (-50 / 2).centimeters,
                         camZ,
                         Rotation3d(0.degrees, camPitch, (-28.579).degrees),
                     ),
@@ -49,7 +54,7 @@ object Vision {
                     "BL",
                     Transform3d(
                         -camX,
-                        (55/2).centimeters,
+                        (55 / 2).centimeters,
                         camZ,
                         Rotation3d(0.degrees, camPitch, 225.degrees),
                     ),
@@ -59,7 +64,7 @@ object Vision {
                     "BR",
                     Transform3d(
                         -camX,
-                        (-55/2).centimeters,
+                        (-55 / 2).centimeters,
                         camZ,
                         Rotation3d(0.degrees, camPitch, 135.degrees),
                     ),

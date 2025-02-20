@@ -111,7 +111,9 @@ object Chassis :
 
     val fieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
-            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance).withHeadingPID(6.0, 0.0, 0.1).withRotationalDeadband(0.05)
+            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
+            .withHeadingPID(6.0, 0.0, 0.1)
+            .withRotationalDeadband(0.05)
 
     fun configureAutoBuilder() {
         try {
@@ -323,11 +325,12 @@ object Chassis :
                         .withVelocityY(yController.calculate(robot.translation.y))
                 }
             )
-//            .until {
-//                xController.atGoal() &&
-//                    yController.atGoal() &&
-//                    fieldCentricFacingAngle.HeadingController.atSetpoint()
-//            }
+
+    //            .until {
+    //                xController.atGoal() &&
+    //                    yController.atGoal() &&
+    //                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+    //            }
 
     val snapToReef by command {
         applyRequest {
