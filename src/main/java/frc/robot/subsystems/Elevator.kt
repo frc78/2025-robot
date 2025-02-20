@@ -35,6 +35,8 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
+import frc.robot.lib.*
+import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -49,6 +51,23 @@ object Elevator : SubsystemBase("Elevator") {
             .alongWith(
                 Commands.runOnce({ currentSetpoint = state.elevatorHeight.toDrumRotations() })
             )
+
+    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
+
+    fun goToAndWaitUntilDown(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                runOnce {
+                    leader.setControl(
+                        motionMagic
+                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
+                            .withSlot(0)
+                            .withEnableFOC(true)
+                    )
+                }
+            )
+            .andThen(Commands.idle())
+            .until(isDown)
 
     val manualUp by command {
         startEnd(
@@ -144,9 +163,7 @@ object Elevator : SubsystemBase("Elevator") {
             5.inches.meters,
         )
     }
-    private val leaderSim by lazy {
-        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
-    }
+    private val leaderSim by lazy { leader.simState }
 
     private val voltageOut = VoltageOut(0.volts)
 

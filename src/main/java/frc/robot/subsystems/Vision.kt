@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
 import frc.robot.IS_TEST
+import frc.robot.lib.centimeters
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.drivetrain.Chassis
@@ -19,54 +20,53 @@ import org.photonvision.simulation.SimCameraProperties
 import org.photonvision.simulation.VisionSystemSim
 
 object Vision {
-    // Measured from CAD
-    private val camXOld = 10.383.inches
-    private val camXNew = 9.263.inches
-    private val camYOld = 8.672.inches
-    private val camYNew = 9.769.inches
-    private val camZ = 8.5.inches
-    private val camRoll = 0.degrees
-    private val camPitchOld = (-28.125).degrees
-    private val camPitchNew = (-14).degrees
-    private val camYawOld = 60.degrees
-    private val camYawNew = 28.579.degrees
 
     private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
+
+    private val camPitch = (-14).degrees
+    private val camRoll = 0.degrees
+    private val camX = (51.5 / 2).centimeters
+    private val camZ = 8.5.inches
 
     private val cams: List<Camera> =
         listOfNotNull(
             Camera(
                     "FL",
-                    Transform3d(camXNew, camYNew, camZ, Rotation3d(camRoll, camPitchNew, camYawNew)),
+                    Transform3d(
+                        camX,
+                        (50 / 2).centimeters,
+                        camZ,
+                        Rotation3d(camRoll, camPitch, (-28.579 - 270).degrees),
+                    ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "FR",
                     Transform3d(
-                        camXOld,
-                        -camYOld,
+                        camX,
+                        (-50 / 2).centimeters,
                         camZ,
-                        Rotation3d(camRoll, camPitchOld, -camYawOld),
+                        Rotation3d(0.degrees, camPitch, (-28.579).degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "BL",
                     Transform3d(
-                        -camXNew,
-                        camYNew,
+                        -camX,
+                        (55 / 2).centimeters,
                         camZ,
-                        Rotation3d(camRoll, camPitchNew, 180.degrees - (90.degrees - camYawNew)),
+                        Rotation3d(0.degrees, camPitch, 225.degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "BR",
                     Transform3d(
-                        -camXOld,
-                        -camYOld,
+                        -camX,
+                        (-55 / 2).centimeters,
                         camZ,
-                        Rotation3d(camRoll, camPitchOld, 180.degrees + camYawOld),
+                        Rotation3d(0.degrees, camPitch, 135.degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
