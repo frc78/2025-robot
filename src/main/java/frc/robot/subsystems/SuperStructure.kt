@@ -11,8 +11,8 @@ import frc.robot.lib.inches
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     L1(60.degrees, 0.inches, 120.degrees),
     L2(75.degrees, 6.inches, 110.degrees),
-    L3(78.degrees, 20.inches, 100.degrees),
-    L4(82.degrees, 46.inches, 100.degrees),
+    L3(79.degrees, 16.inches, 144.degrees),
+    L4(79.degrees, 36.inches, 144.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
     CoralStation(54.degrees, 0.inches, 19.degrees),
     AlgaeGroundPickup(18.degrees, 3.inches, 30.degrees),

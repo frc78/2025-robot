@@ -83,11 +83,11 @@ object Intake : Subsystem {
     }
 
     val intakeCoral by command {
-        startEnd({ coralIntake.set(0.3) }, { coralIntake.set(0.0) }).withName("Intake Coral")
+        startEnd({ coralIntake.set(0.5) }, { coralIntake.set(0.0) }).withName("Intake Coral")
     }
 
     val outtakeCoral by command {
-        startEnd({ coralIntake.set(-0.3) }, { coralIntake.set(0.0) }).withName("Outtake Coral")
+        startEnd({ coralIntake.set(-0.5) }, { coralIntake.set(0.0) }).withName("Outtake Coral")
     }
 
     val intakeAlgae by command {
