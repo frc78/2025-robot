@@ -44,6 +44,11 @@ object SuperStructure {
         ConditionalCommand(goToElevatorIsDown(state), goToElevatorIsUp(state), Elevator.isDown)
             .withName("Go to $state")
 
+    // This code was an attempt to account for the edge case where we want to go between two presets
+    // where the elevator is extended and the pivot never leaves the "vertical" range (such as from
+    // L4 to L3), since currently the elevator has to go down before the pivot can move, but it
+    // never would in this case.  Didn't work in simulation.
+
     //    fun smartGoTo(state: RobotState): Command = InstantCommand(
     //        {
     //            if (Elevator.isDown.asBoolean) {
