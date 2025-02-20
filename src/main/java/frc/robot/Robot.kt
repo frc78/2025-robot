@@ -65,6 +65,19 @@ object Robot : LoggedRobot() {
         driveController.a().whileTrue(Elevator.manualDown)
         driveController.start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
         SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
+        SmartDashboard.putData(
+            "Flip driver station",
+            Commands.runOnce({
+                println("Flipping driver station perspective")
+                Chassis.setOperatorPerspectiveForward(
+                    if (
+                        Chassis.operatorForwardDirection == Chassis.kBlueAlliancePerspectiveRotation
+                    )
+                        Chassis.kRedAlliancePerspectiveRotation
+                    else Chassis.kBlueAlliancePerspectiveRotation
+                )
+            }),
+        )
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
@@ -140,7 +153,7 @@ object Robot : LoggedRobot() {
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
         Chassis.defaultCommand =
-            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()).withForwardPerspective(Chassis.operatorForwardDirection) }
     }
 
     override fun teleopExit() {
