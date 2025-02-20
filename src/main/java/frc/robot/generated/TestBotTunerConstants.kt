@@ -98,7 +98,7 @@ object TestBotTunerConstants {
     private const val INVERT_LEFT = false
     private const val INVERT_RIGHT = true
 
-    private const val PIGEON_ID = 1
+    private const val PIGEON_ID = 0
 
     // These are only used for simulation
     private val steerInertia: MomentOfInertia = Units.KilogramSquareMeters.of(0.01)

@@ -60,6 +60,7 @@ object Robot : LoggedRobot() {
         // driveController.y().whileTrue(Chassis.snapToReef)
         driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
         driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
+        driveController.x().whileTrue(Chassis.snapToReef)
         driveController.y().whileTrue(Elevator.manualUp)
         driveController.a().whileTrue(Elevator.manualDown)
         driveController.start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))

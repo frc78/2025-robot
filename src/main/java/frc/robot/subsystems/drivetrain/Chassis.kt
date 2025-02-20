@@ -38,17 +38,12 @@ import frc.robot.Robot
 import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
+import frc.robot.lib.*
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
-import frc.robot.lib.calculateSpeeds
-import frc.robot.lib.command
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.volts
-import frc.robot.lib.voltsPerSecond
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -117,10 +112,8 @@ object Chassis :
     val fieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
-
-    init {
-        fieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
-    }
+            .withHeadingPID(6.0, 0.0, 0.1)
+            .withRotationalDeadband(0.05)
 
     fun configureAutoBuilder() {
         try {
@@ -304,14 +297,14 @@ object Chassis :
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
     private val yController =
         ProfiledPIDController(
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
 
     fun driveToPose(pose: () -> Pose2d): Command =
@@ -332,17 +325,19 @@ object Chassis :
                         .withVelocityY(yController.calculate(robot.translation.y))
                 }
             )
-            .until {
-                xController.atGoal() &&
-                    yController.atGoal() &&
-                    fieldCentricFacingAngle.HeadingController.atSetpoint()
-            }
+
+    //            .until {
+    //                xController.atGoal() &&
+    //                    yController.atGoal() &&
+    //                    fieldCentricFacingAngle.HeadingController.atSetpoint()
+    //            }
 
     val snapToReef by command {
         applyRequest {
             val pose = closestReef
             val speeds = Robot.driveController.hid.calculateSpeeds()
 
+            Logger.recordOutput("snapToReef_target", pose.rotation)
             fieldCentricFacingAngle
                 .withVelocityX(speeds.vxMetersPerSecond)
                 .withVelocityY(speeds.vyMetersPerSecond)
