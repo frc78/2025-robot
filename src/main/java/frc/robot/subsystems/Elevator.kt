@@ -11,7 +11,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
-import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -22,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.lib.*
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
@@ -35,7 +35,6 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import frc.robot.lib.*
 import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
