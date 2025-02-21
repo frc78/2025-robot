@@ -31,7 +31,10 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
-    private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
+    private val swerveRequest =
+        SwerveRequest.ApplyFieldSpeeds()
+            .withDesaturateWheelSpeeds(true)
+            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.OperatorPerspective)
     val driveController = CommandXboxController(0)
     val joystick = CommandJoystick(5)
 
@@ -153,7 +156,7 @@ object Robot : LoggedRobot() {
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
         Chassis.defaultCommand =
-            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()).withForwardPerspective(Chassis.operatorForwardDirection) }
+            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {
