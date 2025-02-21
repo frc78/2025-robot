@@ -36,9 +36,8 @@ object Pivot : SubsystemBase("Pivot") {
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
 
-    // how close pivot needs to be to its setpoint for elevator to start moving
-    // when doing a smartGoTo on the SuperStructure
-    private val ELEVATOR_THRESHOLD = 3.inches
+    // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
+    private val ELEVATOR_THRESHOLD = 3.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -93,8 +92,9 @@ object Pivot : SubsystemBase("Pivot") {
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
             .andThen(Commands.idle())
             .until {
+                // poor man's absolute value check
                 (angle - state.pivotAngle < ELEVATOR_THRESHOLD) &&
-                    (angle - state.pivotAngle > (-1 * ELEVATOR_THRESHOLD))
+                    (angle - state.pivotAngle > (ELEVATOR_THRESHOLD.times(-1.0)))
             }
 
     val angle: Angle
