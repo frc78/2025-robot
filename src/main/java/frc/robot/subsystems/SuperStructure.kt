@@ -39,25 +39,37 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
 
-    // Old smartGoTo that doesn't account for moving between states where the elevator stays raised (or stowed)
-//    fun smartGoTo(state: RobotState): Command =
-//        ConditionalCommand(goToElevatorIsStowed(state), goToElevatorIsRaised(state), Elevator.isStowed)
-//            .withName("Go to $state")
+    // Old smartGoTo that doesn't account for moving between states where the elevator stays raised
+    // (or stowed)
+    //    fun smartGoTo(state: RobotState): Command =
+    //        ConditionalCommand(goToElevatorIsStowed(state), goToElevatorIsRaised(state),
+    // Elevator.isStowed)
+    //            .withName("Go to $state")
 
     // Command to go to a RobotState and have the elevator and pivot play nice
     fun smartGoTo(state: RobotState): Command =
-        DeferredCommand({
-            if (Elevator.isStowed.asBoolean && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
-                // if elevator is stowed and getting raised, move pivot before raising it
-                goToElevatorIsStowed(state)
-            } else if (!Elevator.isStowed.asBoolean && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD) {
-                // if elevator is raised and getting stowed, lower it before moving pivot
-                goToElevatorIsRaised(state)
-            } else {
-                // if elevator is not going from stowed to raised or vice versa, move everything at once
-                goTo(state)
-            }
-        }, setOf(Pivot, Elevator, Wrist))
+        DeferredCommand(
+            {
+                if (
+                    Elevator.isStowed.asBoolean &&
+                        state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD
+                ) {
+                    // if elevator is stowed and getting raised, move pivot before raising it
+                    goToElevatorIsStowed(state)
+                } else if (
+                    !Elevator.isStowed.asBoolean &&
+                        state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                ) {
+                    // if elevator is raised and getting stowed, lower it before moving pivot
+                    goToElevatorIsRaised(state)
+                } else {
+                    // if elevator is not going from stowed to raised or vice versa, move everything
+                    // at once
+                    goTo(state)
+                }
+            },
+            setOf(Pivot, Elevator, Wrist),
+        )
 
     fun goToElevatorIsRaised(state: RobotState): Command =
         Wrist.goTo(state)
