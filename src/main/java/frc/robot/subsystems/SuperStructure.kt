@@ -4,7 +4,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.ConditionalCommand
+import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
@@ -39,40 +39,33 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
 
-    // Command factory to go to a specific robot state
+    // Old smartGoTo that doesn't account for moving between states where the elevator stays raised (or stowed)
+//    fun smartGoTo(state: RobotState): Command =
+//        ConditionalCommand(goToElevatorIsStowed(state), goToElevatorIsRaised(state), Elevator.isStowed)
+//            .withName("Go to $state")
+
+    // Command to go to a RobotState and have the elevator and pivot play nice
     fun smartGoTo(state: RobotState): Command =
-        ConditionalCommand(goToElevatorIsDown(state), goToElevatorIsUp(state), Elevator.isDown)
-            .withName("Go to $state")
+        DeferredCommand({
+            if (Elevator.isStowed.asBoolean && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
+                // if elevator is stowed and getting raised, move pivot before raising it
+                goToElevatorIsStowed(state)
+            } else if (!Elevator.isStowed.asBoolean && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD) {
+                // if elevator is raised and getting stowed, lower it before moving pivot
+                goToElevatorIsRaised(state)
+            } else {
+                // if elevator is not going from stowed to raised or vice versa, move everything at once
+                goTo(state)
+            }
+        }, setOf(Pivot, Elevator, Wrist))
 
-    // This code was an attempt to account for the edge case where we want to go between two presets
-    // where the elevator is extended and the pivot never leaves the "vertical" range (such as from
-    // L4 to L3), since currently the elevator has to go down before the pivot can move, but it
-    // never would in this case.  Didn't work in simulation.
-
-    //    fun smartGoTo(state: RobotState): Command = InstantCommand(
-    //        {
-    //            if (Elevator.isDown.asBoolean) {
-    //                // if elevator is down, move pivot before raising it
-    //                goToElevatorIsDown(state)
-    //            } else if ((73.degrees < state.pivotAngle) && (state.pivotAngle < 90.degrees)) {
-    //                // if elevator is up but the pivot is staying "vertical", can move everything
-    // at once
-    //                goTo(state)
-    //            } else {
-    //                // if elevator is up and the pivot is not staying vertical, lower elevator
-    // before moving pivot
-    //                goToElevatorIsUp(state)
-    //            }
-    //        }
-    //    )
-
-    fun goToElevatorIsUp(state: RobotState): Command =
+    fun goToElevatorIsRaised(state: RobotState): Command =
         Wrist.goTo(state)
-            .andThen(Elevator.goToAndWaitUntilDown(state))
+            .andThen(Elevator.goToAndWaitUntilStowed(state))
             .andThen(Pivot.goTo(state))
             .withName("Go to $state")
 
-    fun goToElevatorIsDown(state: RobotState): Command =
+    fun goToElevatorIsStowed(state: RobotState): Command =
         Wrist.goTo(state)
             .andThen(Pivot.goToAndWaitUntilVertical(state))
             .andThen(Elevator.goTo(state))

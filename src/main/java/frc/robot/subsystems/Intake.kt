@@ -110,5 +110,5 @@ object Intake : Subsystem {
             .alongWith(runOnce({ coralIntake.set(0.7) }))
             .andThen(Commands.idle())
             .until({ hasBranchCoral })
-            .andThen({ coralIntake.set(0.1) })
+            .andThen({ coralIntake.set(0.2) })
 }

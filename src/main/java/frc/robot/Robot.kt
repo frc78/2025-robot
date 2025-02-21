@@ -126,6 +126,9 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
+        SmartDashboard.putNumber("Pivot Angle (degrees)", Pivot.angle.degrees)
+        SmartDashboard.putNumber("Elevator Extension (inches)", Elevator.position.inches)
+        SmartDashboard.putNumber("Wrist Angle (degrees)", Wrist.angle.degrees)
     }
 
     override fun simulationPeriodic() {

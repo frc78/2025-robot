@@ -42,9 +42,9 @@ object Elevator : SubsystemBase("Elevator") {
                 }
             )
 
-    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
+    val isStowed: BooleanSupplier = BooleanSupplier { position < IS_STOWED_THRESHOLD }
 
-    fun goToAndWaitUntilDown(state: RobotState): Command =
+    fun goToAndWaitUntilStowed(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
                 runOnce {
@@ -57,7 +57,7 @@ object Elevator : SubsystemBase("Elevator") {
                 }
             )
             .andThen(Commands.idle())
-            .until(isDown)
+            .until(isStowed)
 
     val manualUp by command {
         startEnd(
@@ -94,6 +94,7 @@ object Elevator : SubsystemBase("Elevator") {
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     private val MAX_HEIGHT = 53.inches
+    val IS_STOWED_THRESHOLD = 3.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
