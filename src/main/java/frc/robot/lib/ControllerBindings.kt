@@ -31,8 +31,6 @@ fun CommandXboxController.configureDriverBindings() {
     y().whileTrue(Elevator.manualUp)
     a().whileTrue(Elevator.manualDown)
     start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
-    leftTrigger().whileTrue(Chassis.strafeLeft)
-    rightTrigger().whileTrue(Chassis.strafeRight)
 
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
