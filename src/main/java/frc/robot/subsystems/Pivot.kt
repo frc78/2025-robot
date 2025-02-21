@@ -36,7 +36,7 @@ object Pivot : SubsystemBase("Pivot") {
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
     private val leader =
-        TalonFX(9  , "*").apply {
+        TalonFX(9, "*").apply {
             val config =
                 TalonFXConfiguration().apply {
                     MotorOutput.NeutralMode = NeutralModeValue.Brake

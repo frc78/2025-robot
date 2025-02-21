@@ -16,7 +16,7 @@ object climber : SubsystemBase("climber") {
     TalonFX(16, "*").apply {
         val config =
             TalonFXConfiguration().apply {
-                MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                 MotorOutput.NeutralMode = NeutralModeValue.Brake
 
             }
@@ -24,19 +24,13 @@ object climber : SubsystemBase("climber") {
 
     val voltageOut = VoltageOut(0.0)
 
-    fun manualUp(): Command {
+    fun climb(): Command {
         return startEnd(
             { Motor.setControl(voltageOut.withOutput(2.0.volts)) },
             { Motor.setControl(voltageOut.withOutput(0.0.volts)) },
         )
     }
 
-    fun manualDown(): Command {
-        return startEnd(
-            { Motor.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { Motor.setControl(voltageOut.withOutput(0.0.volts)) },
-        )
-    }
-}
+
 
 
