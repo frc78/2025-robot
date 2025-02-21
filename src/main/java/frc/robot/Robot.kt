@@ -70,7 +70,8 @@ object Robot : LoggedRobot() {
         joystick.button(3).whileTrue(Pivot.moveDown)
         joystick.button(6).whileTrue(Elevator.manualUp)
         joystick.button(4).whileTrue(Elevator.manualDown)
-        joystick.button(7).whileTrue(Intake.intakeCoral)
+//        joystick.button(7).whileTrue(Intake.intakeCoral)
+        joystick.button(7).onTrue(Intake.intakeCoralThenHold())
         joystick.button(8).whileTrue(Intake.outtakeCoral)
         joystick.button(9).whileTrue(Intake.intakeAlgae)
         joystick.button(10).whileTrue(Intake.outtakeAlgae)
@@ -125,6 +126,9 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
+        SmartDashboard.putNumber("Pivot Angle (degrees)", Pivot.angle.degrees)
+        SmartDashboard.putNumber("Elevator Extension (inches)", Elevator.position.inches)
+        SmartDashboard.putNumber("Wrist Angle (degrees)", Wrist.angle.degrees)
     }
 
     override fun simulationPeriodic() {

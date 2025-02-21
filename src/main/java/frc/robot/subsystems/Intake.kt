@@ -6,7 +6,9 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
@@ -102,4 +104,11 @@ object Intake : Subsystem {
         SmartDashboard.putData(intakeAlgae)
         SmartDashboard.putData(intakeCoral)
     }
+
+    fun intakeCoralThenHold(): Command =
+        PrintCommand("Intaking coral then holding")
+            .alongWith(runOnce { coralIntake.set(0.8) })
+            .andThen(Commands.idle())
+            .until{ hasBranchCoral }
+            .andThen({ coralIntake.set(0.2) })
 }
