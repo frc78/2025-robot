@@ -57,19 +57,15 @@ object Wrist : SubsystemBase("Wrist") {
             configurator.apply(config)
         }
 
+    private var currentSetpoint: Angle = leader.position.value
+
     val motionMagic = MotionMagicVoltage(0.degrees)
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        positionVoltage.withPosition(state.wristAngle)
-                    ) // Do we need to do .wristToMotor()
-                }
-            )
+            .alongWith(Commands.runOnce({ currentSetpoint = state.wristAngle }))
 
     val angle: Angle
         get() = leader.position.value
@@ -77,18 +73,22 @@ object Wrist : SubsystemBase("Wrist") {
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
-    val resetPosition: Command = Commands.runOnce({ leader.setPosition(0.0) })
+    val resetPosition: Command =
+        Commands.runOnce({
+            leader.setPosition(0.0)
+            currentSetpoint = 0.degrees
+        })
 
     fun zeroRoutines(): Command {
         return SequentialCommandGroup(
@@ -140,6 +140,7 @@ object Wrist : SubsystemBase("Wrist") {
             .withName("Wrist SysId")
 
     init {
+        defaultCommand = run { leader.setControl(positionVoltage.withPosition(currentSetpoint)) }
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
     }

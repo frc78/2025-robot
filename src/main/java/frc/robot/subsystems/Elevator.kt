@@ -23,59 +23,14 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
-import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
+    val IS_STOWED_THRESHOLD = 3.inches
 
-    fun goTo(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
-            )
-
-    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
-
-    fun goToAndWaitUntilDown(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
-            )
-            .andThen(Commands.idle())
-            .until(isDown)
-
-    val manualUp by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
-        )
-    }
-
-    val manualDown by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
-        )
-    }
-
-    val position
-        get() = leader.position.value.toElevatorHeight()
-
+    private const val LEADER_MOTOR_ID = 11
+    private const val FOLLOWER_MOTOR_ID = 12
     // Constants for the feedforward calculation
     private const val K_S = 0.23487
     private const val K_V = 0.60823
@@ -86,9 +41,6 @@ object Elevator : SubsystemBase("Elevator") {
     private const val K_P = 34.887
     private const val K_I = 0.0
     private const val K_D = 1.2611
-
-    private const val LEADER_MOTOR_ID = 11
-    private const val FOLLOWER_MOTOR_ID = 12
 
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
@@ -131,8 +83,43 @@ object Elevator : SubsystemBase("Elevator") {
             closedLoopError.setUpdateFrequency(100.0)
         }
 
+    val position
+        get() = leader.position.value.toElevatorHeight()
+
+    private var currentSetpoint: Angle = leader.position.value
+
+    fun goTo(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                Commands.runOnce({ currentSetpoint = state.elevatorHeight.toDrumRotations() })
+            )
+
+    val isStowed: Boolean
+        get() = position < IS_STOWED_THRESHOLD
+
+    fun goToAndWaitUntilStowed(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(goTo(state))
+            .andThen(Commands.idle())
+            .until { isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD }
+
+    val manualUp by command {
+        startEnd(
+            { leader.setControl(voltage.withOutput(2.0.volts)) },
+            { currentSetpoint = leader.position.value },
+        )
+    }
+
+    val manualDown by command {
+        startEnd(
+            { leader.setControl(voltage.withOutput((-2.0).volts)) },
+            { currentSetpoint = leader.position.value },
+        )
+    }
+
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
+        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)
@@ -177,7 +164,7 @@ object Elevator : SubsystemBase("Elevator") {
                             ForwardSoftLimitEnable = true
                             ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
                             ReverseSoftLimitEnable = true
-                            ReverseSoftLimitThreshold = 0.0
+                            ReverseSoftLimitThreshold = 0.25
                         }
                     )
                 },
