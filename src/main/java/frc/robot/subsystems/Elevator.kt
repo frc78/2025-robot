@@ -86,7 +86,7 @@ object Elevator : SubsystemBase("Elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
-//    private var currentSetpoint: Angle = leader.position.value
+    //    private var currentSetpoint: Angle = leader.position.value
 
     fun goToRaw(setPoint: Angle): Command =
         Commands.runOnce({ leader.setControl(motionMagic.withPosition(setPoint)) })
@@ -95,7 +95,8 @@ object Elevator : SubsystemBase("Elevator") {
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
                 // TODO not working with setting currentSetpoint
-//                Commands.runOnce({ leader.setControl(motionMagic.withPosition(state.elevatorHeight.toDrumRotations())) })
+                //                Commands.runOnce({
+                // leader.setControl(motionMagic.withPosition(state.elevatorHeight.toDrumRotations())) })
                 Commands.runOnce({ goToRaw(state.elevatorHeight.toDrumRotations()) })
             )
 
@@ -124,7 +125,8 @@ object Elevator : SubsystemBase("Elevator") {
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
-//        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
+        //        defaultCommand = run {
+        // leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)
