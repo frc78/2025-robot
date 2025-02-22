@@ -31,11 +31,14 @@ import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Pivot : SubsystemBase("Pivot") {
 
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
+
+    private var currentSetpoint: Angle = cancoder.position.value
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
     private val ELEVATOR_THRESHOLD = 3.degrees
@@ -76,21 +79,18 @@ object Pivot : SubsystemBase("Pivot") {
 
     init {
         follower.setControl(Follower(9, true))
-        defaultCommand = Commands.idle(this)
+        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
-
-    //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
-    // Pivot.angle < 95.degrees}
+            .alongWith(Commands.runOnce({ currentSetpoint = state.pivotAngle }))
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
         PrintCommand(
                 "Pivot going to $state - ${state.pivotAngle} from $angle and waiting until vertical"
             )
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
+            .alongWith(goTo(state))
             .andThen(Commands.idle())
             .until {
                 abs(angle.baseUnitMagnitude() - state.pivotAngle.baseUnitMagnitude()) <
@@ -123,14 +123,14 @@ object Pivot : SubsystemBase("Pivot") {
     val moveUp by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput(2.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     val moveDown by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
     private val sysIdRoutine =
@@ -185,6 +185,12 @@ object Pivot : SubsystemBase("Pivot") {
     init {
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
+    }
+
+    override fun periodic() {
+        Logger.recordOutput("pivot/position", cancoder.position.value)
+        Logger.recordOutput("pivot/setpoint", currentSetpoint)
+        Logger.recordOutput("pivot/error", leader.closedLoopError.value)
     }
 
     override fun simulationPeriodic() {

@@ -86,52 +86,39 @@ object Elevator : SubsystemBase("Elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
+    private var currentSetpoint: Angle = leader.position.value
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
+                Commands.runOnce({ currentSetpoint = state.elevatorHeight.toDrumRotations() })
             )
 
     val isStowed: Boolean get() = position < IS_STOWED_THRESHOLD
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
-            )
+            .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until { isStowed }//|| state.elevatorHeight > IS_STOWED_THRESHOLD }
+            .until { isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD }
 
     val manualUp by command {
         startEnd(
             { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     val manualDown by command {
         startEnd(
             { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
+            { currentSetpoint = leader.position.value },
         )
     }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
+        defaultCommand = run { leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)
