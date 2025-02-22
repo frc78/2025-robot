@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector
@@ -39,14 +40,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
-    val gameField = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
-
-    private val swerveRequest =
-        SwerveRequest.ApplyFieldSpeeds()
-            .withDesaturateWheelSpeeds(true)
-            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.OperatorPerspective)
-    val driveController = CommandXboxController(0)
-    val joystick = CommandJoystick(5)
+    val gameField: AprilTagFieldLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
