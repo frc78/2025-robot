@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
-import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.DriverStation
@@ -76,7 +75,7 @@ object Robot : LoggedRobot() {
         joystick.button(10).whileTrue(Intake.outtakeAlgae)
         joystick.button(11).whileTrue(Wrist.manualUp())
         joystick.button(12).whileTrue(Wrist.manualDown())
-        joystick.trigger().whileTrue((climber.manualDown()))
+        joystick.trigger().whileTrue(Climber.climb())
         // joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
         SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
         SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))

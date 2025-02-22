@@ -9,18 +9,17 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.volts
 
-
-object climber : SubsystemBase("climber") {
+object Climber : SubsystemBase("climber") {
 
     private val Motor =
-    TalonFX(16, "*").apply {
-        val config =
-            TalonFXConfiguration().apply {
-                MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
-                MotorOutput.NeutralMode = NeutralModeValue.Brake
-
-            }
-    }
+        TalonFX(16, "*").apply {
+            val config =
+                TalonFXConfiguration().apply {
+                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    MotorOutput.NeutralMode = NeutralModeValue.Brake
+                }
+            configurator.apply(config)
+        }
 
     val voltageOut = VoltageOut(0.0)
 
@@ -30,7 +29,4 @@ object climber : SubsystemBase("climber") {
             { Motor.setControl(voltageOut.withOutput(0.0.volts)) },
         )
     }
-
-
-
-
+}
