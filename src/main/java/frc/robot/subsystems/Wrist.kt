@@ -62,13 +62,11 @@ object Wrist : SubsystemBase("Wrist") {
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
-    fun goToRaw(setPoint: Angle): Command =
-        Commands.runOnce({ Wrist.leader.setControl(Wrist.motionMagic.withPosition(setPoint)) })
-
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
-            //            .alongWith(Commands.runOnce({ currentSetpoint = state.wristAngle }))
-            .alongWith(Commands.runOnce({ goToRaw(state.wristAngle) }))
+            .alongWith(
+                runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) }
+            )
 
     val angle: Angle
         get() = leader.position.value
@@ -76,14 +74,14 @@ object Wrist : SubsystemBase("Wrist") {
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { goToRaw(leader.position.value) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) }
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { goToRaw(leader.position.value) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) }
         )
     }
 

@@ -35,6 +35,7 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
+import frc.robot.subsystems.Elevator.toDrumRotations
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -98,25 +99,17 @@ object Elevator : SubsystemBase("Elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
-    //    private var currentSetpoint: Angle = leader.position.value
-
-    fun goToRaw(setPoint: Angle): Command =
-        Commands.runOnce({ leader.setControl(motionMagic.withPosition(setPoint)) })
-
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
-                // TODO not working with setting currentSetpoint
-                //                Commands.runOnce({
-                // leader.setControl(motionMagic.withPosition(state.elevatorHeight.toDrumRotations())) })
-                Commands.runOnce({ goToRaw(state.elevatorHeight.toDrumRotations()) })
+                runOnce { leader.setControl(motionMagic.withPosition(state.elevatorHeight.toDrumRotations())) }
             )
 
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+        PrintCommand("Elevator stowing")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
             .until { isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD }
@@ -124,14 +117,14 @@ object Elevator : SubsystemBase("Elevator") {
     val manualUp by command {
         startEnd(
             { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { goToRaw(leader.position.value) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
 
     val manualDown by command {
         startEnd(
             { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { goToRaw(leader.position.value) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
 

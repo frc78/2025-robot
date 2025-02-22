@@ -85,6 +85,7 @@ private fun CommandXboxController.configureButtonLayout() {
     y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
+//    leftTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.Stow))
     rightBumper().onTrue(Intake.intakeCoralThenHold())
     leftBumper().whileTrue(Intake.outtakeCoral)
 }
