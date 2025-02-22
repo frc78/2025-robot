@@ -66,9 +66,36 @@ object Vision {
                     ),
                 )
                 .takeIf { IS_TEST },
-            Camera("BowCam", Transform3d(9.780.inches, (-11.746).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, 28.579.degrees))).takeIf { !IS_TEST },
-            Camera("PortCam", Transform3d((-9.771).inches, (11.519).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, 200.degrees))).takeIf { !IS_TEST },
-            Camera("StarboardCam", Transform3d((-9.771).inches, (-11.519).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, (-200).degrees))).takeIf { !IS_TEST },
+            Camera(
+                    "BowCam",
+                    Transform3d(
+                        9.780.inches,
+                        (-11.746).inches,
+                        6.610.inches,
+                        Rotation3d(0.degrees, (-14).degrees, 28.579.degrees),
+                    ),
+                )
+                .takeIf { !IS_TEST },
+            Camera(
+                    "PortCam",
+                    Transform3d(
+                        (-9.771).inches,
+                        (11.519).inches,
+                        6.610.inches,
+                        Rotation3d(0.degrees, (-14).degrees, 200.degrees),
+                    ),
+                )
+                .takeIf { !IS_TEST },
+            Camera(
+                    "StarboardCam",
+                    Transform3d(
+                        (-9.771).inches,
+                        (-11.519).inches,
+                        6.610.inches,
+                        Rotation3d(0.degrees, (-14).degrees, (-200).degrees),
+                    ),
+                )
+                .takeIf { !IS_TEST },
         )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
@@ -79,7 +106,11 @@ object Vision {
         cams.forEach { cam ->
             cam.getEstimatedGlobalPose()?.let { estimatedGlobalPose ->
                 val pose = estimatedGlobalPose.estimatedPose.toPose2d()
-                Chassis.addVisionMeasurement(pose, estimatedGlobalPose.timestampSeconds, cam.currentStds)
+                Chassis.addVisionMeasurement(
+                    pose,
+                    estimatedGlobalPose.timestampSeconds,
+                    cam.currentStds,
+                )
                 Logger.recordOutput(cam.cam.name + " est", pose)
                 // Send the locations of all tracked tags to networktables
                 topics[cam]?.set(

@@ -1,7 +1,5 @@
 package frc.robot.lib
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
@@ -46,9 +44,13 @@ object Alignments {
             )
 
     private val BLUE_CORAL_STATION_LOCATIONS =
-        intArrayOf(12, 13).flatMap { Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(12, 13).flatMap {
+            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag
+        }
     private val RED_CORAL_STATION_LOCATIONS =
-        intArrayOf(1, 2).flatMap { Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(1, 2).flatMap {
+            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag
+        }
 
     private val reefPoses
         get() =
