@@ -30,6 +30,7 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import kotlin.math.abs
 
 object Pivot : SubsystemBase("Pivot") {
 
@@ -92,9 +93,8 @@ object Pivot : SubsystemBase("Pivot") {
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
             .andThen(Commands.idle())
             .until {
-                // poor man's absolute value check
-                (angle - state.pivotAngle < ELEVATOR_THRESHOLD) &&
-                    (angle - state.pivotAngle > (ELEVATOR_THRESHOLD.times(-1.0)))
+                abs(angle.baseUnitMagnitude() - state.pivotAngle.baseUnitMagnitude()) <
+                    ELEVATOR_THRESHOLD.baseUnitMagnitude()
             }
 
     val angle: Angle
