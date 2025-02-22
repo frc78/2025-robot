@@ -94,7 +94,8 @@ object Elevator : SubsystemBase("Elevator") {
                 Commands.runOnce({ currentSetpoint = state.elevatorHeight.toDrumRotations() })
             )
 
-    val isStowed: Boolean get() = position < IS_STOWED_THRESHOLD
+    val isStowed: Boolean
+        get() = position < IS_STOWED_THRESHOLD
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
