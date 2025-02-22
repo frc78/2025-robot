@@ -3,6 +3,7 @@ package frc.robot.lib
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Centimeters
 import edu.wpi.first.units.Units.Degrees
+import edu.wpi.first.units.Units.FeetPerSecond
 import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
@@ -48,6 +49,8 @@ val Number.seconds: Time
     get() = Seconds.of(this.toDouble())
 val Number.metersPerSecond: LinearVelocity
     get() = MetersPerSecond.of(this.toDouble())
+val Number.feetPerSecond: LinearVelocity
+    get() = FeetPerSecond.of(this.toDouble())
 val Number.volts: Voltage
     get() = Volts.of(this.toDouble())
 val Number.amps: Current
