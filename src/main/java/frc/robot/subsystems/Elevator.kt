@@ -22,7 +22,20 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.radiansPerSecondPerSecond
+import frc.robot.lib.rotations
+import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
+import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -125,8 +138,6 @@ object Elevator : SubsystemBase("Elevator") {
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
-        //        defaultCommand = run {
-        // leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     private fun Distance.toDrumRotations() = this.toAngle(DRUM_RADIUS)

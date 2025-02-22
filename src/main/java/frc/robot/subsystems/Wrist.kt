@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.amps
+import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
@@ -57,8 +58,6 @@ object Wrist : SubsystemBase("Wrist") {
             configurator.apply(config)
         }
 
-    //    private var currentSetpoint: Angle = leader.position.value
-
     val motionMagic = MotionMagicVoltage(0.degrees)
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
@@ -77,24 +76,18 @@ object Wrist : SubsystemBase("Wrist") {
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            //            { currentSetpoint = leader.position.value },
-            { goToRaw(leader.position.value) },
+            { goToRaw(leader.position.value) }
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            //            { currentSetpoint = leader.position.value },
-            { goToRaw(leader.position.value) },
+            { goToRaw(leader.position.value) }
         )
     }
 
-    val resetPosition: Command =
-        Commands.runOnce({
-            leader.setPosition(0.0)
-            //            currentSetpoint = 0.degrees
-        })
+    private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
 
     fun zeroRoutines(): Command {
         return SequentialCommandGroup(
@@ -146,9 +139,8 @@ object Wrist : SubsystemBase("Wrist") {
             .withName("Wrist SysId")
 
     init {
-        //        defaultCommand = run {
-        // leader.setControl(positionVoltage.withPosition(currentSetpoint)) }
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
+        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
     }
 }

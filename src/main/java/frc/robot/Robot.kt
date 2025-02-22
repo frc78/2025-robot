@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
-import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -13,13 +12,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.calculateSpeeds
+import frc.robot.lib.ScoreSelector
+import frc.robot.lib.configureDriverBindings
+import frc.robot.lib.configureManipulatorBindings
+import frc.robot.lib.configureTestBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -31,10 +37,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
-    private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
-    val driveController = CommandXboxController(0)
-    val manipulatorController = CommandXboxController(1)
-    val joystick = CommandJoystick(5)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -56,53 +58,13 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-        //        Trigger { Chassis.state.Pose.translation.getDistance(REEF_POSITION) < 3 }
-        //            .whileTrue(Alignments.snapAngleToReef())
-        // driveController.y().whileTrue(Chassis.snapToReef)
-        driveController.leftBumper().whileTrue(Chassis.driveToLeftBranch)
-        driveController.rightBumper().whileTrue(Chassis.driveToRightBranch)
-        driveController.x().whileTrue(Chassis.snapToReef)
-        driveController.y().whileTrue(Elevator.manualUp)
-        driveController.a().whileTrue(Elevator.manualDown)
-        driveController.start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
-        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
-
-        manipulatorController.a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
-        manipulatorController.b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-        manipulatorController.x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-        manipulatorController.y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
-        // trigger value goes from 0 (not pressed) to 1 (fully pressed)
-        manipulatorController
-            .rightTrigger(0.55)
-            .onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
-        manipulatorController.rightBumper().onTrue(Intake.intakeCoralThenHold())
-        manipulatorController.leftBumper().whileTrue(Intake.outtakeCoral)
-
-        joystick.button(5).whileTrue(Pivot.moveUp)
-        joystick.button(3).whileTrue(Pivot.moveDown)
-        joystick.button(6).whileTrue(Elevator.manualUp)
-        joystick.button(4).whileTrue(Elevator.manualDown)
-        //        joystick.button(7).whileTrue(Intake.intakeCoral)
-        joystick.button(7).whileTrue(Intake.intakeCoralThenHold())
-        joystick.button(8).whileTrue(Intake.outtakeCoral)
-        //        joystick.button(9).whileTrue(Intake.intakeAlgae)
-        //        joystick.button(10).whileTrue(Intake.outtakeAlgae)
-        joystick.button(9).whileTrue(Climber.reverseRoller)
-        joystick.button(10).whileTrue(Climber.runRoller)
-        joystick.button(11).whileTrue(Wrist.manualUp())
-        joystick.button(12).whileTrue(Wrist.manualDown())
-        // joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
-        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
-        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
-        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
-        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
+        CommandXboxController(0).configureDriverBindings()
+        CommandJoystick(5).configureTestBindings()
+        CommandXboxController(1).configureManipulatorBindings()
     }
 
-    private val autoChooser = AutoBuilder.buildAutoChooser("test")
-
-    init {
-        SmartDashboard.putData("Auto Mode", autoChooser)
-    }
+    private val autoChooser =
+        AutoBuilder.buildAutoChooser("test").also { SmartDashboard.putData("Auto Mode", it) }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
@@ -144,6 +106,7 @@ object Robot : LoggedRobot() {
         SmartDashboard.putNumber("Elevator Extension (inches)", Elevator.position.inches)
         SmartDashboard.putNumber("Wrist Angle (degrees)", Wrist.angle.degrees)
         SmartDashboard.putBoolean("Elevator.isStowed", Elevator.isStowed)
+        ScoreSelector.telemeterize()
     }
 
     override fun simulationPeriodic() {
@@ -158,8 +121,8 @@ object Robot : LoggedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
-        Chassis.defaultCommand =
-            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
+//        Chassis.defaultCommand =
+//            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {
@@ -175,6 +138,6 @@ object Robot : LoggedRobot() {
 
     override fun autonomousInit() {
         CommandScheduler.getInstance().cancelAll()
-        autoChooser.selected.let { CommandScheduler.getInstance().schedule(it) }
+        autoChooser.selected?.let { CommandScheduler.getInstance().schedule(it) }
     }
 }

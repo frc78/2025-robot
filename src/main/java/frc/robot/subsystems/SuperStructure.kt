@@ -5,11 +5,14 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.DeferredCommand
+import frc.robot.lib.ScoreSelector.SelectedLevel
+import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
+    Stow(0.degrees, 0.25.inches, 0.degrees),
     L1(60.degrees, 0.25.inches, 120.degrees),
     L2(75.degrees, 6.inches, 110.degrees),
     L3(78.degrees, 20.inches, 100.degrees),
@@ -28,8 +31,13 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 }
 
 object SuperStructure {
+
     init {
         RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
+    }
+
+    val goToSelectedLevel by command {
+        DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
     }
 
     // Command factory to go to a specific robot state
@@ -39,14 +47,7 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state")
 
-    // Old smartGoTo that doesn't account for moving between states where the elevator stays raised
-    // (or stowed)
-    //    fun smartGoTo(state: RobotState): Command =
-    //        ConditionalCommand(goToElevatorIsStowed(state), goToElevatorIsRaised(state),
-    // Elevator.isStowed)
-    //            .withName("Go to $state")
-
-    // Command to go to a RobotState and have the elevator and pivot play nice
+    // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
             {
