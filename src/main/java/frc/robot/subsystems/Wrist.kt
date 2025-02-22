@@ -57,37 +57,42 @@ object Wrist : SubsystemBase("Wrist") {
             configurator.apply(config)
         }
 
-    private var currentSetpoint: Angle = leader.position.value
+//    private var currentSetpoint: Angle = leader.position.value
 
     val motionMagic = MotionMagicVoltage(0.degrees)
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
+    fun goToRaw(setPoint: Angle): Command =
+        Commands.runOnce({ Wrist.leader.setControl(Wrist.motionMagic.withPosition(setPoint)) })
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
-            .alongWith(Commands.runOnce({ currentSetpoint = state.wristAngle }))
-
+//            .alongWith(Commands.runOnce({ currentSetpoint = state.wristAngle }))
+            .alongWith()
     val angle: Angle
         get() = leader.position.value
 
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { currentSetpoint = leader.position.value },
+//            { currentSetpoint = leader.position.value },
+            { goToRaw(leader.position.value) }
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { currentSetpoint = leader.position.value },
+//            { currentSetpoint = leader.position.value },
+            { goToRaw(leader.position.value) }
         )
     }
 
     val resetPosition: Command =
         Commands.runOnce({
             leader.setPosition(0.0)
-            currentSetpoint = 0.degrees
+//            currentSetpoint = 0.degrees
         })
 
     fun zeroRoutines(): Command {
@@ -140,7 +145,7 @@ object Wrist : SubsystemBase("Wrist") {
             .withName("Wrist SysId")
 
     init {
-        defaultCommand = run { leader.setControl(positionVoltage.withPosition(currentSetpoint)) }
+//        defaultCommand = run { leader.setControl(positionVoltage.withPosition(currentSetpoint)) }
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
     }
