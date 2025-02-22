@@ -20,7 +20,7 @@ object Climber : SubsystemBase("Climber") {
             configurator.apply(config)
         }
 
-    private val voltageOut = VoltageOut(0.0)
+//    private val voltageOut = VoltageOut(0.0)
 
     val runRoller by command {
         startEnd(
