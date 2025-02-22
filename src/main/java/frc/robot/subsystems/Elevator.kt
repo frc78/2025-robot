@@ -22,7 +22,19 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.radiansPerSecondPerSecond
+import frc.robot.lib.rotations
+import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
 import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
@@ -200,6 +212,10 @@ object Elevator : SubsystemBase("Elevator") {
 
     init {
         SmartDashboard.putData(sysId)
+        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
+        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
+        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
+        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
     }
 
     override fun simulationPeriodic() {

@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.amps
+import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
@@ -88,7 +89,7 @@ object Wrist : SubsystemBase("Wrist") {
         )
     }
 
-    val resetPosition: Command = Commands.runOnce({ leader.setPosition(0.0) })
+    private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
 
     fun zeroRoutines(): Command {
         return SequentialCommandGroup(
@@ -142,5 +143,6 @@ object Wrist : SubsystemBase("Wrist") {
     init {
         SmartDashboard.putData(this)
         SmartDashboard.putData(sysId)
+        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
     }
 }

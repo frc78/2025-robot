@@ -102,6 +102,10 @@ object Intake : Subsystem {
         startEnd({ algaeIntake.set(-1.0) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
     }
 
+    val scoreCoral by command {
+        Commands.idle() // TODO score coral
+    }
+
     init {
         SmartDashboard.putData(intakeAlgae)
         SmartDashboard.putData(intakeCoral)
