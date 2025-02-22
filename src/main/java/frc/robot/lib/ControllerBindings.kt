@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.subsystems.*
 import frc.robot.subsystems.SuperStructure.goTo
 import frc.robot.subsystems.drivetrain.Chassis
@@ -73,12 +72,12 @@ private fun CommandXboxController.configureDpadLayout() {
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureButtonLayout() {
-//    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
-//    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
-//    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
-//    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
-//    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
-//    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
+    //    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
+    //    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
+    //    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
+    //    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
+    //    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
+    //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
     a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
     b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
@@ -110,11 +109,11 @@ fun CommandJoystick.configureTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-//    button(7).whileTrue(Intake.intakeCoral)
+    //    button(7).whileTrue(Intake.intakeCoral)
     button(7).onTrue(Intake.intakeCoralThenHold())
     button(8).whileTrue(Intake.outtakeCoral)
-//    button(9).whileTrue(Intake.intakeAlgae)
-//    button(10).whileTrue(Intake.outtakeAlgae)
+    //    button(9).whileTrue(Intake.intakeAlgae)
+    //    button(10).whileTrue(Intake.outtakeAlgae)
     button(9).whileTrue(Climber.reverseRoller)
     button(10).whileTrue(Climber.runRoller)
     button(11).whileTrue(Wrist.manualUp())

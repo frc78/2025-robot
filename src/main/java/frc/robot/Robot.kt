@@ -117,8 +117,9 @@ object Robot : LoggedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
-//        Chassis.defaultCommand =
-//            Chassis.applyRequest { swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
+        //        Chassis.defaultCommand =
+        //            Chassis.applyRequest {
+        // swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {

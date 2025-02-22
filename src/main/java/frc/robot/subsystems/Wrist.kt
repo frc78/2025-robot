@@ -76,14 +76,14 @@ object Wrist : SubsystemBase("Wrist") {
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { goToRaw(leader.position.value) }
+            { goToRaw(leader.position.value) },
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { goToRaw(leader.position.value) }
+            { goToRaw(leader.position.value) },
         )
     }
 
