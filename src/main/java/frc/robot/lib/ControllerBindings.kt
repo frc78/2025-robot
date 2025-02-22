@@ -14,18 +14,16 @@ private val MANIPULATOR_LAYOUT =
     ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
 
 fun CommandXboxController.configureDriverBindings() {
-    rightBumper()
-        .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(goTo(RobotState.Stow))
-        )
+//    rightBumper()
+//        .whileTrue(
+//            Chassis.driveToSelectedBranch
+//                .andThen(SuperStructure.goToSelectedLevel)
+//                .andThen(Intake.scoreCoral)
+//                .andThen(goTo(RobotState.Stow))
+//        )
 
     leftBumper().whileTrue(Chassis.driveToLeftBranch)
     rightBumper().whileTrue(Chassis.driveToRightBranch)
-    y().whileTrue(Elevator.manualUp)
-    a().whileTrue(Elevator.manualDown)
     start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
 
     Chassis.defaultCommand =

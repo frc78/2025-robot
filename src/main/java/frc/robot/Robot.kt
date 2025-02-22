@@ -14,12 +14,7 @@ import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.ScoreSelector
-import frc.robot.lib.configureDriverBindings
-import frc.robot.lib.configureManipulatorBindings
-import frc.robot.lib.configureTestBindings
-import frc.robot.lib.degrees
-import frc.robot.lib.inches
+import frc.robot.lib.*
 import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
@@ -102,6 +97,7 @@ object Robot : LoggedRobot() {
         SmartDashboard.putNumber("Elevator Extension (inches)", Elevator.position.inches)
         SmartDashboard.putNumber("Wrist Angle (degrees)", Wrist.angle.degrees)
         SmartDashboard.putBoolean("Elevator.isStowed", Elevator.isStowed)
+        SmartDashboard.putNumber("Intake Current (amps)", Intake.supplyCurrent.amps)
         ScoreSelector.telemeterize()
     }
 
