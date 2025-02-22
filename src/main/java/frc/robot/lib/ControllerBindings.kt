@@ -9,6 +9,7 @@ import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.subsystems.*
 import frc.robot.subsystems.SuperStructure.goTo
 import frc.robot.subsystems.drivetrain.Chassis
+import kotlin.math.absoluteValue
 
 private val MANIPULATOR_LAYOUT =
     ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
@@ -43,6 +44,7 @@ enum class ManipulatorLayout {
     DPAD,
     BUTTONS,
     LEFT_STICK,
+    BOTH_STICKS,
 }
 
 fun CommandXboxController.configureManipulatorBindings() {
@@ -51,6 +53,7 @@ fun CommandXboxController.configureManipulatorBindings() {
         ManipulatorLayout.DPAD -> configureDpadLayout()
         ManipulatorLayout.BUTTONS -> configureButtonLayout()
         ManipulatorLayout.LEFT_STICK -> configureLeftStickLayout()
+        ManipulatorLayout.BOTH_STICKS -> configureBothSticksLayout()
     }
 }
 
@@ -101,6 +104,30 @@ private fun CommandXboxController.configureLeftStickLayout() {
 
     axisLessThan(XboxController.Axis.kLeftY.value, -0.5)
         .onTrue(Commands.runOnce({ ScoreSelector.levelUp() }))
+}
+
+private fun CommandXboxController.configureBothSticksLayout() {
+    leftBumper()
+        .or(rightBumper())
+        .onTrue(
+            Commands.runOnce({
+                when {
+                    leftBumper().asBoolean -> SelectedBranch = Branch.LEFT
+                    rightBumper().asBoolean -> SelectedBranch = Branch.RIGHT
+                }
+
+                val t = 0.5 // Threshold
+                val level =
+                    when {
+                        (leftY > t) && (rightY > t) -> Level.L4
+                        (leftY > t) && (rightY.absoluteValue < t) -> Level.L3
+                        (leftY.absoluteValue < t) && (rightY.absoluteValue < t) -> Level.L2
+                        (leftY < -t) -> Level.L1
+                        else -> null
+                    }
+                level?.let { ScoreSelector.SelectedLevel = it }
+            })
+        )
 }
 
 /** Used for setting up a test controller / joystick */

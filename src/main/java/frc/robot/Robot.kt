@@ -28,7 +28,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
-// Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
