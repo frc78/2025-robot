@@ -1,7 +1,5 @@
 package frc.robot.subsystems
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Rotation3d
@@ -10,6 +8,7 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
 import frc.robot.IS_TEST
+import frc.robot.Robot
 import frc.robot.lib.centimeters
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -20,57 +19,56 @@ import org.photonvision.simulation.SimCameraProperties
 import org.photonvision.simulation.VisionSystemSim
 
 object Vision {
-
-    private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
-
-    private val camPitch = (-14).degrees
-    private val camRoll = 0.degrees
-    private val camX = (51.5 / 2).centimeters
-    private val camZ = 8.5.inches
+    private val testCamPitch = (-14).degrees
+    private val testCamRoll = 0.degrees
+    private val testCamX = (51.5 / 2).centimeters
+    private val testCamZ = 8.5.inches
 
     private val cams: List<Camera> =
         listOfNotNull(
             Camera(
                     "FL",
                     Transform3d(
-                        camX,
+                        testCamX,
                         (50 / 2).centimeters,
-                        camZ,
-                        Rotation3d(camRoll, camPitch, (-28.579 - 270).degrees),
+                        testCamZ,
+                        Rotation3d(testCamRoll, testCamPitch, (-28.579 - 270).degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "FR",
                     Transform3d(
-                        camX,
+                        testCamX,
                         (-50 / 2).centimeters,
-                        camZ,
-                        Rotation3d(0.degrees, camPitch, (-28.579).degrees),
+                        testCamZ,
+                        Rotation3d(0.degrees, testCamPitch, (-28.579).degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "BL",
                     Transform3d(
-                        -camX,
+                        -testCamX,
                         (55 / 2).centimeters,
-                        camZ,
-                        Rotation3d(0.degrees, camPitch, 225.degrees),
+                        testCamZ,
+                        Rotation3d(0.degrees, testCamPitch, 225.degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
             Camera(
                     "BR",
                     Transform3d(
-                        -camX,
+                        -testCamX,
                         (-55 / 2).centimeters,
-                        camZ,
-                        Rotation3d(0.degrees, camPitch, 135.degrees),
+                        testCamZ,
+                        Rotation3d(0.degrees, testCamPitch, 135.degrees),
                     ),
                 )
                 .takeIf { IS_TEST },
-            Camera("PLACEHOLDER", Transform3d()).takeIf { !IS_TEST },
+            Camera("BowCam", Transform3d(9.780.inches, (-11.746).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, 28.579.degrees))).takeIf { !IS_TEST },
+            Camera("PortCam", Transform3d((-9.771).inches, (11.519).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, 200.degrees))).takeIf { !IS_TEST },
+            Camera("StarboardCam", Transform3d((-9.771).inches, (-11.519).inches, 6.610.inches, Rotation3d(0.degrees, (-14).degrees, (-200).degrees))).takeIf { !IS_TEST },
         )
 
     private val table = NetworkTableInstance.getDefault().getTable("vision")
@@ -79,13 +77,13 @@ object Vision {
 
     fun update() {
         cams.forEach { cam ->
-            cam.getEstimatedGlobalPose()?.let {
-                val pose = it.estimatedPose.toPose2d()
-                Chassis.addVisionMeasurement(pose, it.timestampSeconds, cam.currentStds)
+            cam.getEstimatedGlobalPose()?.let { estimatedGlobalPose ->
+                val pose = estimatedGlobalPose.estimatedPose.toPose2d()
+                Chassis.addVisionMeasurement(pose, estimatedGlobalPose.timestampSeconds, cam.currentStds)
                 Logger.recordOutput(cam.cam.name + " est", pose)
                 // Send the locations of all tracked tags to networktables
                 topics[cam]?.set(
-                    it.targetsUsed
+                    estimatedGlobalPose.targetsUsed
                         .map {
                             (Chassis.state.Pose + cam.robotToCamera2d) +
                                 Transform2d(
@@ -106,7 +104,7 @@ object Vision {
     /** Initializes simulated cameras and runs an update thread at 50 Hz */
     fun setupSimulation() {
         val visionSim = VisionSystemSim("sim")
-        visionSim.addAprilTags(field)
+        visionSim.addAprilTags(Robot.gameField)
 
         val camProps =
             SimCameraProperties().apply {

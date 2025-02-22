@@ -5,6 +5,8 @@ package frc.robot
 
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -31,6 +33,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
+    val gameField = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
+
     private val swerveRequest =
         SwerveRequest.ApplyFieldSpeeds()
             .withDesaturateWheelSpeeds(true)

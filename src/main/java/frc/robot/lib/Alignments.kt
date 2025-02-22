@@ -7,20 +7,19 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
+import frc.robot.Robot
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 
 /** Poses that the robot can auto-align to */
 object Alignments {
-    private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
-
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.kZero)
 
     private val BLUE_REEF_POSES =
         intArrayOf(17, 18, 19, 20, 21, 22).map {
-            aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
         }
     private val BLUE_BRANCH_POSES =
         BLUE_REEF_POSES.flatMap {
@@ -28,7 +27,7 @@ object Alignments {
         }
 
     private val RED_REEF_POSES =
-        intArrayOf(6, 7, 8, 9, 10, 11).map { aprilTags.getTagPose(it).get().toPose2d() }
+        intArrayOf(6, 7, 8, 9, 10, 11).map { Robot.gameField.getTagPose(it).get().toPose2d() }
 
     private val RED_BRANCH_POSES =
         RED_REEF_POSES.flatMap {
@@ -47,9 +46,9 @@ object Alignments {
             )
 
     private val BLUE_CORAL_STATION_LOCATIONS =
-        intArrayOf(12, 13).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(12, 13).flatMap { Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag }
     private val RED_CORAL_STATION_LOCATIONS =
-        intArrayOf(1, 2).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(1, 2).flatMap { Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag }
 
     private val reefPoses
         get() =
