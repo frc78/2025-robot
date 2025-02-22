@@ -44,6 +44,7 @@ import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
+import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -348,12 +349,20 @@ object Chassis :
     val driveToClosestReef by command { driveToPose { closestReef } }
 
     val driveToLeftBranch by command {
-        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
+        driveToPose {
+                closestReef
+                    .transformBy(REEF_TO_BRANCH_LEFT)
+                    .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+            }
             .withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
+        driveToPose {
+                closestReef
+                    .transformBy(REEF_TO_BRANCH_RIGHT)
+                    .transformBy((Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)))
+            }
             .withName("Drive to branch right")
     }
 
