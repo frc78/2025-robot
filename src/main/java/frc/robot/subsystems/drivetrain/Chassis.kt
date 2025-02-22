@@ -39,20 +39,14 @@ import frc.robot.IS_TEST
 import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
+import frc.robot.lib.*
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
-import frc.robot.lib.Branch
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.command
-import frc.robot.lib.feetPerSecond
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.rotationsPerSecond
-import frc.robot.lib.volts
-import frc.robot.lib.voltsPerSecond
+import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -121,6 +115,8 @@ object Chassis :
     val FieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
             .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
+            .withHeadingPID(6.0, 0.0, 0.1)
+            .withRotationalDeadband(0.05)
 
     val FieldCentric =
         SwerveRequest.FieldCentric()
@@ -138,10 +134,6 @@ object Chassis :
             .withSpeeds(
                 ChassisSpeeds(0.0.metersPerSecond, (-1.0).feetPerSecond, 0.0.rotationsPerSecond)
             )
-
-    init {
-        FieldCentricFacingAngle.HeadingController.setPID(10.0, 0.0, 0.0)
-    }
 
     fun configureAutoBuilder() {
         try {
@@ -325,14 +317,14 @@ object Chassis :
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
     private val yController =
         ProfiledPIDController(
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 10.0),
+            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
 
     fun driveToPose(pose: () -> Pose2d): Command =
@@ -363,12 +355,20 @@ object Chassis :
     val driveToClosestReef by command { driveToPose { closestReef } }
 
     val driveToLeftBranch by command {
-        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_LEFT) }
+        driveToPose {
+                closestReef
+                    .transformBy(REEF_TO_BRANCH_LEFT)
+                    .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+            }
             .withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPose { closestReef.transformBy(REEF_TO_BRANCH_RIGHT) }
+        driveToPose {
+                closestReef
+                    .transformBy(REEF_TO_BRANCH_RIGHT)
+                    .transformBy((Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)))
+            }
             .withName("Drive to branch right")
     }
 

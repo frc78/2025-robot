@@ -65,7 +65,6 @@ object Robot : LoggedRobot() {
 
         SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
 
-        // joystick.button(12).whileTrue(Elevator.goTo(RobotState.L3))
         SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
         SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
         SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))

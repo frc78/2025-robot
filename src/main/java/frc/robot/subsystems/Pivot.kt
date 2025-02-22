@@ -44,21 +44,22 @@ object Pivot : SubsystemBase("Pivot") {
 
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                         .withReverseSoftLimitEnable(true)
-                        .withForwardSoftLimitThreshold(150.degrees)
+                        .withForwardSoftLimitThreshold(160.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
                     // Set feedback to encoder
                     Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
-                    Slot0.withKP(38.77)
-                        .withKD(14.947)
-                        .withKS(0.13503)
-                        .withKV(32.70)
-                        .withKA(0.69849)
-                        .withKG(0.2816)
+                    Slot0.withKP(24.365)
+                        .withKD(0.22908)
+                        .withKS(0.1755)
+                        .withKV(31.983)
+                        .withKA(0.49753)
+                        .withKG(0.22628)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
                     MotionMagic.MotionMagicCruiseVelocity = .25
                     MotionMagic.MotionMagicAcceleration = 2.5
                 }
+
             configurator.apply(config)
         }
     private val follower =
@@ -76,6 +77,19 @@ object Pivot : SubsystemBase("Pivot") {
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
+
+    //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
+    // Pivot.angle < 95.degrees}
+
+    fun goToAndWaitUntilVertical(state: RobotState): Command =
+        PrintCommand(
+                "Pivot going to $state - ${state.pivotAngle} from $angle and waiting until vertical"
+            )
+            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
+            .andThen(Commands.idle())
+            .until {
+                (angle - state.pivotAngle < 3.degrees) && (angle - state.pivotAngle > (-3).degrees)
+            }
 
     val angle: Angle
         get() = cancoder.position.value
@@ -116,8 +130,8 @@ object Pivot : SubsystemBase("Pivot") {
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(
-                .3.voltsPerSecond,
-                3.volts,
+                1.voltsPerSecond,
+                7.volts,
                 10.seconds,
                 { SignalLogger.writeString("pivot_state", "$it") },
             ),
@@ -133,16 +147,16 @@ object Pivot : SubsystemBase("Pivot") {
         Commands.sequence(
                 runOnce { SignalLogger.start() },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value >= 150.degrees
+                    leader.position.value >= 160.degrees
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value <= 30.degrees
+                    leader.position.value <= 10.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value >= 150.degrees
+                    leader.position.value >= 10.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value <= 30.degrees
+                    leader.position.value <= 10.degrees
                 },
                 runOnce { SignalLogger.stop() },
             )

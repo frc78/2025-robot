@@ -1,6 +1,7 @@
 package frc.robot.lib
 
 import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -15,7 +16,8 @@ import frc.robot.subsystems.SuperStructure.goTo
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 
-private val MANIPULATOR_LAYOUT = ManipulatorLayout.LEFT_STICK
+private val MANIPULATOR_LAYOUT =
+    ManipulatorLayout.LEFT_STICK.also { SmartDashboard.putString("manip_layout", it.name) }
 
 fun CommandXboxController.configureDriverBindings() {
     rightBumper()
@@ -104,7 +106,7 @@ fun CommandJoystick.configureTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-    button(7).whileTrue(Intake.intakeCoral)
+    button(7).whileTrue(Intake.intakeCoralThenHold())
     button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Intake.intakeAlgae)
     button(10).whileTrue(Intake.outtakeAlgae)

@@ -32,7 +32,7 @@ class Camera(val name: String, val transform: Transform3d) {
         )
 
     // TODO guessed values, should tune one day
-    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(1.0, 1.0, 1.0)
+    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(2.0, 2.0, 1.0)
     private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 0.5)
 
     var currentStds: Matrix<N3, N1> = singleTagStds
@@ -72,7 +72,10 @@ class Camera(val name: String, val transform: Transform3d) {
         val avgDist = totalDistance / validTargets.size
 
         if (validTargets.size > 1) currentStds = multiTagStds
-
+        if (avgDist > 4) {
+            currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
+            return
+        }
         // We need to improve standard deviation calculations
         currentStds.times(1 + (avgDist.pow(2) / 15))
     }
