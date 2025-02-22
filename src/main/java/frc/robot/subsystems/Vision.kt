@@ -1,7 +1,5 @@
 package frc.robot.subsystems
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Rotation3d
@@ -11,7 +9,6 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.Notifier
 import frc.robot.IS_TEST
 import frc.robot.Robot
-import frc.robot.lib.centimeters
 import frc.robot.lib.centimeters
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
