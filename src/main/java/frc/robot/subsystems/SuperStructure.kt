@@ -10,12 +10,12 @@ import frc.robot.lib.inches
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    L1(60.degrees, 0.inches, 120.degrees),
+    L1(60.degrees, 0.25.inches, 120.degrees),
     L2(75.degrees, 6.inches, 110.degrees),
     L3(78.degrees, 20.inches, 100.degrees),
     L4(82.degrees, 46.inches, 100.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
-    CoralStation(54.degrees, 0.inches, 19.degrees),
+    CoralStation(54.degrees, 0.25.inches, 19.degrees),
     AlgaeGroundPickup(18.degrees, 3.inches, 30.degrees),
     CoralGroundPickup(5.degrees, 5.inches, 74.degrees),
     Processor(0.degrees, 0.inches, 0.degrees),
@@ -57,6 +57,7 @@ object SuperStructure {
                     !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
                 ) {
                     // if elevator is raised and getting stowed, lower it before moving pivot
+                    println("Elevator going down, running goToElevatorIsRaised(state)")
                     goToElevatorIsRaised(state)
                 } else {
                     // if elevator is not going from stowed to raised or vice versa, move everything

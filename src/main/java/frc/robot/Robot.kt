@@ -33,6 +33,7 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     private val swerveRequest = SwerveRequest.ApplyFieldSpeeds().withDesaturateWheelSpeeds(true)
     val driveController = CommandXboxController(0)
+    val manipulatorController = CommandXboxController(1)
     val joystick = CommandJoystick(5)
 
     init {
@@ -65,6 +66,13 @@ object Robot : LoggedRobot() {
         driveController.a().whileTrue(Elevator.manualDown)
         driveController.start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
         SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
+
+        manipulatorController.a().onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
+        manipulatorController.b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
+        manipulatorController.x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
+        manipulatorController.y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+        manipulatorController.rightBumper().onTrue(Intake.intakeCoralThenHold())
+        manipulatorController.leftBumper().whileTrue(Intake.outtakeCoral)
 
         joystick.button(5).whileTrue(Pivot.moveUp)
         joystick.button(3).whileTrue(Pivot.moveDown)
@@ -129,6 +137,7 @@ object Robot : LoggedRobot() {
         SmartDashboard.putNumber("Pivot Angle (degrees)", Pivot.angle.degrees)
         SmartDashboard.putNumber("Elevator Extension (inches)", Elevator.position.inches)
         SmartDashboard.putNumber("Wrist Angle (degrees)", Wrist.angle.degrees)
+        SmartDashboard.putBoolean("Elevator.isStowed", Elevator.isStowed)
     }
 
     override fun simulationPeriodic() {
