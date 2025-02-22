@@ -20,12 +20,7 @@ import frc.robot.lib.configureManipulatorBindings
 import frc.robot.lib.configureTestBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Elevator
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Vision
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -57,10 +52,11 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
         Wrist
+        Climber
 
         CommandXboxController(0).configureDriverBindings()
-        CommandJoystick(5).configureTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
+        CommandJoystick(5).configureTestBindings()
     }
 
     private val autoChooser =
