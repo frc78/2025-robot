@@ -23,7 +23,6 @@ import frc.robot.lib.inches
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.Vision
 import frc.robot.subsystems.Wrist
@@ -62,20 +61,10 @@ object Robot : LoggedRobot() {
         CommandXboxController(0).configureDriverBindings()
         CommandJoystick(5).configureTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
-
-        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
-
-        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
-        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
-        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
-        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
     }
 
-    private val autoChooser = AutoBuilder.buildAutoChooser("test")
-
-    init {
-        SmartDashboard.putData("Auto Mode", autoChooser)
-    }
+    private val autoChooser =
+        AutoBuilder.buildAutoChooser("test").also { SmartDashboard.putData("Auto Mode", it) }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
@@ -143,6 +132,6 @@ object Robot : LoggedRobot() {
 
     override fun autonomousInit() {
         CommandScheduler.getInstance().cancelAll()
-        autoChooser.selected.let { CommandScheduler.getInstance().schedule(it) }
+        autoChooser.selected?.let { CommandScheduler.getInstance().schedule(it) }
     }
 }

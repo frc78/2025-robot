@@ -11,27 +11,30 @@ private const val DEADBAND = 0.1
 private val maxTranslation = 3.metersPerSecond
 private val maxRotation = 1.rotationsPerSecond
 
-// These use raw doubles to avoid allocations every loop
+// Extension properties to access the drive velocities based on joystick input
+// This used to be a single method that returned a ChassisSpeeds object,
+// but it made it hard to use in cases where we wanted an override of one or more speeds,
+// such as auto-alignment
+
+// triggerAdjust is a scalar that allows scaling up or down based on the values of the left and
+// right triggers. The output is between (1-UP_ADJUST-DOWN_ADJUST) and 1 (default 0.25 and 1)
+val XboxController.triggerAdjust
+    get() = (1 - UP_ADJUST) + (rightTriggerAxis * UP_ADJUST) - (leftTriggerAxis * DOWN_ADJUST)
+
 val XboxController.velocityX: LinearVelocity
     get() {
         val x = MathUtil.applyDeadband(-leftY, DEADBAND)
-        val triggerAdjust =
-            (1 - UP_ADJUST) + (rightTriggerAxis * UP_ADJUST) - (leftTriggerAxis * DOWN_ADJUST)
         return maxTranslation * x * triggerAdjust
     }
 
 val XboxController.velocityY: LinearVelocity
     get() {
         val y = MathUtil.applyDeadband(-leftX, DEADBAND)
-        val triggerAdjust =
-            (1 - UP_ADJUST) + (rightTriggerAxis * UP_ADJUST) - (leftTriggerAxis * DOWN_ADJUST)
         return maxTranslation * y * triggerAdjust
     }
 
 val XboxController.velocityRot: AngularVelocity
     get() {
         val rot = MathUtil.applyDeadband(-rightX, DEADBAND)
-        val triggerAdjust =
-            (1 - UP_ADJUST) + (rightTriggerAxis * UP_ADJUST) - (leftTriggerAxis * DOWN_ADJUST)
         return maxRotation * rot * triggerAdjust
     }
