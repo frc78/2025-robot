@@ -23,11 +23,11 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
-import java.util.function.BooleanSupplier
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
+    val IS_STOWED_THRESHOLD = 3.inches
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
@@ -42,7 +42,7 @@ object Elevator : SubsystemBase("Elevator") {
                 }
             )
 
-    val isStowed: BooleanSupplier = BooleanSupplier { position < IS_STOWED_THRESHOLD }
+    val isStowed: Boolean = position < IS_STOWED_THRESHOLD
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
@@ -57,7 +57,7 @@ object Elevator : SubsystemBase("Elevator") {
                 }
             )
             .andThen(Commands.idle())
-            .until(isStowed)
+            .until { isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD }
 
     val manualUp by command {
         startEnd(
@@ -94,7 +94,6 @@ object Elevator : SubsystemBase("Elevator") {
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     private val MAX_HEIGHT = 53.inches
-    val IS_STOWED_THRESHOLD = 3.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {

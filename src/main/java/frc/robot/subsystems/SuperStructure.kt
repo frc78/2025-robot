@@ -50,15 +50,11 @@ object SuperStructure {
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
             {
-                if (
-                    Elevator.isStowed.asBoolean &&
-                        state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD
-                ) {
+                if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
                     // if elevator is stowed and getting raised, move pivot before raising it
                     goToElevatorIsStowed(state)
                 } else if (
-                    !Elevator.isStowed.asBoolean &&
-                        state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                    !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
                 ) {
                     // if elevator is raised and getting stowed, lower it before moving pivot
                     goToElevatorIsRaised(state)
