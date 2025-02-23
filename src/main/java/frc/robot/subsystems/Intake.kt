@@ -35,8 +35,8 @@ object Intake : Subsystem {
     // TODO determine these values empirically for the new intake - graph on dashboard?
     private val CORAL_CURRENT_THRESHOLD =
         0.amps // Current spike threshold for detecting when we have a coral
-    private val ALGAE_CURRENT_THRESHOLD =
-        0.amps // Current spike threshold for detecting when we have an algae
+    //    private val ALGAE_CURRENT_THRESHOLD =
+    //        0.amps // Current spike threshold for detecting when we have an algae
     //
     //    private val coralIntake =
     //        TalonFX(14, "*").apply {

@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.subsystems.*
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -12,11 +13,8 @@ import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
 import frc.robot.subsystems.Wrist
-import frc.robot.subsystems.drivetrain.Chassis
-import org.littletonrobotics.junction.Logger
-import frc.robot.subsystems.*
-import frc.robot.subsystems.SuperStructure.goTo
 import kotlin.math.absoluteValue
+import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
     ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }

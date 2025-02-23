@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector
-import frc.robot.lib.amps
 import frc.robot.lib.configureDriverBindings
 import frc.robot.lib.configureManipTestBindings
 import frc.robot.lib.configureManipulatorBindings
