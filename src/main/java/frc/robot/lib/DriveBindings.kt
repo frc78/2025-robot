@@ -10,7 +10,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
-    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
+    DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
 
 enum class DriveLayout {
     BASIC,

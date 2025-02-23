@@ -324,14 +324,14 @@ object Chassis :
             10.0,
             0.0,
             0.0,
-            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 3.5),
         )
     private val yController =
         ProfiledPIDController(
             10.0,
             0.0,
             0.0,
-            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 3.5),
         )
 
     fun driveToPose(pose: () -> Pose2d): Command =
@@ -357,11 +357,11 @@ object Chassis :
                     FieldCentricFacingAngle.withVelocityX(xOutput).withVelocityY(yOutput)
                 }
             )
-            .until {
-                xController.atGoal() &&
-                    yController.atGoal() &&
-                    FieldCentricFacingAngle.HeadingController.atSetpoint()
-            }
+//            .until {
+//                xController.atGoal() &&
+//                    yController.atGoal() &&
+//                    FieldCentricFacingAngle.HeadingController.atSetpoint()
+//            }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 

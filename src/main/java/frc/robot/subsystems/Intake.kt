@@ -21,7 +21,7 @@ object Intake : Subsystem {
         defaultCommand = Commands.idle(this)
     }
 
-    private val canRange: CANrange = CANrange(0)
+    private val canRange: CANrange = CANrange(0, "*")
 
     private val canRangeOffsetEntry =
         NetworkTableInstance.getDefault().getEntry("intake/canRangeOffset")
@@ -30,7 +30,7 @@ object Intake : Subsystem {
         get() = canRangeOffsetEntry.getDouble(4.0).centimeters
 
     private val SIDE_PLATE_THICKNESS = 0.5.centimeters // Measured in cm.
-    private val INTAKE_WIDTH = 52.0.centimeters // Measured in cm.
+    private val INTAKE_WIDTH = 40.5.centimeters // Measured in cm.
 
     // TODO determine these values empirically for the new intake - graph on dashboard?
     private val CORAL_CURRENT_THRESHOLD =
@@ -90,7 +90,7 @@ object Intake : Subsystem {
                 return 0.0.centimeters
             }
 
-            return rawDistance() - (INTAKE_WIDTH / 2.0) + 5.715.centimeters
+            return -(rawDistance() - (INTAKE_WIDTH / 2.0) + 3.centimeters)
         }
 
     // Returns the distance from the sensor to the nearest object's edge.
