@@ -120,4 +120,5 @@ fun CommandJoystick.configureManipTestBindings() {
     button(10).whileTrue(Climber.runRoller)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
+    trigger().whileTrue(Climber.climb())
 }
