@@ -199,7 +199,7 @@ object Elevator : SubsystemBase("Elevator") {
     }
 
     init {
-        SmartDashboard.putData(sysId)
+//        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {

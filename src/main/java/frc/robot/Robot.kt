@@ -104,6 +104,16 @@ object Robot : LoggedRobot() {
         CommandScheduler.getInstance().run()
         Vision.update()
         ScoreSelector.telemeterize()
+
+        SmartDashboard.putNumber("Pivot", Pivot.angle.degrees)
+        SmartDashboard.putNumber("Elevator", Elevator.position.inches)
+        SmartDashboard.putNumber("Wrist", Wrist.angle.degrees)
+
+        SmartDashboard.putBoolean("Ele Stowed", Elevator.isStowed)
+
+        SmartDashboard.putNumber("Coral Current", Intake.supplyCurrent.amps)
+
+
     }
 
     override fun simulationPeriodic() {

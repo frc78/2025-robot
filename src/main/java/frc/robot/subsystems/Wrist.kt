@@ -26,8 +26,8 @@ import frc.robot.lib.voltsPerSecond
 import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("Wrist") {
-    private var lowerLimit = 0.degrees
-    private var upperLimit = 120.degrees
+    private var lowerLimit = 8.degrees
+    private var upperLimit = 175.degrees
     private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
 
     private val leader =
@@ -36,7 +36,7 @@ object Wrist : SubsystemBase("Wrist") {
                 TalonFXConfiguration().apply {
                     Feedback.SensorToMechanismRatio = GEAR_RATIO
 
-                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
@@ -44,7 +44,7 @@ object Wrist : SubsystemBase("Wrist") {
                         .withForwardSoftLimitThreshold(upperLimit)
                         .withReverseSoftLimitThreshold(lowerLimit)
 
-                    Slot0.withKP(62.105)
+                    Slot0.withKP(142.105) // 62.105
                         .withKD(19.613)
                         .withKS(0.0)
                         .withKV(0.0)
@@ -52,8 +52,8 @@ object Wrist : SubsystemBase("Wrist") {
                         .withKG(0.0)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
 
-                    MotionMagic.MotionMagicCruiseVelocity = .25
-                    MotionMagic.MotionMagicAcceleration = 2.5
+                    MotionMagic.MotionMagicCruiseVelocity = 10.0
+                    MotionMagic.MotionMagicAcceleration = 100.0
                 }
 
             configurator.apply(config)
@@ -136,9 +136,9 @@ object Wrist : SubsystemBase("Wrist") {
             .withName("Wrist SysId")
 
     init {
-        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
-        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
+//        SmartDashboard.putData(this)
+//        SmartDashboard.putData(sysId)
+//        SmartDashboard.putData("Zero wrist", resetPosition)
     }
 
     override fun periodic() {

@@ -41,7 +41,7 @@ object Pivot : SubsystemBase("Pivot") {
     //    private var currentSetpoint: Angle = cancoder.position.value
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val ELEVATOR_THRESHOLD = 3.degrees
+    private val ELEVATOR_THRESHOLD = 5.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -180,8 +180,8 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     init {
-        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
+//        SmartDashboard.putData(this)
+//        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {
