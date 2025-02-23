@@ -10,19 +10,21 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
-    DriveLayout.AUTOMATIC.also { SmartDashboard.putString("drive_layout", it.name) }
+    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
 
 enum class DriveLayout {
     BASIC,
     SNAPPING,
-    AUTOMATIC,
+    MANUAL_SEQUENCING,
+    AUTOMATIC_SEQUENCING,
 }
 
 fun CommandXboxController.configureDriverBindings() {
     when (DRIVE_LAYOUT) {
         DriveLayout.BASIC -> configureDriveBasicLayout()
         DriveLayout.SNAPPING -> configureDriveSnappingLayout()
-        DriveLayout.AUTOMATIC -> configureDriveAutomaticLayout()
+        DriveLayout.MANUAL_SEQUENCING -> configureDriveManualSequencingLayout()
+        DriveLayout.AUTOMATIC_SEQUENCING -> configureDriveAutomaticSequencingLayout()
     }
 }
 
@@ -44,14 +46,19 @@ fun CommandXboxController.configureDriveSnappingLayout() {
 
     leftBumper().whileTrue(Chassis.driveToLeftBranch)
     rightBumper().whileTrue(Chassis.driveToRightBranch)
-    y().whileTrue(Elevator.manualUp)
-    a().whileTrue(Elevator.manualDown)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
 }
 
+fun CommandXboxController.configureDriveManualSequencingLayout() {
+    configureDriveSnappingLayout()
+
+    leftTrigger(0.55).onTrue(SuperStructure.goToSelectedLevel).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    rightTrigger(0.55).onTrue(Intake.scoreCoral).onFalse(Intake.defaultCommand)
+}
+
 // Driving with buttons for automatic scoring sequences
-fun CommandXboxController.configureDriveAutomaticLayout() {
+fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     configureDriveBasicLayout()
 
     rightBumper()
