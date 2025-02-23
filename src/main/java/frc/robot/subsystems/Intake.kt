@@ -32,13 +32,13 @@ object Intake : Subsystem {
     private val SIDE_PLATE_THICKNESS = 0.5.centimeters // Measured in cm.
     private val INTAKE_WIDTH = 52.0.centimeters // Measured in cm.
 
-    // TODO determine these values empirically for the new intake - graph on dashboard?
     private val CORAL_CURRENT_THRESHOLD =
         25.amps // Current spike threshold for detecting when we have a coral
 
-
     private val ALGAE_CURRENT_THRESHOLD =
         0.amps // Current spike threshold for detecting when we have an algae
+    private var algaeSpikeDetected = false
+    private var algaeSpikeResolved = false
 
     //    private val coralIntake =
     //        TalonFX(14, "*").apply {
@@ -82,9 +82,31 @@ object Intake : Subsystem {
      * Return true if the intake motor is experiencing current draw greater than the given
      * threshold.
      */
-    fun hasCoralByCurrent(threshold: Current): Boolean {
+    fun hasCoralByCurrent(): Boolean {
         // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= threshold) && hasBranchCoral
+        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && hasBranchCoral
+    }
+
+    fun hasAlgaeByCurrent(): Boolean {
+        val thresholdMet: Boolean = leader.torqueCurrent.value >= ALGAE_CURRENT_THRESHOLD
+        if (thresholdMet) {
+            if (algaeSpikeDetected) {
+                if (algaeSpikeResolved) {
+                    // if threshold is met, and initial current spike from running motor is already accounted for,
+                    // we have the algae so return true and reset the spike detection booleans
+                    algaeSpikeDetected = false
+                    algaeSpikeResolved = false
+                    return true
+                }
+            } else {
+                // threshold met and initial spike not detected yet, so mark it as such
+                algaeSpikeDetected = true
+            }
+        } else if (algaeSpikeDetected) {
+            // if spike was detected but current is back down, is now resolved
+            algaeSpikeResolved = true
+        }
+        return false
     }
 
     // Returns the distance from the center of the intake to the center of the coral.
@@ -138,6 +160,13 @@ object Intake : Subsystem {
         PrintCommand("Intake coral then hold")
             .alongWith(runOnce { leader.set(0.6) } )
             .andThen(Commands.idle())
-            .until { hasCoralByCurrent(CORAL_CURRENT_THRESHOLD) }
+            .until { hasCoralByCurrent() }
             .andThen({ leader.set(0.08) })
+
+    fun intakeAlgaeThenHold(): Command =
+        PrintCommand("Intake algae then hold")
+            .alongWith(runOnce { leader.set(-1.0) })
+            .andThen(Commands.idle())
+            .until { hasAlgaeByCurrent() }
+            .andThen({ leader.set(-0.2)} )
 }
