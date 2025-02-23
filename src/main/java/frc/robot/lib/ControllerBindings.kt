@@ -1,7 +1,6 @@
 package frc.robot.lib
 
 import edu.wpi.first.wpilibj.XboxController
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -14,9 +13,10 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
+import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 fun CommandXboxController.configureDriverBindings() {
     //    rightBumper()

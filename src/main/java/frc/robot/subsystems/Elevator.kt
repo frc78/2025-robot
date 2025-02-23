@@ -35,7 +35,7 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import frc.robot.subsystems.Elevator.toDrumRotations
+import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -102,17 +102,20 @@ object Elevator : SubsystemBase("Elevator") {
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
             .alongWith(
-                runOnce { leader.setControl(motionMagic.withPosition(state.elevatorHeight.toDrumRotations())) }
+                runOnce {
+                    leader.setControl(
+                        motionMagic.withPosition(state.elevatorHeight.toDrumRotations())
+                    )
+                }
             )
 
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
-        PrintCommand("Elevator stowing")
-            .alongWith(goTo(state))
-            .andThen(Commands.idle())
-            .until { isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD }
+        PrintCommand("Elevator stowing").alongWith(goTo(state)).andThen(Commands.idle()).until {
+            isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD
+        }
 
     val manualUp by command {
         startEnd(
@@ -197,6 +200,11 @@ object Elevator : SubsystemBase("Elevator") {
 
     init {
         SmartDashboard.putData(sysId)
+    }
+
+    override fun periodic() {
+        Logger.recordOutput("elevator/position", position)
+        Logger.recordOutput("elevator/stowed", isStowed)
     }
 
     override fun simulationPeriodic() {

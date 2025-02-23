@@ -7,7 +7,6 @@ import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -34,18 +33,20 @@ object Intake : Subsystem {
     private val INTAKE_WIDTH = 52.0.centimeters // Measured in cm.
 
     // TODO determine these values empirically for the new intake - graph on dashboard?
-    private val CORAL_CURRENT_THRESHOLD = 0.amps // Current spike threshold for detecting when we have a coral
-    private val ALGAE_CURRENT_THRESHOLD = 0.amps // Current spike threshold for detecting when we have an algae
-//
-//    private val coralIntake =
-//        TalonFX(14, "*").apply {
-//            configurator.apply(
-//                TalonFXConfiguration().apply {
-//                    CurrentLimits.StatorCurrentLimit = 40.0
-//                    CurrentLimits.SupplyCurrentLimit = 20.0
-//                }
-//            )
-//        }
+    private val CORAL_CURRENT_THRESHOLD =
+        0.amps // Current spike threshold for detecting when we have a coral
+    private val ALGAE_CURRENT_THRESHOLD =
+        0.amps // Current spike threshold for detecting when we have an algae
+    //
+    //    private val coralIntake =
+    //        TalonFX(14, "*").apply {
+    //            configurator.apply(
+    //                TalonFXConfiguration().apply {
+    //                    CurrentLimits.StatorCurrentLimit = 40.0
+    //                    CurrentLimits.SupplyCurrentLimit = 20.0
+    //                }
+    //            )
+    //        }
 
     // TODO check id, inversion, etc. before running because of new intake design
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
@@ -74,7 +75,8 @@ object Intake : Subsystem {
         get() = leader.supplyCurrent.value
 
     /**
-     * Return true if the intake motor is experiencing current draw greater than the given threshold.
+     * Return true if the intake motor is experiencing current draw greater than the given
+     * threshold.
      */
     fun hasGamePieceByCurrent(threshold: Current): Boolean {
         return leader.supplyCurrent.value >= threshold
@@ -102,6 +104,8 @@ object Intake : Subsystem {
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
         Logger.recordOutput("intake/coral_position", rawDistance())
         Logger.recordOutput("intake/coral_location", coralLocation)
+        Logger.recordOutput("intake/supply_current", supplyCurrent)
+        Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
     }
 
     val intakeCoral by command {
