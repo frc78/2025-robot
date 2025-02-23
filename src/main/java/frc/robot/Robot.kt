@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
+import frc.robot.lib.amps
 import frc.robot.lib.configureDriverBindings
 import frc.robot.lib.configureManipulatorBindings
 import frc.robot.lib.configureTestBindings
@@ -65,8 +66,8 @@ object Robot : LoggedRobot() {
         Wrist
 
         CommandXboxController(0).configureDriverBindings()
-        CommandJoystick(5).configureTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
+        CommandJoystick(5).configureTestBindings()
 
         SmartDashboard.putData(
             "Flip driver station",
@@ -126,6 +127,14 @@ object Robot : LoggedRobot() {
         CommandScheduler.getInstance().run()
         Vision.update()
         ScoreSelector.telemeterize()
+
+        SmartDashboard.putNumber("Pivot", Pivot.angle.degrees)
+        SmartDashboard.putNumber("Elevator", Elevator.position.inches)
+        SmartDashboard.putNumber("Wrist", Wrist.angle.degrees)
+
+        SmartDashboard.putBoolean("Ele Stowed", Elevator.isStowed)
+
+        SmartDashboard.putNumber("Coral Current", Intake.supplyCurrent.amps)
     }
 
     override fun simulationPeriodic() {
@@ -140,6 +149,9 @@ object Robot : LoggedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
+        //        Chassis.defaultCommand =
+        //            Chassis.applyRequest {
+        // swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {

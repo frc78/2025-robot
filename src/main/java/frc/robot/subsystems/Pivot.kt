@@ -15,7 +15,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -30,11 +29,19 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Pivot : SubsystemBase("Pivot") {
 
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
+
+    //    private var currentSetpoint: Angle = cancoder.position.value
+
+    // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
+    private val ELEVATOR_THRESHOLD = 5.degrees
+
     private val leader =
         TalonFX(9, "*").apply {
             val config =
@@ -71,25 +78,20 @@ object Pivot : SubsystemBase("Pivot") {
 
     init {
         follower.setControl(Follower(9, true))
-        defaultCommand = Commands.idle(this)
+        //        defaultCommand = run {
+        // leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
+            // leader.setControl(motionMagic.withPosition(state.pivotAngle)) }))
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
-
-    //    private val isVertical: BooleanSupplier = BooleanSupplier {Pivot.angle > 80.degrees &&
-    // Pivot.angle < 95.degrees}
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
-        PrintCommand(
-                "Pivot going to $state - ${state.pivotAngle} from $angle and waiting until vertical"
-            )
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
-            .andThen(Commands.idle())
-            .until {
-                (angle - state.pivotAngle < 3.degrees) && (angle - state.pivotAngle > (-3).degrees)
-            }
+        PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
+            abs(angle.baseUnitMagnitude() - state.pivotAngle.baseUnitMagnitude()) <
+                ELEVATOR_THRESHOLD.baseUnitMagnitude()
+        }
 
     val angle: Angle
         get() = cancoder.position.value
@@ -117,14 +119,14 @@ object Pivot : SubsystemBase("Pivot") {
     val moveUp by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput(2.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
 
     val moveDown by command {
         startEnd(
             { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
     private val sysIdRoutine =
@@ -177,8 +179,12 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     init {
-        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
+        //        SmartDashboard.putData(this)
+        //        SmartDashboard.putData(sysId)
+    }
+
+    override fun periodic() {
+        Logger.recordOutput("pivot/angle", angle)
     }
 
     override fun simulationPeriodic() {

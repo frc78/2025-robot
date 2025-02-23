@@ -25,7 +25,6 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -406,6 +405,7 @@ object Chassis :
     val strafeLeft by command { applyRequest { StrafeLeft } }
     val strafeRight by command { applyRequest { StrafeRight } }
 
+    @Suppress("UnusedPrivateProperty")
     private val driveToClosestCoralStation by command {
         driveToPose {
                 closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
@@ -414,10 +414,10 @@ object Chassis :
     }
 
     init {
-        SmartDashboard.putData(driveToRightBranch)
-        SmartDashboard.putData(driveToLeftBranch)
-        SmartDashboard.putData(driveToClosestBranch)
-        SmartDashboard.putData(driveToClosestReef)
-        SmartDashboard.putData(driveToClosestCoralStation)
+        //        SmartDashboard.putData(driveToRightBranch)
+        //        SmartDashboard.putData(driveToLeftBranch)
+        //        SmartDashboard.putData(driveToClosestBranch)
+        //        SmartDashboard.putData(driveToClosestReef)
+        //        SmartDashboard.putData(driveToClosestCoralStation)
     }
 }

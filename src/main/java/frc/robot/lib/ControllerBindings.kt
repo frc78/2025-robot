@@ -1,38 +1,34 @@
 package frc.robot.lib
 
 import edu.wpi.first.wpilibj.XboxController
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.ScoreSelector.SelectedLevel
-import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.SuperStructure.goTo
+import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
+import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.LEFT_STICK.also { SmartDashboard.putString("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 fun CommandXboxController.configureDriverBindings() {
-    rightBumper()
-        .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(goTo(RobotState.Stow))
-        )
+    //    rightBumper()
+    //        .whileTrue(
+    //            Chassis.driveToSelectedBranch
+    //                .andThen(SuperStructure.goToSelectedLevel)
+    //                .andThen(Intake.scoreCoral)
+    //                .andThen(goTo(RobotState.Stow))
+    //        )
 
     leftBumper().whileTrue(Chassis.driveToLeftBranch)
     rightBumper().whileTrue(Chassis.driveToRightBranch)
-    y().whileTrue(Elevator.manualUp)
-    a().whileTrue(Elevator.manualDown)
     start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
 
     Chassis.defaultCommand =
@@ -42,6 +38,7 @@ fun CommandXboxController.configureDriverBindings() {
                 .withRotationalRate(hid.velocityRot)
         }
 
+    a().whileTrue(Intake.outtakeCoral)
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
 }
 
@@ -63,10 +60,10 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManualLayout() {
-    y().onTrue(Commands.runOnce({ goTo(RobotState.L4) }))
-    x().onTrue(Commands.runOnce({ goTo(RobotState.L3) }))
-    b().onTrue(Commands.runOnce({ goTo(RobotState.L2) }))
-    a().onTrue(Commands.runOnce({ goTo(RobotState.L1) }))
+    y().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L4) }))
+    x().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L3) }))
+    b().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L2) }))
+    a().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L1) }))
 }
 
 /** Use dpad to select branch and level */
@@ -79,12 +76,32 @@ private fun CommandXboxController.configureDpadLayout() {
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureButtonLayout() {
-    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
-    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
-    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
-    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
-    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
-    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
+    //    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
+    //    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
+    //    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
+    //    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
+    //    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
+    //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
+
+    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
+    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
+    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
+    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+
+    // trigger value goes from 0 (not pressed) to 1 (fully pressed)
+    rightTrigger(0.55)
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.CoralStation).andThen(Intake.intakeCoralThenHold())
+        )
+    rightBumper().whileTrue(Intake.outtakeCoral)
+
+    // TODO retract elevator when algae intake button released
+    leftTrigger(0.55).whileTrue(Intake.outtakeAlgae)
+    leftBumper().onTrue(Intake.intakeAlgaeThenHold())
+
+    povUp().onTrue(SuperStructure.smartGoTo(RobotState.HighAlgaeIntake))
+    povDown().onTrue(SuperStructure.smartGoTo(RobotState.LowAlgaeIntake))
+    povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
 }
 
 private fun CommandXboxController.configureLeftStickLayout() {
@@ -107,11 +124,11 @@ fun CommandJoystick.configureTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-    button(7).whileTrue(Intake.intakeCoralThenHold())
+    //    button(7).whileTrue(Intake.intakeCoral)
+    button(7).onTrue(Intake.intakeCoralThenHold())
     button(8).whileTrue(Intake.outtakeCoral)
-    button(9).whileTrue(Intake.intakeAlgae)
-    button(10).whileTrue(Intake.outtakeAlgae)
+    //    button(9).whileTrue(Intake.intakeAlgae)
+    //    button(10).whileTrue(Intake.outtakeAlgae)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
-    trigger().whileTrue(Climber.climb())
 }
