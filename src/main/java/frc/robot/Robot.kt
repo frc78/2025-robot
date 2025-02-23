@@ -16,8 +16,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.configureDriverBindings
+import frc.robot.lib.configureManipTestBindings
 import frc.robot.lib.configureManipulatorBindings
-import frc.robot.lib.configureTestBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.*
@@ -55,7 +55,7 @@ object Robot : LoggedRobot() {
 
         CommandXboxController(0).configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
-        CommandJoystick(5).configureTestBindings()
+        CommandJoystick(5).configureManipTestBindings()
     }
 
     private val autoChooser =

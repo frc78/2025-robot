@@ -8,36 +8,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.subsystems.*
 import frc.robot.subsystems.SuperStructure.goTo
-import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
 
 private val MANIPULATOR_LAYOUT =
     ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
-
-fun CommandXboxController.configureDriverBindings() {
-    rightBumper()
-        .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(goTo(RobotState.Stow))
-        )
-
-    leftBumper().whileTrue(Chassis.driveToLeftBranch)
-    rightBumper().whileTrue(Chassis.driveToRightBranch)
-    y().whileTrue(Elevator.manualUp)
-    a().whileTrue(Elevator.manualDown)
-    start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
-
-    Chassis.defaultCommand =
-        Chassis.fieldCentricDrive {
-            withVelocityX(hid.velocityX)
-                .withVelocityY(hid.velocityY)
-                .withRotationalRate(hid.velocityRot)
-        }
-
-    x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
-}
 
 enum class ManipulatorLayout {
     MANUAL,
@@ -49,16 +23,16 @@ enum class ManipulatorLayout {
 
 fun CommandXboxController.configureManipulatorBindings() {
     when (MANIPULATOR_LAYOUT) {
-        ManipulatorLayout.MANUAL -> configureManualLayout()
-        ManipulatorLayout.DPAD -> configureDpadLayout()
-        ManipulatorLayout.BUTTONS -> configureButtonLayout()
-        ManipulatorLayout.LEFT_STICK -> configureLeftStickLayout()
-        ManipulatorLayout.BOTH_STICKS -> configureBothSticksLayout()
+        ManipulatorLayout.MANUAL -> configureManipManualLayout()
+        ManipulatorLayout.DPAD -> configureManipDpadLayout()
+        ManipulatorLayout.BUTTONS -> configureManipButtonLayout()
+        ManipulatorLayout.LEFT_STICK -> configureManipLeftStickLayout()
+        ManipulatorLayout.BOTH_STICKS -> configureManipBothSticksLayout()
     }
 }
 
 // Use buttons to manually go to levels
-private fun CommandXboxController.configureManualLayout() {
+private fun CommandXboxController.configureManipManualLayout() {
     y().onTrue(Commands.runOnce({ goTo(RobotState.L4) }))
     x().onTrue(Commands.runOnce({ goTo(RobotState.L3) }))
     b().onTrue(Commands.runOnce({ goTo(RobotState.L2) }))
@@ -66,7 +40,7 @@ private fun CommandXboxController.configureManualLayout() {
 }
 
 /** Use dpad to select branch and level */
-private fun CommandXboxController.configureDpadLayout() {
+private fun CommandXboxController.configureManipDpadLayout() {
     povUp().onTrue(Commands.runOnce({ ScoreSelector.levelUp() }))
     povDown().onTrue(Commands.runOnce({ ScoreSelector.levelDown() }))
     povLeft().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
@@ -74,7 +48,7 @@ private fun CommandXboxController.configureDpadLayout() {
 }
 
 /** Use buttons to select branch and level */
-private fun CommandXboxController.configureButtonLayout() {
+private fun CommandXboxController.configureManipButtonLayout() {
     //    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
     //    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
     //    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
@@ -92,7 +66,7 @@ private fun CommandXboxController.configureButtonLayout() {
     leftBumper().whileTrue(Intake.outtakeCoral)
 }
 
-private fun CommandXboxController.configureLeftStickLayout() {
+private fun CommandXboxController.configureManipLeftStickLayout() {
     axisGreaterThan(XboxController.Axis.kLeftX.value, 0.5)
         .onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
 
@@ -106,7 +80,8 @@ private fun CommandXboxController.configureLeftStickLayout() {
         .onTrue(Commands.runOnce({ ScoreSelector.levelUp() }))
 }
 
-private fun CommandXboxController.configureBothSticksLayout() {
+// Idea for a more intuitive branch selector, which doesn't require reading the driver station
+private fun CommandXboxController.configureManipBothSticksLayout() {
     leftBumper()
         .or(rightBumper())
         .onTrue(
@@ -131,7 +106,7 @@ private fun CommandXboxController.configureBothSticksLayout() {
 }
 
 /** Used for setting up a test controller / joystick */
-fun CommandJoystick.configureTestBindings() {
+fun CommandJoystick.configureManipTestBindings() {
     button(5).whileTrue(Pivot.moveUp)
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
