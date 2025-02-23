@@ -18,9 +18,11 @@ object Alignments {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.kZero)
+    private val CORAL_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.k180deg)
 
+    // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
-        intArrayOf(17, 18, 19, 20, 21, 22).map {
+        intArrayOf(18, 17, 22, 21, 20, 19).map {
             aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
         }
     private val BLUE_BRANCH_POSES =
@@ -28,8 +30,11 @@ object Alignments {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
         }
 
+    // Tag IDs are in order of ReefFaces
     private val RED_REEF_POSES =
-        intArrayOf(6, 7, 8, 9, 10, 11).map { aprilTags.getTagPose(it).get().toPose2d() }
+        intArrayOf(7, 8, 9, 10, 11, 6).map {
+            aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+        }
 
     private val RED_BRANCH_POSES =
         RED_REEF_POSES.flatMap {
@@ -48,9 +53,17 @@ object Alignments {
             )
 
     private val BLUE_CORAL_STATION_LOCATIONS =
-        intArrayOf(12, 13).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(12, 13).flatMap {
+            aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
+                it.transformBy(CORAL_TO_BOT_TRANSFORM)
+            }
+        }
     private val RED_CORAL_STATION_LOCATIONS =
-        intArrayOf(1, 2).flatMap { aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag }
+        intArrayOf(1, 2).flatMap {
+            aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
+                it.transformBy(CORAL_TO_BOT_TRANSFORM)
+            }
+        }
 
     private val reefPoses
         get() =
@@ -79,4 +92,16 @@ object Alignments {
                 }
             return Chassis.state.Pose.nearest(allianceCoralStations)
         }
+
+    enum class ReefFace {
+        AB,
+        CD,
+        EF,
+        GH,
+        IJ,
+        KL;
+
+        val pose
+            get() = reefPoses[ordinal]
+    }
 }

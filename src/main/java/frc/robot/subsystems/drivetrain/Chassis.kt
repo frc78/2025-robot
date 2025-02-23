@@ -19,7 +19,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.trajectory.TrapezoidProfile
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
@@ -39,13 +38,21 @@ import frc.robot.IS_TEST
 import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.*
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
+import frc.robot.lib.Branch
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.command
+import frc.robot.lib.feetPerSecond
+import frc.robot.lib.inches
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
@@ -156,7 +163,7 @@ object Chassis :
                     PIDConstants(7.0, 0.0, 0.0),
                 ),
                 config,
-                { false },
+                { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
                 this, // Subsystem for requirements
             )
         } catch (ex: IOException) {
@@ -317,20 +324,22 @@ object Chassis :
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
     private val yController =
         ProfiledPIDController(
             10.0,
             0.0,
             0.0,
-            Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 5.0),
         )
 
     fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-                xController.reset(state.Pose.translation.x, state.Speeds.vxMetersPerSecond)
-                yController.reset(state.Pose.translation.y, state.Speeds.vyMetersPerSecond)
+                val fieldRelative =
+                    ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                xController.reset(state.Pose.translation.x, fieldRelative.vxMetersPerSecond)
+                yController.reset(state.Pose.translation.y, fieldRelative.vyMetersPerSecond)
                 val target = pose()
                 Logger.recordOutput("DriveToPose target", target)
                 xController.goal = TrapezoidProfile.State(target.x, 0.0)
@@ -340,10 +349,12 @@ object Chassis :
             .andThen(
                 applyRequest {
                     val robot = Chassis.state.Pose
-                    FieldCentricFacingAngle.withVelocityX(
-                            xController.calculate(robot.translation.x)
-                        )
-                        .withVelocityY(yController.calculate(robot.translation.y))
+
+                    val xOutput = xController.calculate(robot.x)
+                    val yOutput = yController.calculate(robot.y)
+                    Logger.recordOutput("DriveToPose xOutput", xOutput)
+                    Logger.recordOutput("DriveToPose yOutput", yOutput)
+                    FieldCentricFacingAngle.withVelocityX(xOutput).withVelocityY(yOutput)
                 }
             )
             .until {
