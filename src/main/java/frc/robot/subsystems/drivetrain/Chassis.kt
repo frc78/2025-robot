@@ -109,8 +109,8 @@ object Chassis :
 
     /* Keep track if we've ever applied the operator perspective before or not */
     private var hasAppliedOperatorPerspective = false
-    private val kBlueAlliancePerspectiveRotation: Rotation2d = Rotation2d.kZero
-    private val kRedAlliancePerspectiveRotation: Rotation2d = Rotation2d.k180deg
+    val kBlueAlliancePerspectiveRotation: Rotation2d = Rotation2d.kZero
+    val kRedAlliancePerspectiveRotation: Rotation2d = Rotation2d.k180deg
 
     /* Swerve requests to apply during SysId characterization */
     private val translationCharacterization = SwerveRequest.SysIdSwerveTranslation()

@@ -1,20 +1,16 @@
 package frc.robot.lib
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
+import frc.robot.Robot
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 
 /** Poses that the robot can auto-align to */
 object Alignments {
-    // This field will need to be updated based on the event venue.
-    private val aprilTags = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
-
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.4.meters, 0.meters, Rotation2d.kZero)
@@ -23,7 +19,7 @@ object Alignments {
     // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
         intArrayOf(18, 17, 22, 21, 20, 19).map {
-            aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
         }
     private val BLUE_BRANCH_POSES =
         BLUE_REEF_POSES.flatMap {
@@ -33,7 +29,7 @@ object Alignments {
     // Tag IDs are in order of ReefFaces
     private val RED_REEF_POSES =
         intArrayOf(7, 8, 9, 10, 11, 6).map {
-            aprilTags.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
         }
 
     private val RED_BRANCH_POSES =
@@ -54,13 +50,13 @@ object Alignments {
 
     private val BLUE_CORAL_STATION_LOCATIONS =
         intArrayOf(12, 13).flatMap {
-            aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
+            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
                 it.transformBy(CORAL_TO_BOT_TRANSFORM)
             }
         }
     private val RED_CORAL_STATION_LOCATIONS =
         intArrayOf(1, 2).flatMap {
-            aprilTags.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
+            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
                 it.transformBy(CORAL_TO_BOT_TRANSFORM)
             }
         }
