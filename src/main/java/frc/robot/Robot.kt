@@ -4,6 +4,8 @@
 package frc.robot
 
 import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -12,8 +14,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.amps
 import frc.robot.lib.configureDriverBindings
@@ -38,6 +42,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
+    val gameField: AprilTagFieldLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -62,10 +68,27 @@ object Robot : LoggedRobot() {
         CommandXboxController(0).configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
         CommandJoystick(5).configureTestBindings()
+
+        SmartDashboard.putData(
+            "Flip driver station",
+            Commands.runOnce({
+                println("Flipping driver station perspective")
+                Chassis.setOperatorPerspectiveForward(
+                    if (
+                        Chassis.operatorForwardDirection == Chassis.kBlueAlliancePerspectiveRotation
+                    )
+                        Chassis.kRedAlliancePerspectiveRotation
+                    else Chassis.kBlueAlliancePerspectiveRotation
+                )
+            }),
+        )
     }
 
     private val autoChooser =
-        AutoBuilder.buildAutoChooser("test").also { SmartDashboard.putData("Auto Mode", it) }
+        AutoBuilder.buildAutoChooser("test").also {
+            it.addOption("FourCoral", Autos.FourCoralAuto)
+            SmartDashboard.putData("Auto Mode", it)
+        }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
