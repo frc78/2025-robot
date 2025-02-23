@@ -5,12 +5,13 @@ import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
+import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import org.littletonrobotics.junction.Logger
@@ -31,16 +32,24 @@ object Intake : Subsystem {
     private val SIDE_PLATE_THICKNESS = 0.5.centimeters // Measured in cm.
     private val INTAKE_WIDTH = 52.0.centimeters // Measured in cm.
 
-    private val coralIntake =
-        TalonFX(14, "*").apply {
-            configurator.apply(
-                TalonFXConfiguration().apply {
-                    CurrentLimits.StatorCurrentLimit = 40.0
-                    CurrentLimits.SupplyCurrentLimit = 20.0
-                }
-            )
-        }
-    private val algaeIntake =
+    // TODO determine these values empirically for the new intake - graph on dashboard?
+    private val CORAL_CURRENT_THRESHOLD =
+        0.amps // Current spike threshold for detecting when we have a coral
+    private val ALGAE_CURRENT_THRESHOLD =
+        0.amps // Current spike threshold for detecting when we have an algae
+    //
+    //    private val coralIntake =
+    //        TalonFX(14, "*").apply {
+    //            configurator.apply(
+    //                TalonFXConfiguration().apply {
+    //                    CurrentLimits.StatorCurrentLimit = 40.0
+    //                    CurrentLimits.SupplyCurrentLimit = 20.0
+    //                }
+    //            )
+    //        }
+
+    // TODO check id, inversion, etc. before running because of new intake design
+    private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
@@ -52,8 +61,7 @@ object Intake : Subsystem {
         }
 
     init {
-        coralIntake.set(0.0)
-        algaeIntake
+        leader.set(0.0)
     }
 
     /**
@@ -63,7 +71,19 @@ object Intake : Subsystem {
     val hasBranchCoral: Boolean
         get() = canRange.isDetected.value
 
+    val supplyCurrent: Current
+        get() = leader.supplyCurrent.value
+
+    /**
+     * Return true if the intake motor is experiencing current draw greater than the given
+     * threshold.
+     */
+    fun hasGamePieceByCurrent(threshold: Current): Boolean {
+        return leader.supplyCurrent.value >= threshold
+    }
+
     // Returns the distance from the center of the intake to the center of the coral.
+    // TODO check this formula with the new intake
     val coralLocation: Distance
         get() {
             if (!hasBranchCoral) {
@@ -84,37 +104,35 @@ object Intake : Subsystem {
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
         Logger.recordOutput("intake/coral_position", rawDistance())
         Logger.recordOutput("intake/coral_location", coralLocation)
+        Logger.recordOutput("intake/supply_current", supplyCurrent)
+        Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
     }
 
     val intakeCoral by command {
-        startEnd({ coralIntake.set(0.3) }, { coralIntake.set(0.0) }).withName("Intake Coral")
+        startEnd({ leader.set(0.3) }, { leader.set(0.0) }).withName("Intake Coral")
     }
 
     val outtakeCoral by command {
-        startEnd({ coralIntake.set(-0.7) }, { coralIntake.set(0.0) }).withName("Outtake Coral")
+        startEnd({ leader.set(-0.7) }, { leader.set(0.0) }).withName("Outtake Coral")
     }
 
     val intakeAlgae by command {
-        startEnd({ algaeIntake.set(0.3) }, { algaeIntake.set(0.0) }).withName("Intake Algae")
+        startEnd({ leader.set(0.3) }, { leader.set(0.0) }).withName("Intake Algae")
     }
 
     val outtakeAlgae by command {
-        startEnd({ algaeIntake.set(-1.0) }, { algaeIntake.set(0.0) }).withName("Outtake Algae")
+        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
     }
 
     val scoreCoral by command {
         Commands.idle() // TODO score coral
     }
 
-    init {
-        SmartDashboard.putData(intakeAlgae)
-        SmartDashboard.putData(intakeCoral)
-    }
-
+    // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
         PrintCommand("Running HIGH until coral is detected.")
-            .alongWith(runOnce({ coralIntake.set(0.7) }))
+            .alongWith(runOnce({ leader.set(0.7) }))
             .andThen(Commands.idle())
-            .until({ hasBranchCoral })
-            .andThen({ coralIntake.set(0.2) })
+            .until { hasGamePieceByCurrent(CORAL_CURRENT_THRESHOLD) }
+            .andThen({ leader.set(0.15) })
 }

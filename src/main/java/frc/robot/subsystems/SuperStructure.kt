@@ -41,7 +41,7 @@ object SuperStructure {
     }
 
     // Command factory to go to a specific robot state
-    fun goTo(state: RobotState): Command =
+    fun goToMoveElevatorAndPivotTogether(state: RobotState): Command =
         Pivot.goTo(state)
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
@@ -50,32 +50,34 @@ object SuperStructure {
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
-            {
-                if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
-                    // if elevator is stowed and getting raised, move pivot before raising it
-                    goToElevatorIsStowed(state)
-                } else if (
-                    !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
-                ) {
-                    // if elevator is raised and getting stowed, lower it before moving pivot
-                    println("Elevator going down, running goToElevatorIsRaised(state)")
-                    goToElevatorIsRaised(state)
-                } else {
-                    // if elevator is not going from stowed to raised or vice versa, move everything
-                    // at once
-                    goTo(state)
-                }
-            },
-            setOf(Pivot, Elevator, Wrist),
-        )
+                {
+                    if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
+                        // if elevator is stowed and getting raised, move pivot before raising it
+                        goToMovePivotFirst(state)
+                    } else if (
+                        !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                    ) {
+                        // if elevator is raised and getting stowed, lower it before moving pivot
+                        println("Elevator going down, running goToElevatorIsRaised(state)")
+                        goToMoveElevatorFirst(state)
+                    } else {
+                        // if elevator is not going from stowed to raised or vice versa, move
+                        // everything
+                        // at once
+                        goToMoveElevatorAndPivotTogether(state)
+                    }
+                },
+                setOf(Pivot, Elevator, Wrist),
+            )
+            .withName("Smart Go To ${state.name}")
 
-    fun goToElevatorIsRaised(state: RobotState): Command =
+    fun goToMoveElevatorFirst(state: RobotState): Command =
         Wrist.goTo(state)
             .andThen(Elevator.goToAndWaitUntilStowed(state))
             .andThen(Pivot.goTo(state))
             .withName("Go to $state")
 
-    fun goToElevatorIsStowed(state: RobotState): Command =
+    fun goToMovePivotFirst(state: RobotState): Command =
         Wrist.goTo(state)
             .andThen(Pivot.goToAndWaitUntilVertical(state))
             .andThen(Elevator.goTo(state))

@@ -1,17 +1,25 @@
 package frc.robot.lib
 
 import edu.wpi.first.wpilibj.XboxController
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
+import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.drivetrain.Chassis
+import org.littletonrobotics.junction.Logger
 import frc.robot.subsystems.*
 import frc.robot.subsystems.SuperStructure.goTo
 import kotlin.math.absoluteValue
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 enum class ManipulatorLayout {
     MANUAL,
@@ -33,10 +41,10 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(Commands.runOnce({ goTo(RobotState.L4) }))
-    x().onTrue(Commands.runOnce({ goTo(RobotState.L3) }))
-    b().onTrue(Commands.runOnce({ goTo(RobotState.L2) }))
-    a().onTrue(Commands.runOnce({ goTo(RobotState.L1) }))
+    y().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L4) }))
+    x().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L3) }))
+    b().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L2) }))
+    a().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L1) }))
 }
 
 /** Use dpad to select branch and level */
@@ -62,6 +70,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
     y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
+    //    leftTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.Stow))
     rightBumper().onTrue(Intake.intakeCoralThenHold())
     leftBumper().whileTrue(Intake.outtakeCoral)
 }
@@ -116,9 +125,6 @@ fun CommandJoystick.configureManipTestBindings() {
     button(8).whileTrue(Intake.outtakeCoral)
     //    button(9).whileTrue(Intake.intakeAlgae)
     //    button(10).whileTrue(Intake.outtakeAlgae)
-    button(9).whileTrue(Climber.reverseRoller)
-    button(10).whileTrue(Climber.runRoller)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
-    trigger().whileTrue(Climber.climb())
 }
