@@ -6,21 +6,26 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.goTo
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val MANIPULATOR_LAYOUT =
     ManipulatorLayout.BUTTONS.also { SmartDashboard.putString("manip_layout", it.name) }
 
 fun CommandXboxController.configureDriverBindings() {
-//    rightBumper()
-//        .whileTrue(
-//            Chassis.driveToSelectedBranch
-//                .andThen(SuperStructure.goToSelectedLevel)
-//                .andThen(Intake.scoreCoral)
-//                .andThen(goTo(RobotState.Stow))
-//        )
+    //    rightBumper()
+    //        .whileTrue(
+    //            Chassis.driveToSelectedBranch
+    //                .andThen(SuperStructure.goToSelectedLevel)
+    //                .andThen(Intake.scoreCoral)
+    //                .andThen(goTo(RobotState.Stow))
+    //        )
 
     leftBumper().whileTrue(Chassis.driveToLeftBranch)
     rightBumper().whileTrue(Chassis.driveToRightBranch)
@@ -83,7 +88,7 @@ private fun CommandXboxController.configureButtonLayout() {
     y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
-//    leftTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.Stow))
+    //    leftTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.Stow))
     rightBumper().onTrue(Intake.intakeCoralThenHold())
     leftBumper().whileTrue(Intake.outtakeCoral)
 }
@@ -113,8 +118,6 @@ fun CommandJoystick.configureTestBindings() {
     button(8).whileTrue(Intake.outtakeCoral)
     //    button(9).whileTrue(Intake.intakeAlgae)
     //    button(10).whileTrue(Intake.outtakeAlgae)
-    button(9).whileTrue(Climber.reverseRoller)
-    button(10).whileTrue(Climber.runRoller)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
 }

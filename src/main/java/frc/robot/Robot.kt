@@ -47,7 +47,6 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
         Wrist
-        Climber
 
         CommandXboxController(0).configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
