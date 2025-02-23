@@ -89,8 +89,10 @@ private fun CommandXboxController.configureButtonLayout() {
     y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
 
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
-    rightTrigger(0.55).onTrue(SuperStructure.smartGoTo(RobotState.CoralStation)
-        .andThen(Intake.intakeCoralThenHold()))
+    rightTrigger(0.55)
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.CoralStation).andThen(Intake.intakeCoralThenHold())
+        )
     rightBumper().whileTrue(Intake.outtakeCoral)
 
     // TODO retract elevator when algae intake button released
@@ -100,7 +102,6 @@ private fun CommandXboxController.configureButtonLayout() {
     povUp().onTrue(SuperStructure.smartGoTo(RobotState.HighAlgaeIntake))
     povDown().onTrue(SuperStructure.smartGoTo(RobotState.LowAlgaeIntake))
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
-
 }
 
 private fun CommandXboxController.configureLeftStickLayout() {

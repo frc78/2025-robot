@@ -135,8 +135,6 @@ object Robot : LoggedRobot() {
         SmartDashboard.putBoolean("Ele Stowed", Elevator.isStowed)
 
         SmartDashboard.putNumber("Coral Current", Intake.supplyCurrent.amps)
-
-
     }
 
     override fun simulationPeriodic() {

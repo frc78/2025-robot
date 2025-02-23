@@ -92,7 +92,8 @@ object Intake : Subsystem {
         if (thresholdMet) {
             if (algaeSpikeDetected) {
                 if (algaeSpikeResolved) {
-                    // if threshold is met, and initial current spike from running motor is already accounted for,
+                    // if threshold is met, and initial current spike from running motor is already
+                    // accounted for,
                     // we have the algae so return true and reset the spike detection booleans
                     algaeSpikeDetected = false
                     algaeSpikeResolved = false
@@ -158,7 +159,7 @@ object Intake : Subsystem {
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
         PrintCommand("Intake coral then hold")
-            .alongWith(runOnce { leader.set(0.6) } )
+            .alongWith(runOnce { leader.set(0.6) })
             .andThen(Commands.idle())
             .until { hasCoralByCurrent() }
             .andThen({ leader.set(0.08) })
@@ -168,5 +169,5 @@ object Intake : Subsystem {
             .alongWith(runOnce { leader.set(-1.0) })
             .andThen(Commands.idle())
             .until { hasAlgaeByCurrent() }
-            .andThen({ leader.set(-0.2)} )
+            .andThen({ leader.set(-0.2) })
 }
