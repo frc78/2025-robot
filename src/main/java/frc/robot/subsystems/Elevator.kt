@@ -167,6 +167,7 @@ object Elevator : SubsystemBase("Elevator") {
             ),
         )
 
+    @Suppress("UnusedPrivateProperty")
     private val sysId by command {
         Commands.sequence(
                 runOnce {

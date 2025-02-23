@@ -83,6 +83,7 @@ object Wrist : SubsystemBase("Wrist") {
         )
     }
 
+    @Suppress("UnusedPrivateProperty")
     private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
 
     fun zeroRoutines(): Command {
@@ -115,6 +116,7 @@ object Wrist : SubsystemBase("Wrist") {
             ),
         )
 
+    @Suppress("UnusedPrivateProperty")
     private val sysId =
         Commands.sequence(
                 runOnce { SignalLogger.start() },
