@@ -4,6 +4,8 @@
 package frc.robot
 
 import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
@@ -34,9 +37,12 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
+// Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
+    val gameField: AprilTagFieldLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
 
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
@@ -59,8 +65,22 @@ object Robot : LoggedRobot() {
         Wrist
 
         CommandXboxController(0).configureDriverBindings()
-        CommandXboxController(1).configureManipulatorBindings()
         CommandJoystick(5).configureManipTestBindings()
+        CommandXboxController(1).configureManipulatorBindings()
+
+        SmartDashboard.putData(
+            "Flip driver station",
+            Commands.runOnce({
+                println("Flipping driver station perspective")
+                Chassis.setOperatorPerspectiveForward(
+                    if (
+                        Chassis.operatorForwardDirection == Chassis.kBlueAlliancePerspectiveRotation
+                    )
+                        Chassis.kRedAlliancePerspectiveRotation
+                    else Chassis.kBlueAlliancePerspectiveRotation
+                )
+            }),
+        )
     }
 
     private val autoChooser =
@@ -120,9 +140,6 @@ object Robot : LoggedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
-        //        Chassis.defaultCommand =
-        //            Chassis.applyRequest {
-        // swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {

@@ -1,13 +1,12 @@
 package frc.robot.subsystems
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout
-import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import frc.robot.Robot
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -20,13 +19,9 @@ class Camera(val name: String, val transform: Transform3d) {
     val robotToCamera2d =
         Transform2d(transform.translation.toTranslation2d(), transform.rotation.toRotation2d())
 
-    companion object {
-        private val field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
-    }
-
     private val estimator =
         PhotonPoseEstimator(
-            field,
+            Robot.gameField,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             transform,
         )
