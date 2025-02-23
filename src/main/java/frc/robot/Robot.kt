@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.configureDriverBindings
 import frc.robot.lib.configureManipulatorBindings
@@ -83,7 +84,10 @@ object Robot : LoggedRobot() {
     }
 
     private val autoChooser =
-        AutoBuilder.buildAutoChooser("test").also { SmartDashboard.putData("Auto Mode", it) }
+        AutoBuilder.buildAutoChooser("test").also {
+            it.addOption("FourCoral", Autos.FourCoralAuto)
+            SmartDashboard.putData("Auto Mode", it)
+        }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
