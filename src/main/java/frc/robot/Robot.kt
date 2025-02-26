@@ -19,9 +19,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
+import frc.robot.lib.amps
 import frc.robot.lib.configureDriverBindings
+import frc.robot.lib.configureManipTestBindings
 import frc.robot.lib.configureManipulatorBindings
-import frc.robot.lib.configureTestBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Elevator
@@ -65,7 +66,7 @@ object Robot : LoggedRobot() {
         Wrist
 
         CommandXboxController(0).configureDriverBindings()
-        CommandJoystick(5).configureTestBindings()
+        CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
 
         SmartDashboard.putData(
@@ -126,6 +127,14 @@ object Robot : LoggedRobot() {
         CommandScheduler.getInstance().run()
         Vision.update()
         ScoreSelector.telemeterize()
+
+        // Should these be in corresponding subsystems?
+        Logger.recordOutput("Pivot", Pivot.angle.degrees)
+        Logger.recordOutput("Elevator", Elevator.position.inches)
+        Logger.recordOutput("Wrist", Wrist.angle.degrees)
+
+        Logger.recordOutput("Ele Stowed", Elevator.isStowed)
+        Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
     }
 
     override fun simulationPeriodic() {
