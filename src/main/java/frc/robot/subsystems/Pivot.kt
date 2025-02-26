@@ -37,10 +37,8 @@ object Pivot : SubsystemBase("Pivot") {
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
 
-    //    private var currentSetpoint: Angle = cancoder.position.value
-
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val ELEVATOR_THRESHOLD = 5.degrees
+    private val ELEVATOR_THRESHOLD = 8.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -56,7 +54,7 @@ object Pivot : SubsystemBase("Pivot") {
                     // Set feedback to encoder
                     Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
-                    Slot0.withKP(24.365)
+                    Slot0.withKP(44.365) // 24.365
                         .withKD(0.22908)
                         .withKS(0.1755)
                         .withKV(31.983)

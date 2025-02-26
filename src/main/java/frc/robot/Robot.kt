@@ -133,8 +133,7 @@ object Robot : LoggedRobot() {
         SmartDashboard.putNumber("Wrist", Wrist.angle.degrees)
 
         SmartDashboard.putBoolean("Ele Stowed", Elevator.isStowed)
-
-        SmartDashboard.putNumber("Coral Current", Intake.supplyCurrent.amps)
+        SmartDashboard.putNumber("Intake Current", Intake.supplyCurrent.amps)
     }
 
     override fun simulationPeriodic() {

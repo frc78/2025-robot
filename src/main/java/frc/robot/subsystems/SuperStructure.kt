@@ -21,6 +21,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     // l4 2 pivot 81.73 elevator 50.13 wrist 13.62
     // l2 2 pivot 68.11 elevator 0.25 wrist 22.67
     Stow(0.degrees, 0.25.inches, 0.degrees),
+    PreScore(70.degrees, 0.25.inches,  120.degrees), // TODO test this and adjust as needed
     L1(60.degrees, 0.25.inches, 120.degrees),
     //    L2(75.degrees, 6.inches, 11.78.degrees),
     L2(69.degrees, 0.25.inches, 22.67.degrees),
@@ -74,8 +75,7 @@ object SuperStructure {
                         goToMoveElevatorFirst(state)
                     } else {
                         // if elevator is not going from stowed to raised or vice versa, move
-                        // everything
-                        // at once
+                        // everything at once
                         goToMoveElevatorAndPivotTogether(state)
                     }
                 },

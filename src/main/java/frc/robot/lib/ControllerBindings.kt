@@ -95,9 +95,8 @@ private fun CommandXboxController.configureButtonLayout() {
         )
     rightBumper().whileTrue(Intake.outtakeCoral)
 
-    // TODO retract elevator when algae intake button released
-    leftTrigger(0.55).whileTrue(Intake.outtakeAlgae)
-    leftBumper().onTrue(Intake.intakeAlgaeThenHold())
+    leftTrigger(0.55).onTrue(Intake.intakeAlgaeThenHold())
+    leftBumper().whileTrue(Intake.outtakeAlgae)
 
     povUp().onTrue(SuperStructure.smartGoTo(RobotState.HighAlgaeIntake))
     povDown().onTrue(SuperStructure.smartGoTo(RobotState.LowAlgaeIntake))
