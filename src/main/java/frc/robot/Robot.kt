@@ -128,7 +128,7 @@ object Robot : LoggedRobot() {
         Vision.update()
         ScoreSelector.telemeterize()
 
-        //Should these be in corresponding subsystems?
+        // Should these be in corresponding subsystems?
         Logger.recordOutput("Pivot", Pivot.angle.degrees)
         Logger.recordOutput("Elevator", Elevator.position.inches)
         Logger.recordOutput("Wrist", Wrist.angle.degrees)

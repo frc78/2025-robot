@@ -125,10 +125,10 @@ object Vision {
                         .toTypedArray()
                 )
             }
-//                ?: run {
-//                    Logger.recordOutput(cam.cam.name + " est", Pose2d())
-//                    topics[cam]?.set(emptyArray())
-//                }
+            //                ?: run {
+            //                    Logger.recordOutput(cam.cam.name + " est", Pose2d())
+            //                    topics[cam]?.set(emptyArray())
+            //                }
         }
     }
 

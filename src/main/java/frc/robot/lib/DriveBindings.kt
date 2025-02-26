@@ -3,7 +3,6 @@ package frc.robot.lib
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -53,8 +52,11 @@ fun CommandXboxController.configureDriveSnappingLayout() {
 fun CommandXboxController.configureDriveManualSequencingLayout() {
     configureDriveSnappingLayout()
 
-    leftTrigger(0.55).onTrue(SuperStructure.goToSelectedLevel).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    leftTrigger(0.55)
+        .onTrue(SuperStructure.goToSelectedLevel)
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
     rightTrigger(0.55).onTrue(Intake.scoreCoral).onFalse(Intake.defaultCommand)
+    a().whileTrue(Intake.outtakeCoral) // Spencer added, does this work here though?
 }
 
 // Driving with buttons for automatic scoring sequences
