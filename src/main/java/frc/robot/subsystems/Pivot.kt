@@ -84,8 +84,7 @@ object Pivot : SubsystemBase("Pivot") {
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
         PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            abs((angle - state.pivotAngle).degrees) <
-                ELEVATOR_THRESHOLD.degrees
+            abs((angle - state.pivotAngle).degrees) < ELEVATOR_THRESHOLD.degrees
         }
 
     val angle: Angle

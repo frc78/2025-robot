@@ -13,7 +13,7 @@ import frc.robot.lib.inches
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     Stow(0.degrees, 0.25.inches, 0.degrees),
-    PreScore(70.degrees, 0.25.inches,  120.degrees), // TODO test this and adjust as needed
+    PreScore(70.degrees, 0.25.inches, 120.degrees), // TODO test this and adjust as needed
     L1(60.degrees, 0.25.inches, 120.degrees),
     L2(69.degrees, 0.25.inches, 22.67.degrees),
     L3(78.degrees, 20.inches, 20.degrees),
