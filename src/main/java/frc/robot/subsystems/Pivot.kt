@@ -76,13 +76,10 @@ object Pivot : SubsystemBase("Pivot") {
 
     init {
         follower.setControl(Follower(9, true))
-        //        defaultCommand = run {
-        // leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
-            // leader.setControl(motionMagic.withPosition(state.pivotAngle)) }))
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
@@ -174,11 +171,6 @@ object Pivot : SubsystemBase("Pivot") {
             { leader.setControl(voltageOut.withOutput((-2).volts)) },
             { leader.setControl(voltageOut.withOutput(0.volts)) },
         )
-    }
-
-    init {
-        //        SmartDashboard.putData(this)
-        //        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {

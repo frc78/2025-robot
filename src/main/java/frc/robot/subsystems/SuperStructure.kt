@@ -12,24 +12,13 @@ import frc.robot.lib.inches
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    // intake pivot 52.6 elevator 0.27 wrist 145.8
-    // l2 pivot 75 elevator 6 wrist 11.78
-    // l3 pivot 77.26 elevator 20.02 wrist 19.95
-    // l4 pivot 81.65 elevator 46.02 wrist 20.65
-
-    // intake 2 pivot 64.42 elevator 0 wrist 166.9
-    // l4 2 pivot 81.73 elevator 50.13 wrist 13.62
-    // l2 2 pivot 68.11 elevator 0.25 wrist 22.67
     Stow(0.degrees, 0.25.inches, 0.degrees),
     PreScore(70.degrees, 0.25.inches,  120.degrees), // TODO test this and adjust as needed
     L1(60.degrees, 0.25.inches, 120.degrees),
-    //    L2(75.degrees, 6.inches, 11.78.degrees),
     L2(69.degrees, 0.25.inches, 22.67.degrees),
     L3(78.degrees, 20.inches, 20.degrees),
-    //    L4(82.degrees, 46.inches, 20.5.degrees),
     L4(82.degrees, 50.13.inches, 13.62.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
-    //    CoralStation(52.6.degrees, 0.25.inches, 145.8.degrees),
     CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
     AlgaeGroundPickup(18.degrees, 3.inches, 30.degrees),
     CoralGroundPickup(5.degrees, 5.inches, 74.degrees),
