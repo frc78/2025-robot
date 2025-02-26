@@ -32,12 +32,14 @@ object Intake : Subsystem {
     private val SIDE_PLATE_THICKNESS = 0.5.centimeters // Measured in cm.
     private val INTAKE_WIDTH = 40.5.centimeters // Measured in cm.
 
-    // TODO determine these values empirically for the new intake - graph on dashboard?
     private val CORAL_CURRENT_THRESHOLD =
-        0.amps // Current spike threshold for detecting when we have a coral
-    //    private val ALGAE_CURRENT_THRESHOLD =
-    //        0.amps // Current spike threshold for detecting when we have an algae
-    //
+        25.amps // Current spike threshold for detecting when we have a coral
+
+    private val ALGAE_CURRENT_THRESHOLD =
+        0.amps // Current spike threshold for detecting when we have an algae
+    private var algaeSpikeDetected = false
+    private var algaeSpikeResolved = false
+
     //    private val coralIntake =
     //        TalonFX(14, "*").apply {
     //            configurator.apply(
@@ -48,7 +50,6 @@ object Intake : Subsystem {
     //            )
     //        }
 
-    // TODO check id, inversion, etc. before running because of new intake design
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
@@ -74,12 +75,39 @@ object Intake : Subsystem {
     val supplyCurrent: Current
         get() = leader.supplyCurrent.value
 
+    val torqueCurrent: Current
+        get() = leader.torqueCurrent.value
+
     /**
      * Return true if the intake motor is experiencing current draw greater than the given
      * threshold.
      */
-    fun hasGamePieceByCurrent(threshold: Current): Boolean {
-        return leader.supplyCurrent.value >= threshold
+    fun hasCoralByCurrent(): Boolean {
+        // return true if current is spiked and coral is detected by CANRange
+        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && hasBranchCoral
+    }
+
+    fun hasAlgaeByCurrent(): Boolean {
+        val thresholdMet: Boolean = leader.torqueCurrent.value >= ALGAE_CURRENT_THRESHOLD
+        if (thresholdMet) {
+            if (algaeSpikeDetected) {
+                if (algaeSpikeResolved) {
+                    // if threshold is met, and initial current spike from running motor is already
+                    // accounted for,
+                    // we have the algae so return true and reset the spike detection booleans
+                    algaeSpikeDetected = false
+                    algaeSpikeResolved = false
+                    return true
+                }
+            } else {
+                // threshold met and initial spike not detected yet, so mark it as such
+                algaeSpikeDetected = true
+            }
+        } else if (algaeSpikeDetected) {
+            // if spike was detected but current is back down, is now resolved
+            algaeSpikeResolved = true
+        }
+        return false
     }
 
     // Returns the distance from the center of the intake to the center of the coral.
@@ -109,19 +137,19 @@ object Intake : Subsystem {
     }
 
     val intakeCoral by command {
-        startEnd({ leader.set(0.3) }, { leader.set(0.0) }).withName("Intake Coral")
+        startEnd({ leader.set(0.6) }, { leader.set(0.0) }).withName("Intake Coral")
     }
 
     val outtakeCoral by command {
-        startEnd({ leader.set(-0.7) }, { leader.set(0.0) }).withName("Outtake Coral")
+        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Outtake Coral")
     }
 
     val intakeAlgae by command {
-        startEnd({ leader.set(0.3) }, { leader.set(0.0) }).withName("Intake Algae")
+        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Intake Algae")
     }
 
     val outtakeAlgae by command {
-        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
+        startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
     }
 
     val scoreCoral by command {
@@ -130,9 +158,16 @@ object Intake : Subsystem {
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
-        PrintCommand("Running HIGH until coral is detected.")
-            .alongWith(runOnce({ leader.set(0.7) }))
+        PrintCommand("Intake coral then hold")
+            .alongWith(runOnce { leader.set(0.6) })
             .andThen(Commands.idle())
-            .until { hasGamePieceByCurrent(CORAL_CURRENT_THRESHOLD) }
-            .andThen({ leader.set(0.15) })
+            .until { hasCoralByCurrent() }
+            .andThen({ leader.set(0.08) })
+
+    fun intakeAlgaeThenHold(): Command =
+        PrintCommand("Intake algae then hold")
+            .alongWith(runOnce { leader.set(-1.0) })
+            .andThen(Commands.idle())
+            .until { hasAlgaeByCurrent() }
+            .andThen({ leader.set(-0.2) })
 }

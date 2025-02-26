@@ -16,7 +16,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -168,6 +167,7 @@ object Elevator : SubsystemBase("Elevator") {
             ),
         )
 
+    @Suppress("UnusedPrivateProperty")
     private val sysId by command {
         Commands.sequence(
                 runOnce {
@@ -199,7 +199,7 @@ object Elevator : SubsystemBase("Elevator") {
     }
 
     init {
-        SmartDashboard.putData(sysId)
+        //        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {

@@ -15,7 +15,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -38,10 +37,8 @@ object Pivot : SubsystemBase("Pivot") {
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
     private val cancoder = CANcoder(5, "*")
 
-    //    private var currentSetpoint: Angle = cancoder.position.value
-
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val ELEVATOR_THRESHOLD = 3.degrees
+    private val ELEVATOR_THRESHOLD = 8.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -57,7 +54,7 @@ object Pivot : SubsystemBase("Pivot") {
                     // Set feedback to encoder
                     Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     // Set feedforward and feedback gains
-                    Slot0.withKP(24.365)
+                    Slot0.withKP(44.365) // 24.365
                         .withKD(0.22908)
                         .withKS(0.1755)
                         .withKV(31.983)
@@ -79,19 +76,15 @@ object Pivot : SubsystemBase("Pivot") {
 
     init {
         follower.setControl(Follower(9, true))
-        //        defaultCommand = run {
-        // leader.setControl(motionMagic.withPosition(currentSetpoint)) }
     }
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
-            // leader.setControl(motionMagic.withPosition(state.pivotAngle)) }))
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
     fun goToAndWaitUntilVertical(state: RobotState): Command =
         PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            abs(angle.baseUnitMagnitude() - state.pivotAngle.baseUnitMagnitude()) <
-                ELEVATOR_THRESHOLD.baseUnitMagnitude()
+            abs((angle - state.pivotAngle).degrees) < ELEVATOR_THRESHOLD.degrees
         }
 
     val angle: Angle
@@ -177,11 +170,6 @@ object Pivot : SubsystemBase("Pivot") {
             { leader.setControl(voltageOut.withOutput((-2).volts)) },
             { leader.setControl(voltageOut.withOutput(0.volts)) },
         )
-    }
-
-    init {
-        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {
