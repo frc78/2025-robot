@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
+import frc.robot.auto.registerNamedCommands
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.configureDriverBindings
 import frc.robot.lib.configureManipulatorBindings
@@ -55,6 +56,7 @@ object Robot : LoggedRobot() {
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
         Logger.start()
+        registerNamedCommands()
         Chassis.configureAutoBuilder()
         Chassis.registerTelemetry(Telemetry::telemeterize)
 

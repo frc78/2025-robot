@@ -1,0 +1,43 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "AutoLine to IJ"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreClosestLeft"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "IJToCoral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "WaitForCoral"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreClosestLeft"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": "Tim Concepts",
+  "choreoAuto": false
+}
