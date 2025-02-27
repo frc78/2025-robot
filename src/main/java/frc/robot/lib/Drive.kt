@@ -6,7 +6,7 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.XboxController
 
 private const val UP_ADJUST = 0.5
-private const val DOWN_ADJUST = 0.25
+private const val DOWN_ADJUST = 0.4
 private const val DEADBAND = 0.1
 private val maxTranslation = 3.metersPerSecond
 private val maxRotation = 1.rotationsPerSecond

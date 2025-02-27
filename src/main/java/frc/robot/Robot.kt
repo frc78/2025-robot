@@ -21,8 +21,8 @@ import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.amps
 import frc.robot.lib.configureDriverBindings
+import frc.robot.lib.configureManipTestBindings
 import frc.robot.lib.configureManipulatorBindings
-import frc.robot.lib.configureTestBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Elevator
@@ -66,8 +66,8 @@ object Robot : LoggedRobot() {
         Wrist
 
         CommandXboxController(0).configureDriverBindings()
+        CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
-        CommandJoystick(5).configureTestBindings()
 
         SmartDashboard.putData(
             "Flip driver station",
@@ -128,12 +128,13 @@ object Robot : LoggedRobot() {
         Vision.update()
         ScoreSelector.telemeterize()
 
-        SmartDashboard.putNumber("Pivot", Pivot.angle.degrees)
-        SmartDashboard.putNumber("Elevator", Elevator.position.inches)
-        SmartDashboard.putNumber("Wrist", Wrist.angle.degrees)
+        // Should these be in corresponding subsystems?
+        Logger.recordOutput("Pivot", Pivot.angle.degrees)
+        Logger.recordOutput("Elevator", Elevator.position.inches)
+        Logger.recordOutput("Wrist", Wrist.angle.degrees)
 
-        SmartDashboard.putBoolean("Ele Stowed", Elevator.isStowed)
-        SmartDashboard.putNumber("Intake Current", Intake.supplyCurrent.amps)
+        Logger.recordOutput("Ele Stowed", Elevator.isStowed)
+        Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
     }
 
     override fun simulationPeriodic() {
@@ -148,9 +149,6 @@ object Robot : LoggedRobot() {
 
     override fun teleopInit() {
         CommandScheduler.getInstance().cancelAll()
-        //        Chassis.defaultCommand =
-        //            Chassis.applyRequest {
-        // swerveRequest.withSpeeds(driveController.hid.calculateSpeeds()) }
     }
 
     override fun teleopExit() {
