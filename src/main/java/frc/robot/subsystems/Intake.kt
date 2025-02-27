@@ -1,5 +1,6 @@
 package frc.robot.subsystems
 
+import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
@@ -14,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
+import frc.robot.lib.meters
 import org.littletonrobotics.junction.Logger
 
 object Intake : Subsystem {
@@ -21,16 +23,25 @@ object Intake : Subsystem {
         defaultCommand = Commands.idle(this)
     }
 
-    private val canRange: CANrange = CANrange(0, "*")
+    private val canRange: CANrange =
+        CANrange(0, "*").apply {
+            configurator.apply(
+                CANrangeConfiguration().apply {
+                    FovParams.FOVRangeX = 6.0
+                    // High FOV along length of coral
+                    FovParams.FOVRangeY = 27.0
+                    ProximityParams.ProximityThreshold = 40.centimeters.meters
+                }
+            )
+        }
 
     private val canRangeOffsetEntry =
-        NetworkTableInstance.getDefault().getEntry("intake/canRangeOffset")
+        NetworkTableInstance.getDefault().getTable("intake").getEntry("canRangeOffset").also {
+            it.setDouble(19.0)
+        }
 
     private val canRangeOffset
-        get() = canRangeOffsetEntry.getDouble(4.0).centimeters
-
-    private val SIDE_PLATE_THICKNESS = 0.5.centimeters // Measured in cm.
-    private val INTAKE_WIDTH = 40.5.centimeters // Measured in cm.
+        get() = canRangeOffsetEntry.getDouble(19.0).centimeters
 
     private val CORAL_CURRENT_THRESHOLD =
         25.amps // Current spike threshold for detecting when we have a coral
@@ -110,27 +121,23 @@ object Intake : Subsystem {
         return false
     }
 
-    // Returns the distance from the center of the intake to the center of the coral.
-    // TODO check this formula with the new intake
+    /** Returns the distance from the center of the intake to the center of the coral. */
     val coralLocation: Distance
         get() {
             if (!hasBranchCoral) {
                 return 0.0.centimeters
             }
 
-            return -(rawDistance() - (INTAKE_WIDTH / 2.0) + 3.centimeters)
+            /* The CANrange is mounted looking from +X to -X, so the coral position increases as it
+            goes toward -X The offset is the value that puts the coral at 0 when it is in the middle of the intake.
+            Because the axis are inverse from each other (-X for the CANrange goes in the same direction as +X for
+            the robot), the adjusted values must be negated in order to sync the two coordinate systems */
+            return -(canRange.distance.value - canRangeOffset)
         }
-
-    // Returns the distance from the sensor to the nearest object's edge.
-    // Usually returns around +/- 1cm.
-    private fun rawDistance(): Distance {
-        val original = canRange.distance.value
-        return original - canRangeOffset - SIDE_PLATE_THICKNESS
-    }
 
     override fun periodic() {
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
-        Logger.recordOutput("intake/coral_position", rawDistance())
+        Logger.recordOutput("intake/coral_position", canRange.distance.value)
         Logger.recordOutput("intake/coral_location", coralLocation)
         Logger.recordOutput("intake/supply_current", supplyCurrent)
         Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
