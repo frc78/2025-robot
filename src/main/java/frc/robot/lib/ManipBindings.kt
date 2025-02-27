@@ -99,26 +99,32 @@ private fun CommandXboxController.configureManipLeftStickLayout() {
 // Idea for a more intuitive branch selector, which doesn't require reading the driver station
 private fun CommandXboxController.configureManipBothSticksLayout() {
     leftBumper()
-        .or(rightBumper())
         .onTrue(
             Commands.runOnce({
-                when {
-                    leftBumper().asBoolean -> SelectedBranch = Branch.LEFT
-                    rightBumper().asBoolean -> SelectedBranch = Branch.RIGHT
-                }
-
-                val t = 0.5 // Threshold
-                val level =
-                    when {
-                        (leftY > t) && (rightY > t) -> Level.L4
-                        (leftY > t) && (rightY.absoluteValue < t) -> Level.L3
-                        (leftY.absoluteValue < t) && (rightY.absoluteValue < t) -> Level.L2
-                        (leftY < -t) -> Level.L1
-                        else -> null
-                    }
-                level?.let { ScoreSelector.SelectedLevel = it }
+                SelectedBranch = Branch.LEFT
+                selectWithStick()
             })
         )
+    rightBumper()
+        .onTrue(
+            Commands.runOnce({
+                SelectedBranch = Branch.RIGHT
+                selectWithStick()
+            })
+        )
+}
+
+private fun CommandXboxController.selectWithStick() {
+    val t = 0.5 // Threshold
+    val level =
+        when {
+            (leftY > t) && (rightY > t) -> Level.L4
+            (leftY > t) && (rightY.absoluteValue < t) -> Level.L3
+            (leftY.absoluteValue < t) && (rightY.absoluteValue < t) -> Level.L2
+            (leftY < -t) -> Level.L1
+            else -> null
+        }
+    level?.let { ScoreSelector.SelectedLevel = it }
 }
 
 /** Used for setting up a test controller / joystick */

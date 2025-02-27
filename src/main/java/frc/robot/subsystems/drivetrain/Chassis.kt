@@ -356,12 +356,11 @@ object Chassis :
                     FieldCentricFacingAngle.withVelocityX(xOutput).withVelocityY(yOutput)
                 }
             )
-
-    //            .until {
-    //                xController.atGoal() &&
-    //                    yController.atGoal() &&
-    //                    FieldCentricFacingAngle.HeadingController.atSetpoint()
-    //            }
+            .until {
+                xController.atGoal() &&
+                    yController.atGoal() &&
+                    FieldCentricFacingAngle.HeadingController.atSetpoint()
+            }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 

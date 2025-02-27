@@ -1,7 +1,6 @@
 package frc.robot.lib
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
@@ -11,7 +10,7 @@ import frc.robot.subsystems.drivetrain.Chassis
 private val DRIVE_LAYOUT =
     DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
 
-enum class DriveLayout {
+private enum class DriveLayout {
     BASIC,
     SNAPPING,
     MANUAL_SEQUENCING,
@@ -19,8 +18,12 @@ enum class DriveLayout {
 }
 
 fun CommandXboxController.configureDriverBindings() {
+    configureDriveBasicLayout()
+
     when (DRIVE_LAYOUT) {
-        DriveLayout.BASIC -> configureDriveBasicLayout()
+        DriveLayout.BASIC -> {
+            /*Already configured by default*/
+        }
         DriveLayout.SNAPPING -> configureDriveSnappingLayout()
         DriveLayout.MANUAL_SEQUENCING -> configureDriveManualSequencingLayout()
         DriveLayout.AUTOMATIC_SEQUENCING -> configureDriveAutomaticSequencingLayout()
@@ -28,30 +31,24 @@ fun CommandXboxController.configureDriverBindings() {
 }
 
 // Basic driving
-fun CommandXboxController.configureDriveBasicLayout() {
+private fun CommandXboxController.configureDriveBasicLayout() {
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
             withVelocityX(hid.velocityX)
                 .withVelocityY(hid.velocityY)
                 .withRotationalRate(hid.velocityRot)
         }
-
-    start().onTrue(Commands.runOnce({ Chassis.zeroHeading }))
 }
 
 // Driving with snapping bindings for reef alignment
-fun CommandXboxController.configureDriveSnappingLayout() {
-    configureDriveBasicLayout()
-
+private fun CommandXboxController.configureDriveSnappingLayout() {
     leftBumper().whileTrue(Chassis.driveToLeftBranch)
     rightBumper().whileTrue(Chassis.driveToRightBranch)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
 }
 
-fun CommandXboxController.configureDriveManualSequencingLayout() {
-    configureDriveSnappingLayout()
-
+private fun CommandXboxController.configureDriveManualSequencingLayout() {
     leftTrigger(0.55)
         .onTrue(SuperStructure.goToSelectedLevel)
         .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
@@ -60,9 +57,7 @@ fun CommandXboxController.configureDriveManualSequencingLayout() {
 }
 
 // Driving with buttons for automatic scoring sequences
-fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
-    configureDriveBasicLayout()
-
+private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     rightBumper()
         .whileTrue(
             Chassis.driveToSelectedBranch
