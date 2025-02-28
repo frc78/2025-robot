@@ -82,6 +82,10 @@ object Robot : LoggedRobot() {
                 )
             }),
         )
+
+        // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero it,
+        // but the lowest safe limit is greater than this due to the top elevator supports
+        Wrist.initializePosition()
     }
 
     private val autoChooser =
@@ -135,6 +139,9 @@ object Robot : LoggedRobot() {
 
         Logger.recordOutput("Ele Stowed", Elevator.isStowed)
         Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
+
+        SmartDashboard.putBoolean("Has Algae", Intake.hasAlgaeByCurrent())
+        SmartDashboard.putNumber("Intake Current", Intake.torqueCurrent.amps)
     }
 
     override fun simulationPeriodic() {

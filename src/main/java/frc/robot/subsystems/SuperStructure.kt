@@ -12,8 +12,8 @@ import frc.robot.lib.inches
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    Stow(0.degrees, 0.25.inches, 0.degrees),
-    PreScore(70.degrees, 0.25.inches, 120.degrees), // TODO test this and adjust as needed
+    Stow(0.degrees, 0.25.inches, 8.degrees),
+    PreScore(74.degrees, 0.25.inches, 125.degrees),
     L1(60.degrees, 0.25.inches, 120.degrees),
     L2(69.degrees, 0.25.inches, 22.67.degrees),
     L3(78.degrees, 20.inches, 20.degrees),
@@ -23,8 +23,8 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeGroundPickup(18.degrees, 3.inches, 30.degrees),
     CoralGroundPickup(5.degrees, 5.inches, 74.degrees),
     Processor(0.degrees, 0.inches, 0.degrees),
-    HighAlgaeIntake(84.degrees, 17.33.inches, 8.5.degrees),
-    LowAlgaeIntake(84.degrees, 0.25.inches, 8.5.degrees),
+    HighAlgaeIntake(84.degrees, 17.33.inches, 10.degrees),
+    LowAlgaeIntake(84.degrees, 0.25.inches, 10.degrees),
     AlgaeNet(82.97.degrees, 51.61.inches, 39.46.degrees),
     ReadyToClimb(0.degrees, 0.inches, 0.degrees),
     FullyClimbed(0.degrees, 0.inches, 0.degrees),
@@ -47,7 +47,7 @@ object SuperStructure {
         Pivot.goTo(state)
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
-            .withName("Go to $state")
+            .withName("Go to $state all at once")
 
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
@@ -76,11 +76,17 @@ object SuperStructure {
         Wrist.goTo(state)
             .andThen(Elevator.goToAndWaitUntilStowed(state))
             .andThen(Pivot.goTo(state))
-            .withName("Go to $state")
+            .withName("Go to $state elevator first")
 
     fun goToMovePivotFirst(state: RobotState): Command =
-        Wrist.goTo(state)
-            .andThen(Pivot.goToAndWaitUntilVertical(state))
-            .andThen(Elevator.goTo(state))
-            .withName("Go to $state")
+        Pivot.goToAndWaitUntilVertical(state)
+            .andThen(Elevator.goToAndWaitUntilAtHeight(state))
+            .andThen(Wrist.goTo(state))
+            .withName("Go to $state pivot first")
+
+    fun goToScoreReefFromPreScore(state: RobotState): Command =
+        Elevator.goToAndWaitUntilAtHeight(state)
+            .alongWith(Wrist.goToAndWaitUntilAtAngle(state))
+            .andThen(Pivot.goTo(state))
+            .withName("Go to score reef at $state from PreScore")
 }
