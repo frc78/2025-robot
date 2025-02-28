@@ -6,6 +6,8 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.wpilibj.DriverStation
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.drivetrain.Chassis
+import kotlin.math.sqrt
 
 object FieldObstacles {
     private val hasCoral = { Intake.hasBranchCoral }
@@ -44,22 +46,26 @@ class LineSegment(val p1: Translation2d, val p2: Translation2d, val applySlow: (
 
     override fun getSlowdownFactor(): Double {
         if (applySlow()) {
-            TODO("Not yet implemented")
+            return quadraticDecreaseFactor(
+                getShortestDistance(Chassis.pose.translation),
+                0.5,
+                1.0,
+                0.5,
+            )
         }
         return 1.0
     }
 }
 
 // In progress
-private fun quadraticDecrease(
+private fun quadraticDecreaseFactor(
     distance: Double,
-    startSlowDistance: Double,
-    maxSlowDistance: Double,
-    maxSlowdown: Double,
+    startSlowDistance: Double, // Distance at which the robot starts slowing down
+    maxSlowDistance: Double, // Distance by which slowing down factor is maximum
+    maxSlowdown: Double, // Maximum slowdown factor
 ): Double {
-    return MathUtil.clamp(
-        distance - startSlowDistance,
-        0.0,
-        maxSlowDistance,
-    )
+    val distToMax = distance - maxSlowDistance
+    val slope = startSlowDistance - maxSlowDistance
+    return sqrt( 1 - MathUtil.clamp(distToMax / slope, 0.0, 1.0)
+    ) * maxSlowdown
 }
