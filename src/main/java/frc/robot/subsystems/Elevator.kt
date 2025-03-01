@@ -34,8 +34,8 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -126,7 +126,7 @@ object Elevator : SubsystemBase("Elevator") {
         PrintCommand("Elevator waiting until it gets to $state - ${state.elevatorHeight}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until{ isAtHeight(state.elevatorHeight) }
+            .until { isAtHeight(state.elevatorHeight) }
 
     val manualUp by command {
         startEnd(

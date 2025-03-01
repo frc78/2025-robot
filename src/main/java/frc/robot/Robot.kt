@@ -83,7 +83,8 @@ object Robot : LoggedRobot() {
             }),
         )
 
-        // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero it,
+        // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
+        // it,
         // but the lowest safe limit is greater than this due to the top elevator supports
         Wrist.initializePosition()
     }

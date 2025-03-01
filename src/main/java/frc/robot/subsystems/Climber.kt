@@ -25,16 +25,13 @@ object Climber : Subsystem {
         leader.set(0.0)
     }
 
-    override fun periodic() {
-
-    }
+    override fun periodic() {}
 
     val manualExtend by command {
-        startEnd({ leader.set(.5) }, {leader.set(0.0) }).withName("Extend Climber")
+        startEnd({ leader.set(.5) }, { leader.set(0.0) }).withName("Extend Climber")
     }
 
     val manualRetract by command {
         startEnd({ leader.set(-.5) }, { leader.set(0.0) }).withName("Retract Climber")
     }
-
 }

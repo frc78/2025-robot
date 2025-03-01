@@ -71,26 +71,32 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     // Coral Station
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
-    rightBumper().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation)
-            .andThen(Intake.intakeCoralThenHold())
-            .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
-            .andThen(SuperStructure.smartGoTo(RobotState.PreScore)))
+    rightBumper()
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.CoralStation)
+                .andThen(Intake.intakeCoralThenHold())
+                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
+                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+        )
 
     // Algae Intake
-    povUp().onTrue(
-        SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-            .andThen(Intake.intakeAlgaeThenHold()))
-    povDown().onTrue(
-        SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
-            .andThen(Intake.intakeAlgaeThenHold()))
-//    leftTrigger(0.55).onTrue(
-//        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
-//            .andThen(Intake.intakeAlgaeThenHold()))
+    povUp()
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
+                .andThen(Intake.intakeAlgaeThenHold())
+        )
+    povDown()
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
+                .andThen(Intake.intakeAlgaeThenHold())
+        )
+    //    leftTrigger(0.55).onTrue(
+    //        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
+    //            .andThen(Intake.intakeAlgaeThenHold()))
 
     // Algae Scoring
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
-//    povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
+    //    povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
     leftTrigger(0.55).whileTrue(Intake.outtakeAlgae)
 }
 

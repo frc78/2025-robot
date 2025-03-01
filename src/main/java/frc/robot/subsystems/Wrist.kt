@@ -10,7 +10,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -23,8 +22,8 @@ import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 10.degrees
@@ -81,7 +80,7 @@ object Wrist : SubsystemBase("Wrist") {
         PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until{ isAtAngle(state.wristAngle) }
+            .until { isAtAngle(state.wristAngle) }
 
     val angle: Angle
         get() = leader.position.value
