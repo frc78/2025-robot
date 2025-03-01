@@ -31,6 +31,7 @@ import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
+import java.util.function.BooleanSupplier
 
 object Pivot : SubsystemBase("Pivot") {
 
@@ -38,7 +39,9 @@ object Pivot : SubsystemBase("Pivot") {
     private val cancoder = CANcoder(5, "*")
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val ELEVATOR_THRESHOLD = 8.degrees
+    private val SETPOINT_THRESHOLD = 8.degrees
+    // how vertical the pivot needs to be for the elevator to extend
+    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -62,7 +65,8 @@ object Pivot : SubsystemBase("Pivot") {
                         .withKG(0.22628)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
                     MotionMagic.MotionMagicCruiseVelocity = .25
-                    MotionMagic.MotionMagicAcceleration = 2.5
+                    MotionMagic.MotionMagicAcceleration = .5
+                    MotionMagic.MotionMagicJerk = 2.5
                 }
 
             configurator.apply(config)
@@ -78,13 +82,23 @@ object Pivot : SubsystemBase("Pivot") {
         follower.setControl(Follower(9, true))
     }
 
+    // Checks if the pivot is sufficiently vertical to extend the elevator
+    val canExtendElevator: Boolean
+        get() = angle > RAISE_ELEVATOR_THRESHOLD
+
+    // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
+    fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
+        runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
+            .until(endCondition)
+
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
-    fun goToAndWaitUntilVertical(state: RobotState): Command =
+    fun goToAndWaitUntilSetpoint(state: RobotState): Command =
         PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            abs((angle - state.pivotAngle).degrees) < ELEVATOR_THRESHOLD.degrees
+            abs((angle - state.pivotAngle).degrees) < SETPOINT_THRESHOLD.degrees
         }
 
     val angle: Angle

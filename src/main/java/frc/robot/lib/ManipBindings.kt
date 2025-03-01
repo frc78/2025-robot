@@ -75,7 +75,8 @@ private fun CommandXboxController.configureManipButtonLayout() {
 //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver control?
     rightTrigger(0.55).onTrue(
         Intake.outtakeCoral
-            .andThen(Commands.waitTime(0.25.seconds))
+            .andThen(Commands.waitTime(0.35.seconds))
+            .andThen(Intake.stopRollers)
             .andThen(SuperStructure.retractAfterScoring()))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper().onTrue(
@@ -101,6 +102,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
     leftTrigger(0.55).onTrue(
         Intake.outtakeAlgae
             .andThen(Commands.waitTime(0.5.seconds))
+            .andThen(Intake.stopRollers)
             .andThen(SuperStructure.retractAfterScoring())
     )
 }
@@ -150,11 +152,14 @@ fun CommandJoystick.configureManipTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-    //    button(7).whileTrue(Intake.intakeCoral)
-    button(7).onTrue(Intake.intakeCoralThenHold())
-    button(8).whileTrue(Intake.outtakeCoral)
-    button(9).whileTrue(Climber.manualExtend)
-    button(10).whileTrue(Climber.manualRetract)
+
+    button(5).onTrue(Pivot.goToRawUntil(20.degrees){true})
+    button(7).onTrue(Pivot.goToRawUntil(RobotState.CoralStation.pivotAngle){true})
+    button(8).onTrue(Pivot.goToRawUntil(90.degrees){true})
+    button(9).onTrue(Pivot.goToRawUntil())
+
+//    button(9).whileTrue(Climber.manualExtend)
+//    button(10).whileTrue(Climber.manualRetract)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
 }

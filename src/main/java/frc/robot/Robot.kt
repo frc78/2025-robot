@@ -127,6 +127,9 @@ object Robot : LoggedRobot() {
         Vision.setupSimulation()
     }
 
+    private val hasAlgae: Boolean
+        get() = Intake.hasAlgaeByCurrent()
+
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
@@ -140,7 +143,7 @@ object Robot : LoggedRobot() {
         Logger.recordOutput("Ele Stowed", Elevator.isStowed)
         Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
 
-        SmartDashboard.putBoolean("Has Algae", Intake.hasAlgaeByCurrent())
+        SmartDashboard.putBoolean("Has Algae", hasAlgae)
         SmartDashboard.putNumber("Intake Current", Intake.torqueCurrent.amps)
     }
 

@@ -5,7 +5,6 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.DeferredCommand
-import frc.robot.Robot
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
 import frc.robot.lib.degrees
@@ -69,24 +68,24 @@ object SuperStructure {
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
-                {
-                    if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
-                        // if elevator is stowed and getting raised, move pivot before raising it
-                        goToMovePivotFirst(state)
-                    } else if (
-                        !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
-                    ) {
-                        // if elevator is raised and getting stowed, lower it before moving pivot
-                        println("Elevator going down, running goToElevatorIsRaised(state)")
-                        goToMoveElevatorFirst(state)
-                    } else {
-                        // if elevator is not going from stowed to raised or vice versa, move
-                        // everything at once
-                        goToMoveElevatorAndPivotTogether(state)
-                    }
-                },
-                setOf(Pivot, Elevator, Wrist),
-            )
+            {
+                if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
+                    // if elevator is stowed and getting raised, move pivot before raising it
+                    goToMovePivotFirst(state)
+                } else if (
+                    !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                ) {
+                    // if elevator is raised and getting stowed, lower it before moving pivot
+                    println("Elevator going down, running goToElevatorIsRaised(state)")
+                    goToMoveElevatorFirst(state)
+                } else {
+                    // if elevator is not going from stowed to raised or vice versa, move
+                    // everything at once
+                    goToMoveElevatorAndPivotTogether(state)
+                }
+            },
+            setOf(Pivot, Elevator, Wrist),
+        )
             .withName("Smart Go To ${state.name}")
 
     fun goToMoveElevatorFirst(state: RobotState): Command =
@@ -96,26 +95,30 @@ object SuperStructure {
             .withName("Go to $state elevator first")
 
     fun goToMovePivotFirst(state: RobotState): Command =
-        Pivot.goToAndWaitUntilVertical(state)
+        Pivot.goToAndWaitUntilSetpoint(state)
             .andThen(Elevator.goToAndWaitUntilAtHeight(state))
             .andThen(Wrist.goTo(state))
             .withName("Go to $state pivot first")
 
     fun goToScoreReefFromPreScore(state: RobotState): Command =
-        DeferredCommand(
-            {
-                if (state == RobotState.L4 || state == RobotState.L1) {
-                    // If going L4, can do wrist last bc there's nothing above it to hit
-                    // If going L1, scoring out the front with no elevator so no worries
-                    smartGoTo(state)
-                } else {
-                    // If going L2 or L3, set elevator and wrist first, then move pivot the last few degrees
-                    Elevator.goToAndWaitUntilAtHeight(state)
-                        .alongWith(Wrist.goToAndWaitUntilAtAngle(state))
-                        .andThen(Pivot.goTo(state))
-                        .withName("Go to score reef at $state from PreScore")
-                }
-            },
-            setOf(Pivot, Elevator, Wrist)
-        )
+        Wrist.goTo(state)
+            .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
+            .andThen(Elevator.goTo(state))
+
+//        DeferredCommand(
+//            {
+//                if (state == RobotState.L4 || state == RobotState.L1) {
+//                    // If going L4, can do wrist last bc there's nothing above it to hit
+//                    // If going L1, scoring out the front with no elevator so no worries
+//                    smartGoTo(state)
+//                } else {
+//                    // If going L2 or L3, set elevator and wrist first, then move pivot the last few degrees
+//                    Elevator.goToAndWaitUntilAtHeight(state)
+//                        .alongWith(Wrist.goToAndWaitUntilAtAngle(state))
+//                        .andThen(Pivot.goTo(state))
+//                        .withName("Go to score reef at $state from PreScore")
+//                }
+//            },
+//            setOf(Pivot, Elevator, Wrist)
+//        )
 }
