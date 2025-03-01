@@ -13,7 +13,7 @@ import kotlin.jvm.optionals.getOrNull
 object Alignments {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
-    private val REEF_TO_BOT_TRANSFORM = Transform2d(0.55.meters, 0.meters, Rotation2d.kZero)
+    private val REEF_TO_BOT_TRANSFORM = Transform2d(0.7.meters, 0.meters, Rotation2d.kZero)
     private val CORAL_TO_BOT_TRANSFORM = Transform2d(0.55.meters, 0.meters, Rotation2d.k180deg)
 
     // Tag IDs are in order of ReefFaces
