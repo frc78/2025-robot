@@ -4,6 +4,8 @@ import edu.wpi.first.math.MathUtil
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.XboxController
+import frc.robot.lib.bindings.DRIVE_MODIFIERS
+import frc.robot.subsystems.Intake
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
@@ -15,12 +17,14 @@ private val maxTranslation = 3.metersPerSecond
 private val maxRotation = 1.rotationsPerSecond
 
 /* Extension properties to access the drive velocities based on joystick input
-* This used to be a single method that returned a ChassisSpeeds object,
-* but it made it hard to use in cases where we wanted an override of one or more speeds,
-* such as auto-alignment */
+ * This used to be a single method that returned a ChassisSpeeds object,
+ * but it made it hard to use in cases where we wanted an override of one or more speeds,
+ * such as auto-alignment */
 
-/** Calculates a speed modifier that allows scaling up or down based on the values of the left and
-* right triggers. The output is between (1-UP_ADJUST-DOWN_ADJUST) and 1*/
+/**
+ * Calculates a speed modifier that allows scaling up or down based on the values of the left and
+ * right triggers. The output is between (1-UP_ADJUST-DOWN_ADJUST) and 1
+ */
 val XboxController.triggerAdjust
     get() =
         (1 - UP_ADJUST) + (MathUtil.applyDeadband(rightTriggerAxis, TRIGGER_DEADBAND) * UP_ADJUST) -
@@ -32,16 +36,17 @@ val obstacleSlowdown
                 FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation).also {
                     Logger.recordOutput("closestCoralStationDistance", it)
                 },
+                1.5,
                 1.0,
                 0.5,
-                0.5,
-            )
+            ) * (if (Intake.hasBranchCoral) 0 else 1)
             .also { Logger.recordOutput("obstacleSlowdown", it) }
 
-/** Cumulates the enabled speed modifiers into one coefficient*/
+/** Cumulates the enabled speed modifiers into one coefficient */
 val XboxController.speedModifiers
-    get() = (if (DRIVE_MODIFIERS.triggerAdjust) triggerAdjust else 1.0) *
-        (if (DRIVE_MODIFIERS.distanceSlowing) obstacleSlowdown else 1.0)
+    get() =
+        (if (DRIVE_MODIFIERS.triggerAdjust) triggerAdjust else 1.0) *
+            (if (DRIVE_MODIFIERS.distanceSlowing) obstacleSlowdown else 1.0)
 
 val XboxController.velocityX: LinearVelocity
     get() {
@@ -61,13 +66,18 @@ val XboxController.velocityRot: AngularVelocity
         return maxRotation * rot * speedModifiers
     }
 
-/** Calculates a speed modifier based on a distance and a range.
- * Note: 0 < maxSlowDistance < startSlowDistance
+/**
+ * Calculates a speed modifier based on a distance and a range. Note: 0 < maxSlowDistance <
+ * startSlowDistance
+ *
  * @param distance The measured distance
  * @param startSlowDistance The distance at which the robot will start slowing down
- * @param maxSlowDistance The distance at which the effect will be greatest, i.e. slowdown factor = maxSlowdownCoefficient
- * @param maxSlowdownCoefficient The maximum decrease in speed this modifier will apply (0.1 will decrease speed by 10% FROM original speed)
- * @return Value between 1.0 and (1.0 - maxSlowdownCoefficient)*/
+ * @param maxSlowDistance The distance at which the effect will be greatest, i.e. slowdown factor =
+ *   maxSlowdownCoefficient
+ * @param maxSlowdownCoefficient The maximum decrease in speed this modifier will apply (0.1 will
+ *   decrease speed by 10% FROM original speed)
+ * @return Value between 1.0 and (1.0 - maxSlowdownCoefficient)
+ */
 private fun distanceSlowdown(
     distance: Double,
     startSlowDistance: Double, // Distance at which the robot starts slowing down

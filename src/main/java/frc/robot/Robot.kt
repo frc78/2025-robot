@@ -20,9 +20,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.amps
-import frc.robot.lib.configureDriverBindings
-import frc.robot.lib.configureManipTestBindings
-import frc.robot.lib.configureManipulatorBindings
+import frc.robot.lib.bindings.configureDriverBindings
+import frc.robot.lib.bindings.configureManipTestBindings
+import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Elevator
@@ -45,6 +45,9 @@ object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
 
+    // Because I needed it for driveToChangingPose
+    val driveController = CommandXboxController(0)
+
     init {
         DriverStation.silenceJoystickConnectionWarning(true)
         Logger.recordMetadata("IS_TEST ?", "$IS_TEST")
@@ -65,7 +68,7 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-        CommandXboxController(0).configureDriverBindings()
+        driveController.configureDriverBindings()
         CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
 
