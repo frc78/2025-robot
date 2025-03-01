@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -124,26 +124,32 @@ private fun CommandXboxController.configureManipLeftStickLayout() {
 // Idea for a more intuitive branch selector, which doesn't require reading the driver station
 private fun CommandXboxController.configureManipBothSticksLayout() {
     leftBumper()
-        .or(rightBumper())
         .onTrue(
             Commands.runOnce({
-                when {
-                    leftBumper().asBoolean -> SelectedBranch = Branch.LEFT
-                    rightBumper().asBoolean -> SelectedBranch = Branch.RIGHT
-                }
-
-                val t = 0.5 // Threshold
-                val level =
-                    when {
-                        (leftY > t) && (rightY > t) -> Level.L4
-                        (leftY > t) && (rightY.absoluteValue < t) -> Level.L3
-                        (leftY.absoluteValue < t) && (rightY.absoluteValue < t) -> Level.L2
-                        (leftY < -t) -> Level.L1
-                        else -> null
-                    }
-                level?.let { ScoreSelector.SelectedLevel = it }
+                SelectedBranch = Branch.LEFT
+                selectWithStick()
             })
         )
+    rightBumper()
+        .onTrue(
+            Commands.runOnce({
+                SelectedBranch = Branch.RIGHT
+                selectWithStick()
+            })
+        )
+}
+
+private fun CommandXboxController.selectWithStick() {
+    val t = 0.5 // Threshold
+    val level =
+        when {
+            (leftY > t) && (rightY > t) -> Level.L4
+            (leftY > t) && (rightY.absoluteValue < t) -> Level.L3
+            (leftY.absoluteValue < t) && (rightY.absoluteValue < t) -> Level.L2
+            (leftY < -t) -> Level.L1
+            else -> null
+        }
+    level?.let { ScoreSelector.SelectedLevel = it }
 }
 
 /** Used for setting up a test controller / joystick */
@@ -168,9 +174,9 @@ fun CommandJoystick.configureManipTestBindings() {
 //    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
 //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
 
-
-    button(9).whileTrue(Climber.manualExtend)
-    button(10).whileTrue(Climber.manualRetract)
+    button(8).whileTrue(Intake.outtakeCoral)
+    button(9).whileTrue(Climber.extend)
+    button(10).whileTrue(Climber.retract)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
 }

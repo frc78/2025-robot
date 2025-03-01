@@ -21,7 +21,20 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.lib.*
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilograms
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.radiansPerSecondPerSecond
+import frc.robot.lib.rotations
+import frc.robot.lib.toAngle
+import frc.robot.lib.toAngularVelocity
+import frc.robot.lib.toDistance
+import frc.robot.lib.volts
+import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 import java.util.function.BooleanSupplier
 import kotlin.math.abs
@@ -126,7 +139,7 @@ object Elevator : SubsystemBase("Elevator") {
         PrintCommand("Elevator waiting until it gets to $state - ${state.elevatorHeight}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until{ isAtHeight(state.elevatorHeight) }
+            .until { isAtHeight(state.elevatorHeight) }
 
     val manualUp by command {
         startEnd(

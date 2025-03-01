@@ -123,21 +123,3 @@ object SuperStructure {
         Wrist.goTo(state)
             .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
-
-//        DeferredCommand(
-//            {
-//                if (state == RobotState.L4 || state == RobotState.L1) {
-//                    // If going L4, can do wrist last bc there's nothing above it to hit
-//                    // If going L1, scoring out the front with no elevator so no worries
-//                    smartGoTo(state)
-//                } else {
-//                    // If going L2 or L3, set elevator and wrist first, then move pivot the last few degrees
-//                    Elevator.goToAndWaitUntilAtHeight(state)
-//                        .alongWith(Wrist.goToAndWaitUntilAtAngle(state))
-//                        .andThen(Pivot.goTo(state))
-//                        .withName("Go to score reef at $state from PreScore")
-//                }
-//            },
-//            setOf(Pivot, Elevator, Wrist)
-//        )
-}

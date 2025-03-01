@@ -1,15 +1,24 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.lib.command
+import frc.robot.lib.rotations
+import org.littletonrobotics.junction.Logger
 
-object Climber : Subsystem {
+object Climber : SubsystemBase("Climber") {
 
-    private const val GEAR_RATIO = 0.0
+    private val rotationsPerInch = 12.0.rotations
+    private const val EXTENDED_INCHES = 6.0
+    private val extendedPosition = rotationsPerInch * EXTENDED_INCHES
+
+    private val positionVoltage = PositionVoltage(0.0)
 
     private val leader =
         TalonFX(14, "*").apply {
@@ -18,6 +27,8 @@ object Climber : Subsystem {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    Feedback.SensorToMechanismRatio = 20.0 / 12.0
+                    Slot0.kP = 10.0
                 }
             )
         }
@@ -28,15 +39,20 @@ object Climber : Subsystem {
     }
 
     override fun periodic() {
-
+        Logger.recordOutput("climber/position", leader.position.value)
     }
 
-    val manualExtend by command {
-        startEnd({ leader.set(.5) }, {leader.set(0.0) }).withName("Extend Climber")
+    val retract by command {
+        runOnce { leader.setControl(positionVoltage.withPosition(0.0)) }.withName("Retract Foot")
     }
 
-    val manualRetract by command {
-        startEnd({ leader.set(-.5) }, { leader.set(0.0) }).withName("Retract Climber")
+    val extend by command {
+        runOnce { leader.setControl(positionVoltage.withPosition(extendedPosition)) }
+            .withName("Extend Foot")
     }
 
+    init {
+        SmartDashboard.putData(retract)
+        SmartDashboard.putData(extend)
+    }
 }

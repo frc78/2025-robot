@@ -22,6 +22,7 @@ import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 import java.util.function.BooleanSupplier
 import kotlin.math.abs
@@ -89,7 +90,7 @@ object Wrist : SubsystemBase("Wrist") {
         PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until{ isAtAngle(state.wristAngle) }
+            .until { isAtAngle(state.wristAngle) }
 
     val angle: Angle
         get() = leader.position.value
