@@ -10,7 +10,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -23,11 +22,14 @@ import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("Wrist") {
-    private var lowerLimit = 0.degrees
-    private var upperLimit = 120.degrees
+    private var lowerLimit = 10.degrees
+    private var upperLimit = 175.degrees
     private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
+    private val AT_ANGLE_THRESHOLD = 3.degrees
 
     private val leader =
         TalonFX(13, "*").apply {
@@ -35,7 +37,7 @@ object Wrist : SubsystemBase("Wrist") {
                 TalonFXConfiguration().apply {
                     Feedback.SensorToMechanismRatio = GEAR_RATIO
 
-                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
@@ -43,7 +45,7 @@ object Wrist : SubsystemBase("Wrist") {
                         .withForwardSoftLimitThreshold(upperLimit)
                         .withReverseSoftLimitThreshold(lowerLimit)
 
-                    Slot0.withKP(62.105)
+                    Slot0.withKP(142.105) // 62.105
                         .withKD(19.613)
                         .withKS(0.0)
                         .withKV(0.0)
@@ -51,8 +53,8 @@ object Wrist : SubsystemBase("Wrist") {
                         .withKG(0.0)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
 
-                    MotionMagic.MotionMagicCruiseVelocity = .25
-                    MotionMagic.MotionMagicAcceleration = 2.5
+                    MotionMagic.MotionMagicCruiseVelocity = 10.0
+                    MotionMagic.MotionMagicAcceleration = 100.0
                 }
 
             configurator.apply(config)
@@ -62,15 +64,23 @@ object Wrist : SubsystemBase("Wrist") {
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
+    fun initializePosition() {
+        leader.setControl(motionMagic.withPosition(lowerLimit))
+    }
+
+    fun isAtAngle(target: Angle): Boolean {
+        return abs((angle - target).degrees) < AT_ANGLE_THRESHOLD.degrees
+    }
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        positionVoltage.withPosition(state.wristAngle)
-                    ) // Do we need to do .wristToMotor()
-                }
-            )
+            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
+
+    fun goToAndWaitUntilAtAngle(state: RobotState): Command =
+        PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
+            .alongWith(goTo(state))
+            .andThen(Commands.idle())
+            .until { isAtAngle(state.wristAngle) }
 
     val angle: Angle
         get() = leader.position.value
@@ -78,17 +88,18 @@ object Wrist : SubsystemBase("Wrist") {
     fun manualUp(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.0.volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
 
     fun manualDown(): Command {
         return startEnd(
             { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.0.volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
 
+    @Suppress("UnusedPrivateProperty")
     private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
 
     fun zeroRoutines(): Command {
@@ -121,6 +132,7 @@ object Wrist : SubsystemBase("Wrist") {
             ),
         )
 
+    @Suppress("UnusedPrivateProperty")
     private val sysId =
         Commands.sequence(
                 runOnce { SignalLogger.start() },
@@ -141,8 +153,13 @@ object Wrist : SubsystemBase("Wrist") {
             .withName("Wrist SysId")
 
     init {
-        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
-        SmartDashboard.putData("Zero wrist", Wrist.resetPosition)
+        //        SmartDashboard.putData(this)
+        //        SmartDashboard.putData(sysId)
+        //        SmartDashboard.putData("Zero wrist", resetPosition)
+    }
+
+    override fun periodic() {
+        super.periodic()
+        Logger.recordOutput("wrist/angle", angle)
     }
 }

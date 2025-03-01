@@ -4,7 +4,6 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
@@ -13,18 +12,20 @@ import frc.robot.lib.inches
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    Stow(0.degrees, 0.inches, 0.degrees),
-    L1(60.degrees, 0.inches, 120.degrees),
-    L2(75.degrees, 6.inches, 110.degrees),
-    L3(78.degrees, 20.inches, 100.degrees),
-    L4(82.degrees, 46.inches, 100.degrees),
+    Stow(0.degrees, 0.25.inches, 8.degrees),
+    PreScore(74.degrees, 0.25.inches, 125.degrees),
+    L1(60.degrees, 0.25.inches, 120.degrees),
+    L2(69.degrees, 0.25.inches, 22.67.degrees),
+    L3(78.degrees, 20.inches, 20.degrees),
+    L4(82.degrees, 50.13.inches, 13.62.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
-    CoralStation(54.degrees, 0.inches, 19.degrees),
+    CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
     AlgaeGroundPickup(18.degrees, 3.inches, 30.degrees),
     CoralGroundPickup(5.degrees, 5.inches, 74.degrees),
     Processor(0.degrees, 0.inches, 0.degrees),
-    HighAlgaeIntake(0.degrees, 0.inches, 0.degrees),
-    LowAlgaeIntake(0.degrees, 0.inches, 0.degrees),
+    HighAlgaeIntake(84.degrees, 17.33.inches, 10.degrees),
+    LowAlgaeIntake(84.degrees, 0.25.inches, 10.degrees),
+    AlgaeNet(82.97.degrees, 51.61.inches, 39.46.degrees),
     ReadyToClimb(0.degrees, 0.inches, 0.degrees),
     FullyClimbed(0.degrees, 0.inches, 0.degrees),
     AlgaeStorage(0.degrees, 0.inches, 0.degrees),
@@ -38,52 +39,54 @@ object SuperStructure {
     }
 
     val goToSelectedLevel by command {
-        DeferredCommand({ goTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
+        DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
     }
 
     // Command factory to go to a specific robot state
-    fun goTo(state: RobotState): Command =
+    fun goToMoveElevatorAndPivotTogether(state: RobotState): Command =
         Pivot.goTo(state)
             .andThen(Elevator.goTo(state))
             .andThen(Wrist.goTo(state))
-            .withName("Go to $state")
+            .withName("Go to $state all at once")
 
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
-        ConditionalCommand(goToElevatorIsDown(state), goToElevatorIsUp(state), Elevator.isDown)
-            .withName("Go to $state")
+        DeferredCommand(
+                {
+                    if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
+                        // if elevator is stowed and getting raised, move pivot before raising it
+                        goToMovePivotFirst(state)
+                    } else if (
+                        !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                    ) {
+                        // if elevator is raised and getting stowed, lower it before moving pivot
+                        println("Elevator going down, running goToElevatorIsRaised(state)")
+                        goToMoveElevatorFirst(state)
+                    } else {
+                        // if elevator is not going from stowed to raised or vice versa, move
+                        // everything at once
+                        goToMoveElevatorAndPivotTogether(state)
+                    }
+                },
+                setOf(Pivot, Elevator, Wrist),
+            )
+            .withName("Smart Go To ${state.name}")
 
-    // This code was an attempt to account for the edge case where we want to go between two presets
-    // where the elevator is extended and the pivot never leaves the "vertical" range (such as from
-    // L4 to L3), since currently the elevator has to go down before the pivot can move, but it
-    // never would in this case.  Didn't work in simulation.
-
-    //    fun smartGoTo(state: RobotState): Command = InstantCommand(
-    //        {
-    //            if (Elevator.isDown.asBoolean) {
-    //                // if elevator is down, move pivot before raising it
-    //                goToElevatorIsDown(state)
-    //            } else if ((73.degrees < state.pivotAngle) && (state.pivotAngle < 90.degrees)) {
-    //                // if elevator is up but the pivot is staying "vertical", can move everything
-    // at once
-    //                goTo(state)
-    //            } else {
-    //                // if elevator is up and the pivot is not staying vertical, lower elevator
-    // before moving pivot
-    //                goToElevatorIsUp(state)
-    //            }
-    //        }
-    //    )
-
-    fun goToElevatorIsUp(state: RobotState): Command =
+    fun goToMoveElevatorFirst(state: RobotState): Command =
         Wrist.goTo(state)
-            .andThen(Elevator.goToAndWaitUntilDown(state))
+            .andThen(Elevator.goToAndWaitUntilStowed(state))
             .andThen(Pivot.goTo(state))
-            .withName("Go to $state")
+            .withName("Go to $state elevator first")
 
-    fun goToElevatorIsDown(state: RobotState): Command =
-        Wrist.goTo(state)
-            .andThen(Pivot.goToAndWaitUntilVertical(state))
-            .andThen(Elevator.goTo(state))
-            .withName("Go to $state")
+    fun goToMovePivotFirst(state: RobotState): Command =
+        Pivot.goToAndWaitUntilVertical(state)
+            .andThen(Elevator.goToAndWaitUntilAtHeight(state))
+            .andThen(Wrist.goTo(state))
+            .withName("Go to $state pivot first")
+
+    fun goToScoreReefFromPreScore(state: RobotState): Command =
+        Elevator.goToAndWaitUntilAtHeight(state)
+            .alongWith(Wrist.goToAndWaitUntilAtAngle(state))
+            .andThen(Pivot.goTo(state))
+            .withName("Go to score reef at $state from PreScore")
 }

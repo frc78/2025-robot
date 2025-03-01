@@ -16,7 +16,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -35,59 +34,16 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import java.util.function.BooleanSupplier
+import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
+    val IS_STOWED_THRESHOLD = 3.inches
 
-    fun goTo(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
-            )
-
-    val isDown: BooleanSupplier = BooleanSupplier { position < 3.inches }
-
-    fun goToAndWaitUntilDown(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic
-                            .withPosition(state.elevatorHeight.toAngle(DRUM_RADIUS))
-                            .withSlot(0)
-                            .withEnableFOC(true)
-                    )
-                }
-            )
-            .andThen(Commands.idle())
-            .until(isDown)
-
-    val manualUp by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
-        )
-    }
-
-    val manualDown by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { leader.setControl(voltage.withOutput(0.0.volts)) },
-        )
-    }
-
-    val position
-        get() = leader.position.value.toElevatorHeight()
-
+    private const val LEADER_MOTOR_ID = 11
+    private const val FOLLOWER_MOTOR_ID = 12
     // Constants for the feedforward calculation
     private const val K_S = 0.23487
     private const val K_V = 0.60823
@@ -99,13 +55,11 @@ object Elevator : SubsystemBase("Elevator") {
     private const val K_I = 0.0
     private const val K_D = 1.2611
 
-    private const val LEADER_MOTOR_ID = 11
-    private const val FOLLOWER_MOTOR_ID = 12
-
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     private val MAX_HEIGHT = 53.inches
+    private val AT_HEIGHT_THRESHOLD = 5.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -142,6 +96,51 @@ object Elevator : SubsystemBase("Elevator") {
             motorVoltage.setUpdateFrequency(100.0)
             closedLoopError.setUpdateFrequency(100.0)
         }
+
+    val position
+        get() = leader.position.value.toElevatorHeight()
+
+    fun goTo(state: RobotState): Command =
+        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
+            .alongWith(
+                runOnce {
+                    leader.setControl(
+                        motionMagic.withPosition(state.elevatorHeight.toDrumRotations())
+                    )
+                }
+            )
+
+    val isStowed: Boolean
+        get() = position < IS_STOWED_THRESHOLD
+
+    fun isAtHeight(target: Distance): Boolean {
+        return abs((position - target).inches) < AT_HEIGHT_THRESHOLD.inches
+    }
+
+    fun goToAndWaitUntilStowed(state: RobotState): Command =
+        PrintCommand("Elevator stowing").alongWith(goTo(state)).andThen(Commands.idle()).until {
+            isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD
+        }
+
+    fun goToAndWaitUntilAtHeight(state: RobotState): Command =
+        PrintCommand("Elevator waiting until it gets to $state - ${state.elevatorHeight}")
+            .alongWith(goTo(state))
+            .andThen(Commands.idle())
+            .until { isAtHeight(state.elevatorHeight) }
+
+    val manualUp by command {
+        startEnd(
+            { leader.setControl(voltage.withOutput(2.0.volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
+        )
+    }
+
+    val manualDown by command {
+        startEnd(
+            { leader.setControl(voltage.withOutput((-2.0).volts)) },
+            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
+        )
+    }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
@@ -180,6 +179,7 @@ object Elevator : SubsystemBase("Elevator") {
             ),
         )
 
+    @Suppress("UnusedPrivateProperty")
     private val sysId by command {
         Commands.sequence(
                 runOnce {
@@ -189,7 +189,7 @@ object Elevator : SubsystemBase("Elevator") {
                             ForwardSoftLimitEnable = true
                             ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
                             ReverseSoftLimitEnable = true
-                            ReverseSoftLimitThreshold = 0.0
+                            ReverseSoftLimitThreshold = 0.25
                         }
                     )
                 },
@@ -211,11 +211,12 @@ object Elevator : SubsystemBase("Elevator") {
     }
 
     init {
-        SmartDashboard.putData(sysId)
-        SmartDashboard.putData("Elevator L1", Elevator.goTo(RobotState.L1))
-        SmartDashboard.putData("Elevator L2", Elevator.goTo(RobotState.L2))
-        SmartDashboard.putData("Elevator L3", Elevator.goTo(RobotState.L3))
-        SmartDashboard.putData("Elevator L4", Elevator.goTo(RobotState.L4))
+        //        SmartDashboard.putData(sysId)
+    }
+
+    override fun periodic() {
+        Logger.recordOutput("elevator/position", position)
+        Logger.recordOutput("elevator/stowed", isStowed)
     }
 
     override fun simulationPeriodic() {
