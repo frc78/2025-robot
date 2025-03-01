@@ -9,6 +9,8 @@ import frc.robot.lib.command
 
 object Climber : Subsystem {
 
+    private const val GEAR_RATIO = 0.0
+
     private val leader =
         TalonFX(14, "*").apply {
             configurator.apply(

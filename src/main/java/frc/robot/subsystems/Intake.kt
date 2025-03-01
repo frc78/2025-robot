@@ -135,7 +135,7 @@ object Intake : Subsystem {
         startEnd({ leader.set(0.6) }, { leader.set(0.0) }).withName("Intake Coral")
     }
 
-    val outtakeCoral by command {
+    val manualOuttakeCoral by command {
         startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Outtake Coral")
     }
 
@@ -143,8 +143,16 @@ object Intake : Subsystem {
         startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Intake Algae")
     }
 
-    val outtakeAlgae by command {
+    val manualOuttakeAlgae by command {
         startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
+    }
+
+    val outtakeCoral by command {
+        runOnce{ leader.set(-1.0) }
+    }
+
+    val outtakeAlgae by command {
+        runOnce{ leader.set(1.0) }
     }
 
     val scoreCoral by command {
