@@ -10,7 +10,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -24,6 +23,7 @@ import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import org.littletonrobotics.junction.Logger
+import java.util.function.BooleanSupplier
 import kotlin.math.abs
 
 object Wrist : SubsystemBase("Wrist") {
@@ -46,7 +46,8 @@ object Wrist : SubsystemBase("Wrist") {
                         .withForwardSoftLimitThreshold(upperLimit)
                         .withReverseSoftLimitThreshold(lowerLimit)
 
-                    Slot0.withKP(142.105) // 62.105
+                    Slot0.withKP(162.105) // 62.105
+                        .withKI(1.0)
                         .withKD(19.613)
                         .withKS(0.0)
                         .withKV(0.0)
@@ -55,7 +56,8 @@ object Wrist : SubsystemBase("Wrist") {
                         .withGravityType(GravityTypeValue.Arm_Cosine)
 
                     MotionMagic.MotionMagicCruiseVelocity = 10.0
-                    MotionMagic.MotionMagicAcceleration = 100.0
+                    MotionMagic.MotionMagicAcceleration = 20.0
+                    MotionMagic.MotionMagicJerk = 100.0
                 }
 
             configurator.apply(config)
@@ -72,6 +74,11 @@ object Wrist : SubsystemBase("Wrist") {
     fun isAtAngle(target: Angle): Boolean {
         return abs((angle - target).degrees) < AT_ANGLE_THRESHOLD.degrees
     }
+
+    // Moves the wrist to <setpoint> and holds the command until <endCondition> is true
+    fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
+        runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
+            .until(endCondition)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")

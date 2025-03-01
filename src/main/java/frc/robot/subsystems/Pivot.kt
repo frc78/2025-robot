@@ -35,7 +35,7 @@ import java.util.function.BooleanSupplier
 
 object Pivot : SubsystemBase("Pivot") {
 
-    private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
+    private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12) // 266.25
     private val cancoder = CANcoder(5, "*")
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
@@ -55,9 +55,12 @@ object Pivot : SubsystemBase("Pivot") {
                         .withForwardSoftLimitThreshold(160.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
                     // Set feedback to encoder
-                    Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    // TODO encoder slipping, so zeroing manually for now on devbot
+//                    Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    Feedback.SensorToMechanismRatio = GEAR_RATIO
                     // Set feedforward and feedback gains
-                    Slot0.withKP(44.365) // 24.365
+                    Slot0.withKP(50.365) // 24.365
+                        .withKI(0.1)
                         .withKD(0.22908)
                         .withKS(0.1755)
                         .withKV(31.983)
@@ -102,7 +105,8 @@ object Pivot : SubsystemBase("Pivot") {
         }
 
     val angle: Angle
-        get() = cancoder.position.value
+        get() = leader.position.value
+//        get() = cancoder.position.value
 
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {

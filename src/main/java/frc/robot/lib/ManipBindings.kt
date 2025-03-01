@@ -153,13 +153,24 @@ fun CommandJoystick.configureManipTestBindings() {
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
 
-    button(5).onTrue(Pivot.goToRawUntil(20.degrees){true})
-    button(7).onTrue(Pivot.goToRawUntil(RobotState.CoralStation.pivotAngle){true})
-    button(8).onTrue(Pivot.goToRawUntil(90.degrees){true})
-    button(9).onTrue(Pivot.goToRawUntil())
+    // Pivot control tuning
+    button(7).onTrue(Pivot.goToRawUntil(10.degrees){true})
+    button(8).onTrue(Pivot.goToRawUntil(66.degrees){true}) // coral station angle
+    button(9).onTrue(Pivot.goToRawUntil(90.degrees){true})
+
+    // Elevator control tuning
+//    button(10).onTrue(Elevator.goToRawUntil(0.25.inches){true})
+//    button(11).onTrue(Elevator.goToRawUntil(20.inches){true}) // l3 height
+//    button(12).onTrue(Elevator.goToRawUntil(50.inches){true}) // l4 height
+
+    // Wrist control tuning
+    button(10).onTrue(Wrist.goToRawUntil(13.degrees){true})
+    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
+    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
+
 
 //    button(9).whileTrue(Climber.manualExtend)
 //    button(10).whileTrue(Climber.manualRetract)
-    button(11).whileTrue(Wrist.manualUp())
-    button(12).whileTrue(Wrist.manualDown())
+//    button(11).whileTrue(Wrist.manualUp())
+//    button(12).whileTrue(Wrist.manualDown())
 }
