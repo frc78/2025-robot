@@ -79,8 +79,8 @@ object Vision {
             Camera(
                     "PortCam",
                     Transform3d(
-                        (-9.771).inches,
-                        (11.519).inches,
+                        (-11.857).inches,
+                        (11.483).inches,
                         6.610.inches,
                         Rotation3d(0.degrees, (-14).degrees, 200.degrees),
                     ),
@@ -89,8 +89,8 @@ object Vision {
             Camera(
                     "StarboardCam",
                     Transform3d(
-                        (-9.771).inches,
-                        (-11.519).inches,
+                        (-11.857).inches,
+                        (-11.483).inches,
                         6.610.inches,
                         Rotation3d(0.degrees, (-14).degrees, (-200).degrees),
                     ),
