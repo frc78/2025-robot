@@ -48,7 +48,7 @@
   "folder": "Pathfinder Path #2",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -177.73949808885877
+    "rotation": -177.7394980888588
   },
   "useDefaultConstraints": true
 }
