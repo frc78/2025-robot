@@ -30,6 +30,7 @@ object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
     val IS_STOWED_THRESHOLD = 3.inches
+    val MOVE_PIVOT_THRESHOLD = 40.inches
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
@@ -96,6 +97,7 @@ object Elevator : SubsystemBase("Elevator") {
     // Moves the elevator to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Distance, endCondition: BooleanSupplier): Command =
         runOnce { leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations())) }
+            .andThen(Commands.idle())
             .until(endCondition)
 
     fun goTo(state: RobotState): Command =

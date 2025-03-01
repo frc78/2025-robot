@@ -78,6 +78,7 @@ object Wrist : SubsystemBase("Wrist") {
     // Moves the wrist to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
         runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
+            .andThen(Commands.idle())
             .until(endCondition)
 
     fun goTo(state: RobotState): Command =

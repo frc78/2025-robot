@@ -41,7 +41,7 @@ object Pivot : SubsystemBase("Pivot") {
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
     private val SETPOINT_THRESHOLD = 8.degrees
     // how vertical the pivot needs to be for the elevator to extend
-    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees
+    private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -92,6 +92,7 @@ object Pivot : SubsystemBase("Pivot") {
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
         runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
+            .andThen(Commands.idle())
             .until(endCondition)
 
 
