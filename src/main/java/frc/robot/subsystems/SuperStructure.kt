@@ -123,3 +123,5 @@ object SuperStructure {
         Wrist.goTo(state)
             .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
+
+}
