@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -154,8 +154,8 @@ fun CommandJoystick.configureManipTestBindings() {
     //    button(7).whileTrue(Intake.intakeCoral)
     button(7).onTrue(Intake.intakeCoralThenHold())
     button(8).whileTrue(Intake.outtakeCoral)
-    button(9).whileTrue(Climber.manualExtend)
-    button(10).whileTrue(Climber.manualRetract)
+    button(9).whileTrue(Climber.extend)
+    button(10).whileTrue(Climber.retract)
     button(11).whileTrue(Wrist.manualUp())
     button(12).whileTrue(Wrist.manualDown())
 }
