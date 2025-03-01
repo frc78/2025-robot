@@ -112,14 +112,17 @@ object Intake : Subsystem {
         return false
     }
 
-    // Returns the distance from the center of the intake to the center of the coral.
-    // TODO check this formula with the new intake
+    /** Returns the distance from the center of the intake to the center of the coral. */
     val coralLocation: Distance
         get() {
             if (!hasBranchCoral) {
                 return 0.0.centimeters
             }
 
+            /* The CANrange is mounted looking from +X to -X, so the coral position increases as it
+            goes toward -X The offset is the value that puts the coral at 0 when it is in the middle of the intake.
+            Because the axis are inverse from each other (-X for the CANrange goes in the same direction as +X for
+            the robot), the adjusted values must be negated in order to sync the two coordinate systems */
             return -(canRange.distance.value - canRangeOffset)
         }
 
