@@ -4,6 +4,8 @@ import edu.wpi.first.math.MathUtil
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.XboxController
+import frc.robot.subsystems.drivetrain.Chassis
+import java.lang.reflect.Field
 
 private const val UP_ADJUST = 0.5
 private const val DOWN_ADJUST = 0.4
@@ -25,7 +27,7 @@ val XboxController.triggerAdjust
             (MathUtil.applyDeadband(leftTriggerAxis, TRIGGER_DEADBAND) * DOWN_ADJUST)
 
 val obstacleSlowdown
-    get() = null
+    get() = distanceSlowdown(FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation), 0.5, 1.0, 0.5)
 
 val XboxController.velocityX: LinearVelocity
     get() {
@@ -44,3 +46,14 @@ val XboxController.velocityRot: AngularVelocity
         val rot = MathUtil.applyDeadband(-rightX, JOYSTICK_DEADBAND)
         return maxRotation * rot * triggerAdjust
     }
+
+private fun distanceSlowdown(
+    distance: Double,
+    startSlowDistance: Double, // Distance at which the robot starts slowing down
+    maxSlowDistance: Double, // Distance by which slowing down factor is maximum
+    maxSlowdown: Double, // Maximum slowdown factor
+): Double {
+    val distToMax = distance - maxSlowDistance
+    val slope = startSlowDistance - maxSlowDistance
+    return (1 - MathUtil.clamp(distToMax / slope, 0.0, 1.0)) * maxSlowdown
+}
