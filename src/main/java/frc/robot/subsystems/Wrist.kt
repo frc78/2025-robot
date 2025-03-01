@@ -3,13 +3,13 @@ package frc.robot.subsystems
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
-import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -60,12 +60,13 @@ object Wrist : SubsystemBase("Wrist") {
             configurator.apply(config)
         }
 
-    val motionMagic = MotionMagicVoltage(0.degrees)
-    val positionVoltage = PositionVoltage(0.degrees)
+    // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
+    // it, but the lowest safe limit is greater than this due to the top elevator supports
+    val motionMagic = MotionMagicVoltage(0.degrees).withPosition(lowerLimit)
     val voltageOut = VoltageOut(0.0)
 
-    fun initializePosition() {
-        leader.setControl(motionMagic.withPosition(lowerLimit))
+    init {
+        leader.setControl(motionMagic)
     }
 
     fun isAtAngle(target: Angle): Boolean {
@@ -100,7 +101,9 @@ object Wrist : SubsystemBase("Wrist") {
     }
 
     @Suppress("UnusedPrivateProperty")
-    private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
+    private val resetPosition by command {
+        Commands.runOnce({ leader.setPosition(0.0) }).withName("Reset Wrist")
+    }
 
     fun zeroRoutines(): Command {
         return SequentialCommandGroup(
@@ -133,7 +136,7 @@ object Wrist : SubsystemBase("Wrist") {
         )
 
     @Suppress("UnusedPrivateProperty")
-    private val sysId =
+    private val sysId by command {
         Commands.sequence(
                 runOnce { SignalLogger.start() },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
@@ -151,15 +154,14 @@ object Wrist : SubsystemBase("Wrist") {
                 runOnce { SignalLogger.stop() },
             )
             .withName("Wrist SysId")
+    }
 
     init {
-        //        SmartDashboard.putData(this)
-        //        SmartDashboard.putData(sysId)
-        //        SmartDashboard.putData("Zero wrist", resetPosition)
+        SmartDashboard.putData(this)
     }
 
     override fun periodic() {
         super.periodic()
-        Logger.recordOutput("wrist/angle", angle)
+        Logger.recordOutput("wrist/angle_degrees", angle.degrees)
     }
 }

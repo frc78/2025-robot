@@ -96,10 +96,10 @@ object Telemetry {
 
         /* Also write to log file */
         for (i in 0..6 step 2) {
-            m_moduleStatesArray[i] = state.ModuleStates[i].angle.radians
-            m_moduleStatesArray[i + 1] = state.ModuleStates[i].speedMetersPerSecond
-            m_moduleTargetsArray[i] = state.ModuleTargets[i].angle.radians
-            m_moduleTargetsArray[i + 1] = state.ModuleTargets[i].speedMetersPerSecond
+            m_moduleStatesArray[i] = state.ModuleStates[i / 2].angle.radians
+            m_moduleStatesArray[i + 1] = state.ModuleStates[i / 2].speedMetersPerSecond
+            m_moduleTargetsArray[i] = state.ModuleTargets[i / 2].angle.radians
+            m_moduleTargetsArray[i + 1] = state.ModuleTargets[i / 2].speedMetersPerSecond
         }
 
         SignalLogger.writeDoubleArray("DriveState/Pose", m_poseArray)

@@ -4,8 +4,8 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.*
+import frc.robot.lib.ScoreSelector.selectedBranch
+import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -47,20 +47,14 @@ private fun CommandXboxController.configureManipManualLayout() {
 
 /** Use dpad to select branch and level */
 private fun CommandXboxController.configureManipDpadLayout() {
-    povUp().onTrue(Commands.runOnce({ ScoreSelector.levelUp() }))
-    povDown().onTrue(Commands.runOnce({ ScoreSelector.levelDown() }))
-    povLeft().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
-    povRight().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
+    povUp().onTrue(ScoreSelector.levelUp)
+    povDown().onTrue(ScoreSelector.levelDown)
+    povLeft().onTrue(ScoreSelector.selectLeftBranch)
+    povRight().onTrue(ScoreSelector.selectRightBranch)
 }
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureManipButtonLayout() {
-    //    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
-    //    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
-    //    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
-    //    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
-    //    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
-    //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
     // Coral Scoring
     a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
@@ -74,7 +68,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
-                .andThen(Intake.intakeCoralThenHold())
+                .andThen(Intake.intakeCoralThenHold)
                 .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
                 .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
@@ -82,17 +76,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
     // Algae Intake
     povUp()
         .onTrue(
-            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-                .andThen(Intake.intakeAlgaeThenHold())
+            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake).andThen(Intake.intakeAlgaeThenHold)
         )
     povDown()
         .onTrue(
-            SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
-                .andThen(Intake.intakeAlgaeThenHold())
+            SuperStructure.smartGoTo(RobotState.LowAlgaeIntake).andThen(Intake.intakeAlgaeThenHold)
         )
-    //    leftTrigger(0.55).onTrue(
-    //        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
-    //            .andThen(Intake.intakeAlgaeThenHold()))
 
     // Algae Scoring
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
@@ -101,17 +90,13 @@ private fun CommandXboxController.configureManipButtonLayout() {
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
-    axisGreaterThan(XboxController.Axis.kLeftX.value, 0.5)
-        .onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
+    axisGreaterThan(XboxController.Axis.kLeftX.value, 0.5).onTrue(ScoreSelector.selectLeftBranch)
 
-    axisLessThan(XboxController.Axis.kLeftX.value, -0.5)
-        .onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
+    axisLessThan(XboxController.Axis.kLeftX.value, -0.5).onTrue(ScoreSelector.selectRightBranch)
 
-    axisGreaterThan(XboxController.Axis.kLeftY.value, 0.5)
-        .onTrue(Commands.runOnce({ ScoreSelector.levelDown() }))
+    axisGreaterThan(XboxController.Axis.kLeftY.value, 0.5).onTrue(ScoreSelector.levelDown)
 
-    axisLessThan(XboxController.Axis.kLeftY.value, -0.5)
-        .onTrue(Commands.runOnce({ ScoreSelector.levelUp() }))
+    axisLessThan(XboxController.Axis.kLeftY.value, -0.5).onTrue(ScoreSelector.levelUp)
 }
 
 // Idea for a more intuitive branch selector, which doesn't require reading the driver station
@@ -119,14 +104,14 @@ private fun CommandXboxController.configureManipBothSticksLayout() {
     leftBumper()
         .onTrue(
             Commands.runOnce({
-                SelectedBranch = Branch.LEFT
+                selectedBranch = Branch.LEFT
                 selectWithStick()
             })
         )
     rightBumper()
         .onTrue(
             Commands.runOnce({
-                SelectedBranch = Branch.RIGHT
+                selectedBranch = Branch.RIGHT
                 selectWithStick()
             })
         )
@@ -142,7 +127,7 @@ private fun CommandXboxController.selectWithStick() {
             (leftY < -t) -> Level.L1
             else -> null
         }
-    level?.let { ScoreSelector.SelectedLevel = it }
+    level?.let { ScoreSelector.selectedLevel = it }
 }
 
 /** Used for setting up a test controller / joystick */
@@ -151,8 +136,7 @@ fun CommandJoystick.configureManipTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-    //    button(7).whileTrue(Intake.intakeCoral)
-    button(7).onTrue(Intake.intakeCoralThenHold())
+    button(7).onTrue(Intake.intakeCoralThenHold)
     button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Climber.manualExtend)
     button(10).whileTrue(Climber.manualRetract)

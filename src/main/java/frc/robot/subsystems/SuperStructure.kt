@@ -5,7 +5,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.DeferredCommand
-import frc.robot.lib.ScoreSelector.SelectedLevel
+import frc.robot.lib.ScoreSelector.selectedLevel
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -39,7 +39,7 @@ object SuperStructure {
     }
 
     val goToSelectedLevel by command {
-        DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
+        DeferredCommand({ smartGoTo(selectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
     }
 
     // Command factory to go to a specific robot state

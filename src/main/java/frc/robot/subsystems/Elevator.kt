@@ -210,12 +210,8 @@ object Elevator : SubsystemBase("Elevator") {
             .withName("Elevator sysId")
     }
 
-    init {
-        //        SmartDashboard.putData(sysId)
-    }
-
     override fun periodic() {
-        Logger.recordOutput("elevator/position", position)
+        Logger.recordOutput("elevator/position_inches", position.inches)
         Logger.recordOutput("elevator/stowed", isStowed)
     }
 

@@ -1,6 +1,7 @@
 package frc.robot.lib
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.wpilibj2.command.Commands
 import frc.robot.subsystems.RobotState
 import org.littletonrobotics.junction.Logger
 
@@ -24,25 +25,24 @@ enum class Level(val state: RobotState) {
 }
 
 object ScoreSelector {
-    var SelectedLevel: Level = Level.L2
+    var selectedLevel: Level = Level.L2
         set(value) {
             field = value
             Logger.recordOutput("selectedLevel", value.name)
         }
 
-    var SelectedBranch: Branch = Branch.LEFT
+    var selectedBranch: Branch = Branch.LEFT
         set(value) {
             field = value
             Logger.recordOutput("selectedBranchSide", value.name)
         }
 
-    fun levelUp() {
-        SelectedLevel = SelectedLevel.next()
-    }
+    val levelUp by command { Commands.runOnce({ selectedLevel = selectedLevel.next() }) }
 
-    fun levelDown() {
-        SelectedLevel = SelectedLevel.previous()
-    }
+    val levelDown by command { Commands.runOnce({ selectedLevel = selectedLevel.previous() }) }
+
+    val selectLeftBranch by command { Commands.runOnce({ selectedBranch = Branch.LEFT }) }
+    val selectRightBranch by command { Commands.runOnce({ selectedBranch = Branch.RIGHT }) }
 
     private val table = NetworkTableInstance.getDefault().getTable("score_selector")
     private val l1Selected = table.getBooleanTopic("l1Selected").publish()
@@ -54,12 +54,12 @@ object ScoreSelector {
     private val l4rSelected = table.getBooleanTopic("l4rSelected").publish()
 
     fun telemeterize() {
-        l1Selected.set(SelectedLevel == Level.L1)
-        l2lSelected.set(SelectedLevel == Level.L2 && SelectedBranch == Branch.LEFT)
-        l2rSelected.set(SelectedLevel == Level.L2 && SelectedBranch == Branch.RIGHT)
-        l3lSelected.set(SelectedLevel == Level.L3 && SelectedBranch == Branch.LEFT)
-        l3rSelected.set(SelectedLevel == Level.L3 && SelectedBranch == Branch.RIGHT)
-        l4lSelected.set(SelectedLevel == Level.L4 && SelectedBranch == Branch.LEFT)
-        l4rSelected.set(SelectedLevel == Level.L4 && SelectedBranch == Branch.RIGHT)
+        l1Selected.set(selectedLevel == Level.L1)
+        l2lSelected.set(selectedLevel == Level.L2 && selectedBranch == Branch.LEFT)
+        l2rSelected.set(selectedLevel == Level.L2 && selectedBranch == Branch.RIGHT)
+        l3lSelected.set(selectedLevel == Level.L3 && selectedBranch == Branch.LEFT)
+        l3rSelected.set(selectedLevel == Level.L3 && selectedBranch == Branch.RIGHT)
+        l4lSelected.set(selectedLevel == Level.L4 && selectedBranch == Branch.LEFT)
+        l4rSelected.set(selectedLevel == Level.L4 && selectedBranch == Branch.RIGHT)
     }
 }

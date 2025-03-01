@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -33,8 +34,6 @@ import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.IS_TEST
-import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
@@ -43,7 +42,7 @@ import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestReef
 import frc.robot.lib.Branch
-import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.ScoreSelector.selectedBranch
 import frc.robot.lib.command
 import frc.robot.lib.feetPerSecond
 import frc.robot.lib.inches
@@ -58,12 +57,11 @@ import java.text.ParseException
 import kotlin.math.PI
 import org.littletonrobotics.junction.Logger
 
-val drivetrainConstants =
-    if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
-val frontLeft = if (IS_TEST) TestBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
-val frontRight = if (IS_TEST) TestBotTunerConstants.FrontRight else TunerConstants.FrontRight
-val backLeft = if (IS_TEST) TestBotTunerConstants.BackLeft else TunerConstants.BackLeft
-val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants.BackRight
+private val drivetrainConstants = TunerConstants.DrivetrainConstants
+private val frontLeft = TunerConstants.FrontLeft
+private val frontRight = TunerConstants.FrontRight
+private val backLeft = TunerConstants.BackLeft
+private val backRight = TunerConstants.BackRight
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -78,6 +76,12 @@ object Chassis :
     private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
     private val closestCoralStationPub =
         table.getStructTopic("closest_coral", Pose2d.struct).publish()
+    private val reefToBotDistance =
+        table
+            .getDoubleTopic("reef_to_bot_distance")
+            .apply { isPersistent = true }
+            .getEntry(0.8)
+            .also { it.setDefault(0.8) }
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -362,12 +366,18 @@ object Chassis :
                     FieldCentricFacingAngle.HeadingController.atSetpoint()
             }
 
-    val driveToClosestReef by command { driveToPose { closestReef } }
+    val reefToBotTransform
+        get() = Transform2d(reefToBotDistance.get().meters, 0.meters, Rotation2d.kZero)
+
+    val driveToClosestReef by command {
+        driveToPose { closestReef.transformBy(reefToBotTransform) }
+    }
 
     val driveToLeftBranch by command {
         driveToPose {
                 closestReef
                     .transformBy(REEF_TO_BRANCH_LEFT)
+                    .transformBy(reefToBotTransform)
                     .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
             }
             .withName("Drive to branch left")
@@ -377,6 +387,7 @@ object Chassis :
         driveToPose {
                 closestReef
                     .transformBy(REEF_TO_BRANCH_RIGHT)
+                    .transformBy(reefToBotTransform)
                     .transformBy((Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)))
             }
             .withName("Drive to branch right")
@@ -385,7 +396,7 @@ object Chassis :
     val driveToClosestBranch by command { driveToPose { closestBranch } }
 
     val driveToSelectedBranch by command {
-        ConditionalCommand(driveToLeftBranch, driveToRightBranch, { SelectedBranch == Branch.LEFT })
+        ConditionalCommand(driveToLeftBranch, driveToRightBranch, { selectedBranch == Branch.LEFT })
     }
 
     fun snapToReef(
@@ -414,10 +425,7 @@ object Chassis :
     }
 
     init {
-        //        SmartDashboard.putData(driveToRightBranch)
-        //        SmartDashboard.putData(driveToLeftBranch)
-        //        SmartDashboard.putData(driveToClosestBranch)
-        //        SmartDashboard.putData(driveToClosestReef)
-        //        SmartDashboard.putData(driveToClosestCoralStation)
+        SmartDashboard.putData(driveToClosestCoralStation)
+        SmartDashboard.putData(driveToClosestReef)
     }
 }

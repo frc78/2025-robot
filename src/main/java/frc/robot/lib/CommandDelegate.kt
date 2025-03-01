@@ -27,7 +27,11 @@ import kotlin.reflect.KProperty
  */
 class CommandDelegate(private val command: () -> Command) : ReadOnlyProperty<Any?, Command> {
     override fun getValue(thisRef: Any?, property: KProperty<*>): Command {
-        return command()
+        return command().also {
+            if (it.name == it.javaClass.simpleName) {
+                it.name = property.name
+            }
+        }
     }
 }
 
