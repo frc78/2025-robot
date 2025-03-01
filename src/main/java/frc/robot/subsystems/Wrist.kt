@@ -22,12 +22,14 @@ import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("Wrist") {
-    private var lowerLimit = 8.degrees
+    private var lowerLimit = 10.degrees
     private var upperLimit = 175.degrees
     private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
+    private val AT_ANGLE_THRESHOLD = 3.degrees
 
     private val leader =
         TalonFX(13, "*").apply {
@@ -62,9 +64,23 @@ object Wrist : SubsystemBase("Wrist") {
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
+    fun initializePosition() {
+        leader.setControl(motionMagic.withPosition(lowerLimit))
+    }
+
+    fun isAtAngle(target: Angle): Boolean {
+        return abs((angle - target).degrees) < AT_ANGLE_THRESHOLD.degrees
+    }
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Wrist going to $state - ${state.wristAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
+
+    fun goToAndWaitUntilAtAngle(state: RobotState): Command =
+        PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
+            .alongWith(goTo(state))
+            .andThen(Commands.idle())
+            .until { isAtAngle(state.wristAngle) }
 
     val angle: Angle
         get() = leader.position.value

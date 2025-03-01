@@ -47,19 +47,9 @@ object Intake : Subsystem {
         25.amps // Current spike threshold for detecting when we have a coral
 
     private val ALGAE_CURRENT_THRESHOLD =
-        0.amps // Current spike threshold for detecting when we have an algae
+        (-30).amps // Current spike threshold for detecting when we have an algae
     private var algaeSpikeDetected = false
     private var algaeSpikeResolved = false
-
-    //    private val coralIntake =
-    //        TalonFX(14, "*").apply {
-    //            configurator.apply(
-    //                TalonFXConfiguration().apply {
-    //                    CurrentLimits.StatorCurrentLimit = 40.0
-    //                    CurrentLimits.SupplyCurrentLimit = 20.0
-    //                }
-    //            )
-    //        }
 
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
@@ -99,7 +89,8 @@ object Intake : Subsystem {
     }
 
     fun hasAlgaeByCurrent(): Boolean {
-        val thresholdMet: Boolean = leader.torqueCurrent.value >= ALGAE_CURRENT_THRESHOLD
+        // NOTE: Algae intake current is negative
+        val thresholdMet: Boolean = leader.torqueCurrent.value <= ALGAE_CURRENT_THRESHOLD
         if (thresholdMet) {
             if (algaeSpikeDetected) {
                 if (algaeSpikeResolved) {
@@ -176,5 +167,5 @@ object Intake : Subsystem {
             .alongWith(runOnce { leader.set(-1.0) })
             .andThen(Commands.idle())
             .until { hasAlgaeByCurrent() }
-            .andThen({ leader.set(-0.2) })
+            .andThen({ leader.set(-0.5) })
 }
