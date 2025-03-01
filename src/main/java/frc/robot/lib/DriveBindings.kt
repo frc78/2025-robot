@@ -6,9 +6,19 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
+import org.littletonrobotics.junction.Logger
 
 private val DRIVE_LAYOUT =
     DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
+
+val DRIVE_MODIFIERS =
+    DriveModifiers(triggerAdjust = true, distanceSlowing = true).also {
+        SmartDashboard.putBoolean("trigger_adjust", it.triggerAdjust)
+        SmartDashboard.putBoolean("distance_slowing", it.distanceSlowing)
+    }
+
+/** Stores values for whether to apply trigger speed, distance slowing, and any other future speed modifiers*/
+class DriveModifiers(val triggerAdjust: Boolean = false, val distanceSlowing: Boolean = false)
 
 private enum class DriveLayout {
     BASIC,

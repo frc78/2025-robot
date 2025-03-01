@@ -5,7 +5,7 @@ import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.XboxController
 import frc.robot.subsystems.drivetrain.Chassis
-import java.lang.reflect.Field
+import org.littletonrobotics.junction.Logger
 
 private const val UP_ADJUST = 0.5
 private const val DOWN_ADJUST = 0.4
@@ -14,46 +14,68 @@ private const val TRIGGER_DEADBAND = 0.05
 private val maxTranslation = 3.metersPerSecond
 private val maxRotation = 1.rotationsPerSecond
 
-// Extension properties to access the drive velocities based on joystick input
-// This used to be a single method that returned a ChassisSpeeds object,
-// but it made it hard to use in cases where we wanted an override of one or more speeds,
-// such as auto-alignment
+/* Extension properties to access the drive velocities based on joystick input
+* This used to be a single method that returned a ChassisSpeeds object,
+* but it made it hard to use in cases where we wanted an override of one or more speeds,
+* such as auto-alignment */
 
-// triggerAdjust is a scalar that allows scaling up or down based on the values of the left and
-// right triggers. The output is between (1-UP_ADJUST-DOWN_ADJUST) and 1 (default 0.1 and 1)
+/** Calculates a speed modifier that allows scaling up or down based on the values of the left and
+* right triggers. The output is between (1-UP_ADJUST-DOWN_ADJUST) and 1*/
 val XboxController.triggerAdjust
     get() =
         (1 - UP_ADJUST) + (MathUtil.applyDeadband(rightTriggerAxis, TRIGGER_DEADBAND) * UP_ADJUST) -
             (MathUtil.applyDeadband(leftTriggerAxis, TRIGGER_DEADBAND) * DOWN_ADJUST)
 
 val obstacleSlowdown
-    get() = distanceSlowdown(FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation), 0.5, 1.0, 0.5)
+    get() =
+        distanceSlowdown(
+                FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation).also {
+                    Logger.recordOutput("closestCoralStationDistance", it)
+                },
+                1.0,
+                0.5,
+                0.5,
+            )
+            .also { Logger.recordOutput("obstacleSlowdown", it) }
+
+/** Cumulates the enabled speed modifiers into one coefficient*/
+val XboxController.speedModifiers
+    get() = (if (DRIVE_MODIFIERS.triggerAdjust) triggerAdjust else 1.0) *
+        (if (DRIVE_MODIFIERS.distanceSlowing) obstacleSlowdown else 1.0)
 
 val XboxController.velocityX: LinearVelocity
     get() {
         val x = MathUtil.applyDeadband(-leftY, JOYSTICK_DEADBAND)
-        return maxTranslation * x * triggerAdjust
+        return maxTranslation * x * speedModifiers
     }
 
 val XboxController.velocityY: LinearVelocity
     get() {
         val y = MathUtil.applyDeadband(-leftX, JOYSTICK_DEADBAND)
-        return maxTranslation * y * triggerAdjust
+        return maxTranslation * y * speedModifiers
     }
 
 val XboxController.velocityRot: AngularVelocity
     get() {
         val rot = MathUtil.applyDeadband(-rightX, JOYSTICK_DEADBAND)
-        return maxRotation * rot * triggerAdjust
+        return maxRotation * rot * speedModifiers
     }
 
+/** Calculates a speed modifier based on a distance and a range.
+ * Note: 0 < maxSlowDistance < startSlowDistance
+ * @param distance The measured distance
+ * @param startSlowDistance The distance at which the robot will start slowing down
+ * @param maxSlowDistance The distance at which the effect will be greatest, i.e. slowdown factor = maxSlowdownCoefficient
+ * @param maxSlowdownCoefficient The maximum decrease in speed this modifier will apply (0.1 will decrease speed by 10% FROM original speed)
+ * @return Value between 1.0 and (1.0 - maxSlowdownCoefficient)*/
 private fun distanceSlowdown(
     distance: Double,
     startSlowDistance: Double, // Distance at which the robot starts slowing down
     maxSlowDistance: Double, // Distance by which slowing down factor is maximum
-    maxSlowdown: Double, // Maximum slowdown factor
+    maxSlowdownCoefficient: Double, // Maximum slowdown factor
 ): Double {
-    val distToMax = distance - maxSlowDistance
-    val slope = startSlowDistance - maxSlowDistance
-    return (1 - MathUtil.clamp(distToMax / slope, 0.0, 1.0)) * maxSlowdown
+    val maxValue = startSlowDistance - maxSlowDistance
+    val inverseInterpolate = MathUtil.clamp(startSlowDistance - distance, 0.0, maxValue) / maxValue
+    Logger.recordOutput("distanceClamp", inverseInterpolate)
+    return 1 - (inverseInterpolate * (1 - maxSlowdownCoefficient))
 }

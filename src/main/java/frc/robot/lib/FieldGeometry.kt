@@ -14,9 +14,17 @@ object FieldGeometry {
     private val BLUE_CORAL_STATION_UPPER =
         LineSegment(Translation2d(0.0, 0.0), Translation2d(0.0, 1.0), hasCoral)
     private val RED_CORAL_STATION_LOWER =
-        LineSegment(BLUE_CORAL_STATION_LOWER.p1.mirror(), BLUE_CORAL_STATION_LOWER.p2.mirror(), hasCoral)
+        LineSegment(
+            BLUE_CORAL_STATION_LOWER.p1.mirror(),
+            BLUE_CORAL_STATION_LOWER.p2.mirror(),
+            hasCoral,
+        )
     private val RED_CORAL_STATION_UPPER =
-        LineSegment(BLUE_CORAL_STATION_UPPER.p1.mirror(), BLUE_CORAL_STATION_UPPER.p2.mirror(), hasCoral)
+        LineSegment(
+            BLUE_CORAL_STATION_UPPER.p1.mirror(),
+            BLUE_CORAL_STATION_UPPER.p2.mirror(),
+            hasCoral,
+        )
 
     val CORAL_STATIONS =
         if (DriverStation.getAlliance().equals(DriverStation.Alliance.Blue)) {

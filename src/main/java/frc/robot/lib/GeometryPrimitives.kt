@@ -7,6 +7,7 @@ import edu.wpi.first.math.numbers.N2
 
 abstract class Primitive() {
     abstract fun getVectorToClosestPoint(position: Translation2d): Translation2d
+
     abstract fun getShortestDistance(position: Translation2d): Double
 }
 
