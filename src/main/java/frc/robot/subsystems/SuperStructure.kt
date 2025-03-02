@@ -4,13 +4,11 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.lib.seconds
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
@@ -61,50 +59,59 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state all at once")
 
-    // Command for the superstructure to automatically retract to CoralStation preset after outtaking a gamepiece
+    // Command for the superstructure to automatically retract to CoralStation preset after
+    // outtaking a gamepiece
     fun retractAfterScoring(): Command =
         Wrist.goTo(RobotState.CoralStation)
-            // Wait for elevator to be down *enough* to move pivot, not necessarily all the way with smooth motion
-            .andThen(Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight) { Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD })
+            // Wait for elevator to be down *enough* to move pivot, not necessarily all the way with
+            // smooth motion
+            .andThen(
+                Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight) {
+                    Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD
+                }
+            )
             .andThen(Pivot.goTo(RobotState.CoralStation))
-//        DeferredCommand(
-//            {
-//                if (Elevator.position > RobotState.CoralStation.elevatorHeight) {
-//                    // If elevator is moving down, wait for wrist to get out of the way
-//                    Wrist.goToRawUntil(102.degrees) { Wrist.angle > 100.degrees}
-//                        // Wait for elevator to be down *enough* to move pivot, not necessarily all the way with smooth motion
-//                        .andThen(Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight) { Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD })
-//                        .andThen(Pivot.goTo(RobotState.CoralStation))
-//                        .andThen(Wrist.goTo(RobotState.CoralStation))
-//                } else {
-//                    // Otherwise, use normal logic
-//                    smartGoTo(RobotState.CoralStation)
-//                }
-//            },
-//            setOf(Pivot, Elevator, Wrist)
-//        ).withName("Superstructure retracting after scoring")
+
+    //        DeferredCommand(
+    //            {
+    //                if (Elevator.position > RobotState.CoralStation.elevatorHeight) {
+    //                    // If elevator is moving down, wait for wrist to get out of the way
+    //                    Wrist.goToRawUntil(102.degrees) { Wrist.angle > 100.degrees}
+    //                        // Wait for elevator to be down *enough* to move pivot, not
+    // necessarily all the way with smooth motion
+    //                        .andThen(Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight)
+    // { Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD })
+    //                        .andThen(Pivot.goTo(RobotState.CoralStation))
+    //                        .andThen(Wrist.goTo(RobotState.CoralStation))
+    //                } else {
+    //                    // Otherwise, use normal logic
+    //                    smartGoTo(RobotState.CoralStation)
+    //                }
+    //            },
+    //            setOf(Pivot, Elevator, Wrist)
+    //        ).withName("Superstructure retracting after scoring")
 
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
-            {
-                if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
-                    // if elevator is stowed and getting raised, move pivot before raising it
-                    goToMovePivotFirst(state)
-                } else if (
-                    !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
-                ) {
-                    // if elevator is raised and getting stowed, lower it before moving pivot
-                    println("Elevator going down, running goToElevatorIsRaised(state)")
-                    goToMoveElevatorFirst(state)
-                } else {
-                    // if elevator is not going from stowed to raised or vice versa, move
-                    // everything at once
-                    goToMoveElevatorAndPivotTogether(state)
-                }
-            },
-            setOf(Pivot, Elevator, Wrist),
-        )
+                {
+                    if (Elevator.isStowed && state.elevatorHeight > Elevator.IS_STOWED_THRESHOLD) {
+                        // if elevator is stowed and getting raised, move pivot before raising it
+                        goToMovePivotFirst(state)
+                    } else if (
+                        !Elevator.isStowed && state.elevatorHeight < Elevator.IS_STOWED_THRESHOLD
+                    ) {
+                        // if elevator is raised and getting stowed, lower it before moving pivot
+                        println("Elevator going down, running goToElevatorIsRaised(state)")
+                        goToMoveElevatorFirst(state)
+                    } else {
+                        // if elevator is not going from stowed to raised or vice versa, move
+                        // everything at once
+                        goToMoveElevatorAndPivotTogether(state)
+                    }
+                },
+                setOf(Pivot, Elevator, Wrist),
+            )
             .withName("Smart Go To ${state.name}")
 
     fun goToMoveElevatorFirst(state: RobotState): Command =
@@ -123,5 +130,4 @@ object SuperStructure {
         Wrist.goTo(state)
             .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
-
 }

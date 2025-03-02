@@ -27,17 +27,14 @@ import frc.robot.lib.kilograms
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.pounds
-import frc.robot.lib.radiansPerSecond
-import frc.robot.lib.radiansPerSecondPerSecond
 import frc.robot.lib.rotations
 import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import kotlin.math.abs
-import org.littletonrobotics.junction.Logger
 import java.util.function.BooleanSupplier
 import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
@@ -91,9 +88,13 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
                     MotionMagic
-//                        .withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
-//                        .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
-                        .withMotionMagicCruiseVelocity(9.49) // rotations per second, equal to old radians per second above
+                        //                        .withMotionMagicCruiseVelocity((119.17 *
+                        // 0.5).radiansPerSecond)
+                        //                        .withMotionMagicAcceleration((898.69 *
+                        // 0.5).radiansPerSecondPerSecond)
+                        .withMotionMagicCruiseVelocity(
+                            9.49
+                        ) // rotations per second, equal to old radians per second above
                         .withMotionMagicAcceleration(20.0)
                         .withMotionMagicJerk(100.0)
                 }

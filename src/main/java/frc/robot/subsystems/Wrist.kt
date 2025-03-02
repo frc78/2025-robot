@@ -22,10 +22,9 @@ import frc.robot.lib.degrees
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import kotlin.math.abs
-import org.littletonrobotics.junction.Logger
 import java.util.function.BooleanSupplier
 import kotlin.math.abs
+import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 10.degrees

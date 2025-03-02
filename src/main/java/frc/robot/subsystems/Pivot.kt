@@ -29,9 +29,9 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
-import java.util.function.BooleanSupplier
 
 object Pivot : SubsystemBase("Pivot") {
 
@@ -56,7 +56,8 @@ object Pivot : SubsystemBase("Pivot") {
                         .withReverseSoftLimitThreshold(0.degrees)
                     // Set feedback to encoder
                     // TODO encoder slipping, so zeroing manually for now on devbot
-//                    Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    //
+                    // Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
                     Feedback.SensorToMechanismRatio = GEAR_RATIO
                     // Set feedforward and feedback gains
                     Slot0.withKP(50.365) // 24.365
@@ -95,7 +96,6 @@ object Pivot : SubsystemBase("Pivot") {
             .andThen(Commands.idle())
             .until(endCondition)
 
-
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
@@ -107,7 +107,8 @@ object Pivot : SubsystemBase("Pivot") {
 
     val angle: Angle
         get() = leader.position.value
-//        get() = cancoder.position.value
+
+    //        get() = cancoder.position.value
 
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {

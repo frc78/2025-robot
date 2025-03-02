@@ -150,17 +150,11 @@ object Intake : Subsystem {
         startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
     }
 
-    val stopRollers by command {
-        runOnce { leader.set(0.0) }
-    }
+    val stopRollers by command { runOnce { leader.set(0.0) } }
 
-    val outtakeCoral by command {
-        runOnce{ leader.set(-1.0) }
-    }
+    val outtakeCoral by command { runOnce { leader.set(-1.0) } }
 
-    val outtakeAlgae by command {
-        runOnce{ leader.set(1.0) }
-    }
+    val outtakeAlgae by command { runOnce { leader.set(1.0) } }
 
     val scoreCoral by command {
         Commands.idle() // TODO score coral

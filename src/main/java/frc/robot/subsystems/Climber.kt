@@ -7,7 +7,6 @@ import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.lib.command
 import frc.robot.lib.rotations
 import org.littletonrobotics.junction.Logger
