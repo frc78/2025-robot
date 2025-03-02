@@ -87,29 +87,33 @@ private fun CommandXboxController.configureManipButtonLayout() {
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
-                .andThen(Intake.intakeCoralThenHold())
-                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
-                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+                .alongWith(Intake.intakeCoralThenHold())
+//                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
+//                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
     // Algae Stuff
     povUp()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-                .andThen(Intake.intakeAlgaeThenHold())
+                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
     povDown()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
-                .andThen(Intake.intakeAlgaeThenHold())
+                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
-    //    leftTrigger(0.55).onTrue(
-    //        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
-    //            .andThen(Intake.intakeAlgaeThenHold()))
-
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
-    //    povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
-    //    leftTrigger(0.55).whileTrue(Intake.manualOuttakeAlgae)
+    povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
+
+    leftBumper().onTrue(
+        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
+            .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+            .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+    )
+
     leftTrigger(0.55)
         .onTrue(
             Intake.outtakeAlgae
@@ -185,6 +189,9 @@ fun CommandJoystick.configureManipTestBindings() {
     //    button(10).onTrue(Wrist.goToRawUntil(13.degrees){true})
     //    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
     //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
+
+    button(7).onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
+    button(7).onFalse(SuperStructure.smartGoTo(RobotState.FullyClimbed))
 
     button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Climber.extend)

@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.DeferredCommand
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -32,35 +33,61 @@ object Wrist : SubsystemBase("Wrist") {
     private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
     private val AT_ANGLE_THRESHOLD = 3.degrees
 
+    private val standardConfig =
+        TalonFXConfiguration().apply {
+            Feedback.SensorToMechanismRatio = GEAR_RATIO
+
+            MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+            MotorOutput.NeutralMode = NeutralModeValue.Brake
+
+            SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
+                .withReverseSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(upperLimit)
+                .withReverseSoftLimitThreshold(lowerLimit)
+
+            Slot0.withKP(162.105) // 62.105
+                .withKI(1.0)
+                .withKD(19.613)
+                .withKS(0.0)
+                .withKV(0.0)
+                .withKA(0.0)
+                .withKG(0.0)
+                .withGravityType(GravityTypeValue.Arm_Cosine)
+
+            MotionMagic.MotionMagicCruiseVelocity = 10.0
+            MotionMagic.MotionMagicAcceleration = 30.0
+            MotionMagic.MotionMagicJerk = 100.0
+        }
+
+    private val hasAlgaeConfig =
+        TalonFXConfiguration().apply {
+            Feedback.SensorToMechanismRatio = GEAR_RATIO
+
+            MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+            MotorOutput.NeutralMode = NeutralModeValue.Brake
+
+            SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
+                .withReverseSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(upperLimit)
+                .withReverseSoftLimitThreshold(lowerLimit)
+
+            Slot0.withKP(162.105) // 62.105
+                .withKI(1.0)
+                .withKD(19.613)
+                .withKS(0.0)
+                .withKV(0.0)
+                .withKA(0.0)
+                .withKG(0.0)
+                .withGravityType(GravityTypeValue.Arm_Cosine)
+
+            MotionMagic.MotionMagicCruiseVelocity = 2.0
+            MotionMagic.MotionMagicAcceleration = 6.0
+            MotionMagic.MotionMagicJerk = 30.0
+        }
+
     private val leader =
         TalonFX(13, "*").apply {
-            val config =
-                TalonFXConfiguration().apply {
-                    Feedback.SensorToMechanismRatio = GEAR_RATIO
-
-                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
-                    MotorOutput.NeutralMode = NeutralModeValue.Brake
-
-                    SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
-                        .withReverseSoftLimitEnable(true)
-                        .withForwardSoftLimitThreshold(upperLimit)
-                        .withReverseSoftLimitThreshold(lowerLimit)
-
-                    Slot0.withKP(162.105) // 62.105
-                        .withKI(1.0)
-                        .withKD(19.613)
-                        .withKS(0.0)
-                        .withKV(0.0)
-                        .withKA(0.0)
-                        .withKG(0.0)
-                        .withGravityType(GravityTypeValue.Arm_Cosine)
-
-                    MotionMagic.MotionMagicCruiseVelocity = 10.0
-                    MotionMagic.MotionMagicAcceleration = 30.0
-                    MotionMagic.MotionMagicJerk = 100.0
-                }
-
-            configurator.apply(config)
+            configurator.apply(standardConfig)
         }
 
     val motionMagic = MotionMagicVoltage(0.degrees)
@@ -82,8 +109,16 @@ object Wrist : SubsystemBase("Wrist") {
             .until(endCondition)
 
     fun goTo(state: RobotState): Command =
-        PrintCommand("Wrist going to $state - ${state.wristAngle}")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
+        DeferredCommand({
+            if (Intake.detectAlgaeByCurrent()) {
+                runOnce { leader.configurator.apply(hasAlgaeConfig) }
+                    .andThen(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
+            } else {
+                PrintCommand("Wrist going to $state - ${state.wristAngle}")
+                    .alongWith(runOnce { leader.configurator.apply(standardConfig) })
+                    .andThen(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
+            }
+        }, setOf(Wrist))
 
     fun goToAndWaitUntilAtAngle(state: RobotState): Command =
         PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")

@@ -129,7 +129,7 @@ object Robot : LoggedRobot() {
     }
 
     private val hasAlgae: Boolean
-        get() = Intake.hasAlgaeByCurrent()
+        get() = Intake.detectAlgaeByCurrent()
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
