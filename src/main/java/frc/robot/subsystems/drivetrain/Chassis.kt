@@ -405,8 +405,7 @@ object Chassis :
     val strafeLeft by command { applyRequest { StrafeLeft } }
     val strafeRight by command { applyRequest { StrafeRight } }
 
-    @Suppress("UnusedPrivateProperty")
-    private val driveToClosestCoralStation by command {
+     val driveToClosestCoralStation by command {
         driveToPose {
                 closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
             }
