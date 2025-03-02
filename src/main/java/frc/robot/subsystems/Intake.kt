@@ -17,6 +17,7 @@ import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import frc.robot.lib.meters
+import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
 object Intake : Subsystem {
@@ -161,7 +162,9 @@ object Intake : Subsystem {
     val intakeCoral by command { runOnce { leader.set(0.6) } }
 
     val scoreCoral by command {
-        Commands.idle() // TODO score coral
+        outtakeCoral
+            .andThen(Commands.waitTime(0.2.seconds))
+            .andThen(Intake.stopRollers)
     }
 
     // TODO find optimal intake and hold speeds experimentally

@@ -407,7 +407,7 @@ object Chassis :
 
      val driveToClosestCoralStation by command {
         driveToPose {
-                closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
+                closestCoralStation.transformBy(Transform2d(1.meters, 0.meters, Rotation2d.kPi))
             }
             .withName("Drive to coral station")
     }
