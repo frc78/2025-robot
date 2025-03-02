@@ -361,6 +361,8 @@ object Chassis :
                     yController.atGoal() &&
                     FieldCentricFacingAngle.HeadingController.atSetpoint()
             }
+            // Stop movement
+            .andThen(runOnce { setControl(ApplyRobotSpeeds().withSpeeds(ChassisSpeeds())) })
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 

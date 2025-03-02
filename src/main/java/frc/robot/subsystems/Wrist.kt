@@ -9,6 +9,7 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -88,6 +89,10 @@ object Wrist : SubsystemBase("Wrist") {
     private val leader = TalonFX(13, "*").apply { configurator.apply(standardConfig) }
 
     val motionMagic = MotionMagicVoltage(0.degrees)
+
+    val atPosition
+        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
+
     val positionVoltage = PositionVoltage(0.degrees)
     val voltageOut = VoltageOut(0.0)
 
@@ -213,5 +218,6 @@ object Wrist : SubsystemBase("Wrist") {
     override fun periodic() {
         super.periodic()
         Logger.recordOutput("wrist/angle", angle)
+        Logger.recordOutput("wrist/at_position", atPosition)
     }
 }

@@ -12,6 +12,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
@@ -96,6 +97,9 @@ object Pivot : SubsystemBase("Pivot") {
             .andThen(Commands.idle())
             .until(endCondition)
 
+    val atPosition
+        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
@@ -107,8 +111,6 @@ object Pivot : SubsystemBase("Pivot") {
 
     val angle: Angle
         get() = leader.position.value
-
-    //        get() = cancoder.position.value
 
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {
@@ -194,6 +196,7 @@ object Pivot : SubsystemBase("Pivot") {
 
     override fun periodic() {
         Logger.recordOutput("pivot/angle", angle)
+        Logger.recordOutput("pivot/at_position", atPosition)
     }
 
     override fun simulationPeriodic() {

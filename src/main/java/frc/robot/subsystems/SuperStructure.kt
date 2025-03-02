@@ -50,6 +50,9 @@ object SuperStructure {
         RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
     }
 
+    val atPosition
+        get() = Pivot.atPosition && Elevator.atPosition && Wrist.atPosition
+
     val goToSelectedLevel by command {
         DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
     }
