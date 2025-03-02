@@ -1,11 +1,14 @@
 package frc.robot.lib
 
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
+import frc.robot.Robot
 
 /** Object for defining field geometry and functions to measure distances */
 object FieldGeometry {
-    private const val FIELD_X_LENGTH = 17.530
+    const val FIELD_X_LENGTH = 17.530
+    const val FIELD_Y_LENGTH = 8.230
 
     // These are constructed so that left hand perpendicular is always pointing towards the center
     // of the field
@@ -18,15 +21,26 @@ object FieldGeometry {
     private val RED_CORAL_STATION_UPPER =
         LineSegment(BLUE_CORAL_STATION_UPPER.p2.mirror(), BLUE_CORAL_STATION_UPPER.p1.mirror())
 
-    private val CORAL_STATIONS =
-        if (
-            DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue) ==
-                DriverStation.Alliance.Blue
-        ) {
-            listOf(BLUE_CORAL_STATION_LOWER, BLUE_CORAL_STATION_UPPER)
-        } else {
-            listOf(RED_CORAL_STATION_LOWER, RED_CORAL_STATION_UPPER)
-        }
+    private val CORAL_STATIONS
+        get() =
+            if (Robot.alliance == DriverStation.Alliance.Blue) {
+                listOf(BLUE_CORAL_STATION_LOWER, BLUE_CORAL_STATION_UPPER)
+            } else {
+                listOf(RED_CORAL_STATION_LOWER, RED_CORAL_STATION_UPPER)
+            }
+
+    private val BLUE_BARGE_ALIGNMENT_LINE =
+        LineSegment(Translation2d(7.5, 7.374), Translation2d(7.5, 4.815))
+
+    private val RED_BARGE_ALIGNMENT_LINE = BLUE_BARGE_ALIGNMENT_LINE.rotateToOtherAlliance()
+
+    val BARGE_ALIGNMENT_LINE
+        get() =
+            if (Robot.alliance == DriverStation.Alliance.Blue) {
+                BLUE_BARGE_ALIGNMENT_LINE
+            } else {
+                RED_BARGE_ALIGNMENT_LINE
+            }
 
     fun distanceToClosestCoralStation(position: Translation2d): Double {
         return CORAL_STATIONS.minOfOrNull { it.getShortestDistance(position) } ?: Double.MAX_VALUE
@@ -35,9 +49,11 @@ object FieldGeometry {
     fun getClosestCoralStation(position: Translation2d): LineSegment {
         return CORAL_STATIONS.minBy { it.getShortestDistance(position) }
     }
+}
 
-    // There is probably a cleaner way to do this
-    private fun Translation2d.mirror(): Translation2d {
-        return Translation2d(FIELD_X_LENGTH - x, y)
+fun Rotation2d.rotateByAlliance(): Rotation2d {
+    if (Robot.alliance == DriverStation.Alliance.Red) {
+        return this.rotateBy(Rotation2d.k180deg)
     }
+    return this
 }

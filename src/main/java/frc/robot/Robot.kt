@@ -44,6 +44,8 @@ val IS_TEST = "TEST" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
+    val alliance: DriverStation.Alliance
+        get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
 
     // Because I needed it for driveToChangingPose
     val driveController = CommandXboxController(0)

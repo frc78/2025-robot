@@ -67,6 +67,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
             SmartDashboard.putData("Snap to closest substation", it)
         }
     )
+    b().whileTrue(Chassis.snapToBarge())
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {

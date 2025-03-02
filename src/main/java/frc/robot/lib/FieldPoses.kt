@@ -62,13 +62,11 @@ object FieldPoses {
         }
 
     private val reefPoses
-        get() =
-            if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) BLUE_REEF_POSES
-            else RED_REEF_POSES
+        get() = if (Robot.alliance == Alliance.Blue) BLUE_REEF_POSES else RED_REEF_POSES
 
     private val branchPoses
         get() =
-            if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
+            if (Robot.alliance == Alliance.Blue) {
                 BLUE_BRANCH_POSES
             } else RED_BRANCH_POSES
 

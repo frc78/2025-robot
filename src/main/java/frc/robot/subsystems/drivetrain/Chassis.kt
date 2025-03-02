@@ -39,6 +39,7 @@ import frc.robot.generated.TestBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.*
+import frc.robot.lib.FieldGeometry.BARGE_ALIGNMENT_LINE
 import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.FieldPoses.closestBranch
@@ -113,12 +114,11 @@ object Chassis :
 
     private val FieldCentricFacingAngle: SwerveRequest.FieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
-            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
             .withHeadingPID(6.0, 0.0, 0.1)
             .withRotationalDeadband(0.05)
 
     private val FieldCentric =
-        SwerveRequest.FieldCentric()
+        SwerveRequest.FieldCentric().withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.OperatorPerspective)
             .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
             .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
 
@@ -160,7 +160,7 @@ object Chassis :
                     PIDConstants(7.0, 0.0, 0.0),
                 ),
                 config,
-                { DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red },
+                { Robot.alliance == Alliance.Red },
                 this, // Subsystem for requirements
             )
         } catch (ex: IOException) {
@@ -341,6 +341,7 @@ object Chassis :
             Logger.recordOutput("DriveToPose target", target)
             xController.goal = TrapezoidProfile.State(target.x, 0.0)
             yController.goal = TrapezoidProfile.State(target.y, 0.0)
+            FieldCentricFacingAngle.withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.BlueAlliance)
             FieldCentricFacingAngle.withTargetDirection(target.rotation)
         })
 
@@ -423,7 +424,7 @@ object Chassis :
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
     ): Command {
         return applyRequest {
-            FieldCentricFacingAngle.withTargetDirection(closestReef.rotation).block()
+            FieldCentricFacingAngle.withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.OperatorPerspective).withTargetDirection(closestReef.rotation.rotateBy(Rotation2d.k180deg)).block()
         }
     }
 
@@ -467,6 +468,42 @@ object Chassis :
                 },
                 true,
             )
+            .andThen(
+                applyRequest {
+                    RobotRelative.withVelocityX(Robot.driveController.hid.velocityX)
+                        .withVelocityY(Robot.driveController.hid.velocityY)
+                        .withRotationalRate(Robot.driveController.hid.velocityRot)
+                }
+            )
+
+    fun snapToBarge(): Command =
+        // Our target distance from the line segment of the substation
+        driveToChangingPose(
+            {
+                val position = Chassis.state.Pose.translation
+                val closestSubstationPoint =
+                    BARGE_ALIGNMENT_LINE
+                        .getVectorFromClosestPoint(position)
+                        .unaryMinus()
+                        .plus(position)
+                Pose2d(
+                    closestSubstationPoint,
+                    Rotation2d().rotateByAlliance(),
+                )
+                    .also { Logger.recordOutput("Drive to barge", it) }
+            },
+            {
+                // Any way to be able to use the variables from above?
+                val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
+                Transform2d(
+                    FieldGeometry.getClosestCoralStation(Chassis.state.Pose.translation)
+                        .getParallelUnitVector() * strafeSpeed,
+                    Rotation2d(),
+                )
+                    .also { Logger.recordOutput("Drive ", it) }
+            },
+            true,
+        )
             .andThen(
                 applyRequest {
                     RobotRelative.withVelocityX(Robot.driveController.hid.velocityX)

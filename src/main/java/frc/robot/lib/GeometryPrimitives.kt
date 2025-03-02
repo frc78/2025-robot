@@ -4,6 +4,8 @@ import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.numbers.N2
+import frc.robot.lib.FieldGeometry.FIELD_X_LENGTH
+import frc.robot.lib.FieldGeometry.FIELD_Y_LENGTH
 
 abstract class Primitive {
     /** Returns vector from the closest point of primitive to the input position */
@@ -39,4 +41,21 @@ class LineSegment(val p1: Translation2d, val p2: Translation2d) : Primitive() {
         val p2ToP1 = p2.minus(p1)
         return p2ToP1.div(p2ToP1.norm)
     }
+
+    fun mirror(): LineSegment {
+        return LineSegment(p1.mirror(), p2.mirror())
+    }
+
+    fun rotateToOtherAlliance(): LineSegment {
+        return LineSegment(p1.rotateToOtherAlliance(), p2.rotateToOtherAlliance())
+    }
+}
+
+// There is probably a cleaner way to do this
+fun Translation2d.mirror(): Translation2d {
+    return Translation2d(FIELD_X_LENGTH - x, y)
+}
+
+fun Translation2d.rotateToOtherAlliance(): Translation2d {
+    return Translation2d(FIELD_X_LENGTH - x, FIELD_Y_LENGTH - y)
 }
