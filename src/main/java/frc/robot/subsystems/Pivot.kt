@@ -29,16 +29,19 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
 object Pivot : SubsystemBase("Pivot") {
 
-    private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12)
+    private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12) // 266.25
     private val cancoder = CANcoder(5, "*")
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val ELEVATOR_THRESHOLD = 8.degrees
+    private val SETPOINT_THRESHOLD = 8.degrees
+    // how vertical the pivot needs to be for the elevator to extend
+    private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -52,9 +55,13 @@ object Pivot : SubsystemBase("Pivot") {
                         .withForwardSoftLimitThreshold(160.degrees)
                         .withReverseSoftLimitThreshold(0.degrees)
                     // Set feedback to encoder
-                    Feedback.withSensorToMechanismRatio(GEAR_RATIO)
+                    // TODO encoder slipping, so zeroing manually for now on devbot
+                    //
+                    // Feedback.withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+                    Feedback.SensorToMechanismRatio = GEAR_RATIO
                     // Set feedforward and feedback gains
-                    Slot0.withKP(44.365) // 24.365
+                    Slot0.withKP(50.365) // 24.365
+                        .withKI(0.1)
                         .withKD(0.22908)
                         .withKS(0.1755)
                         .withKV(31.983)
@@ -62,7 +69,8 @@ object Pivot : SubsystemBase("Pivot") {
                         .withKG(0.22628)
                         .withGravityType(GravityTypeValue.Arm_Cosine)
                     MotionMagic.MotionMagicCruiseVelocity = .25
-                    MotionMagic.MotionMagicAcceleration = 2.5
+                    MotionMagic.MotionMagicAcceleration = .5
+                    MotionMagic.MotionMagicJerk = 2.5
                 }
 
             configurator.apply(config)
@@ -78,17 +86,29 @@ object Pivot : SubsystemBase("Pivot") {
         follower.setControl(Follower(9, true))
     }
 
+    // Checks if the pivot is sufficiently vertical to extend the elevator
+    val canExtendElevator: Boolean
+        get() = angle > RAISE_ELEVATOR_THRESHOLD
+
+    // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
+    fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
+        runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
+            .andThen(Commands.idle())
+            .until(endCondition)
+
     fun goTo(state: RobotState): Command =
         PrintCommand("Pivot going to $state - ${state.pivotAngle}")
             .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
 
-    fun goToAndWaitUntilVertical(state: RobotState): Command =
+    fun goToAndWaitUntilSetpoint(state: RobotState): Command =
         PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            abs((angle - state.pivotAngle).degrees) < ELEVATOR_THRESHOLD.degrees
+            abs((angle - state.pivotAngle).degrees) < SETPOINT_THRESHOLD.degrees
         }
 
     val angle: Angle
-        get() = cancoder.position.value
+        get() = leader.position.value
+
+    //        get() = cancoder.position.value
 
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {
