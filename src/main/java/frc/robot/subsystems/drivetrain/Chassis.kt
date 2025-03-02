@@ -33,8 +33,8 @@ import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.IS_TEST
-import frc.robot.generated.TestBotTunerConstants
+import frc.robot.IS_COMP
+import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
@@ -59,11 +59,11 @@ import kotlin.math.PI
 import org.littletonrobotics.junction.Logger
 
 val drivetrainConstants =
-    if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
-val frontLeft = if (IS_TEST) TestBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
-val frontRight = if (IS_TEST) TestBotTunerConstants.FrontRight else TunerConstants.FrontRight
-val backLeft = if (IS_TEST) TestBotTunerConstants.BackLeft else TunerConstants.BackLeft
-val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants.BackRight
+    if (IS_COMP) CompBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
+val frontLeft = if (IS_COMP) CompBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
+val frontRight = if (IS_COMP) CompBotTunerConstants.FrontRight else TunerConstants.FrontRight
+val backLeft = if (IS_COMP) CompBotTunerConstants.BackLeft else TunerConstants.BackLeft
+val backRight = if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants.BackRight
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
