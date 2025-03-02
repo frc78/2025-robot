@@ -108,8 +108,6 @@ object Pivot : SubsystemBase("Pivot") {
     val angle: Angle
         get() = leader.position.value
 
-    //        get() = cancoder.position.value
-
     // Only create this object when it is needed during simulation
     private val pivotSim by lazy {
         SingleJointedArmSim(
@@ -194,6 +192,7 @@ object Pivot : SubsystemBase("Pivot") {
 
     override fun periodic() {
         Logger.recordOutput("pivot/angle", angle)
+        Logger.recordOutput("pivot/at_position", atPosition)
     }
 
     override fun simulationPeriodic() {

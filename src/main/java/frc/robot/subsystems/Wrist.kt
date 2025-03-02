@@ -170,5 +170,6 @@ object Wrist : SubsystemBase("Wrist") {
     override fun periodic() {
         super.periodic()
         Logger.recordOutput("wrist/angle", angle)
+        Logger.recordOutput("wrist/at_position", atPosition)
     }
 }

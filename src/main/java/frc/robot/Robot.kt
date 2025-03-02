@@ -146,6 +146,8 @@ object Robot : LoggedRobot() {
 
         SmartDashboard.putBoolean("Has Algae", hasAlgae)
         SmartDashboard.putNumber("Intake Current", Intake.torqueCurrent.amps)
+
+        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
     }
 
     override fun simulationPeriodic() {
