@@ -57,7 +57,7 @@ object Wrist : SubsystemBase("Wrist") {
                         .withGravityType(GravityTypeValue.Arm_Cosine)
 
                     MotionMagic.MotionMagicCruiseVelocity = 10.0
-                    MotionMagic.MotionMagicAcceleration = 20.0
+                    MotionMagic.MotionMagicAcceleration = 30.0
                     MotionMagic.MotionMagicJerk = 100.0
                 }
 
