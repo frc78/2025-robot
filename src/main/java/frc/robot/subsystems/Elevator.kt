@@ -27,13 +27,12 @@ import frc.robot.lib.kilograms
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.pounds
-import frc.robot.lib.radiansPerSecond
-import frc.robot.lib.radiansPerSecondPerSecond
 import frc.robot.lib.rotations
 import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
+import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
@@ -41,6 +40,7 @@ object Elevator : SubsystemBase("Elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
     val IS_STOWED_THRESHOLD = 3.inches
+    val MOVE_PIVOT_THRESHOLD = 40.inches
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
@@ -87,8 +87,16 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
-                    MotionMagic.withMotionMagicCruiseVelocity((119.17 * 0.5).radiansPerSecond)
-                        .withMotionMagicAcceleration((898.69 * 0.5).radiansPerSecondPerSecond)
+                    MotionMagic
+                        //                        .withMotionMagicCruiseVelocity((119.17 *
+                        // 0.5).radiansPerSecond)
+                        //                        .withMotionMagicAcceleration((898.69 *
+                        // 0.5).radiansPerSecondPerSecond)
+                        .withMotionMagicCruiseVelocity(
+                            9.49
+                        ) // rotations per second, equal to old radians per second above
+                        .withMotionMagicAcceleration(20.0)
+                        .withMotionMagicJerk(100.0)
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
@@ -99,6 +107,12 @@ object Elevator : SubsystemBase("Elevator") {
 
     val position
         get() = leader.position.value.toElevatorHeight()
+
+    // Moves the elevator to <setpoint> and holds the command until <endCondition> is true
+    fun goToRawUntil(setpoint: Distance, endCondition: BooleanSupplier): Command =
+        runOnce { leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations())) }
+            .andThen(Commands.idle())
+            .until(endCondition)
 
     fun goTo(state: RobotState): Command =
         PrintCommand("Elevator going to $state - ${state.elevatorHeight}")

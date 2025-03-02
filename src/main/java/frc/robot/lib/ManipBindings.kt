@@ -62,14 +62,27 @@ private fun CommandXboxController.configureManipButtonLayout() {
     //    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
     //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
-    // Coral Scoring
-    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
-    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
-    rightTrigger(0.55).whileTrue(Intake.outtakeCoral) // TODO ultimate a driver control?
+    // Coral Stuff
+    //    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
+    //    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
+    //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
+    //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
 
-    // Coral Station
+    a().onTrue(
+        SuperStructure.goToScoreReefFromPreScore(RobotState.L1)
+    ) // TODO tune prescore to support goToScoreReefFromPreScore
+    b().onTrue(SuperStructure.goToScoreReefFromPreScore(RobotState.L2))
+    x().onTrue(SuperStructure.goToScoreReefFromPreScore(RobotState.L3))
+    y().onTrue(SuperStructure.goToScoreReefFromPreScore(RobotState.L4))
+    //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
+    // control?
+    rightTrigger(0.55)
+        .onTrue(
+            Intake.outtakeCoral
+                .andThen(Commands.waitTime(0.2.seconds))
+                .andThen(Intake.stopRollers)
+                .andThen(SuperStructure.retractAfterScoring())
+        )
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -79,7 +92,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
-    // Algae Intake
+    // Algae Stuff
     povUp()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
@@ -94,10 +107,16 @@ private fun CommandXboxController.configureManipButtonLayout() {
     //        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
     //            .andThen(Intake.intakeAlgaeThenHold()))
 
-    // Algae Scoring
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     //    povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
-    leftTrigger(0.55).whileTrue(Intake.outtakeAlgae)
+    //    leftTrigger(0.55).whileTrue(Intake.manualOuttakeAlgae)
+    leftTrigger(0.55)
+        .onTrue(
+            Intake.outtakeAlgae
+                .andThen(Commands.waitTime(0.5.seconds))
+                .andThen(Intake.stopRollers)
+                .andThen(SuperStructure.retractAfterScoring())
+        )
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
@@ -151,8 +170,22 @@ fun CommandJoystick.configureManipTestBindings() {
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
     button(4).whileTrue(Elevator.manualDown)
-    //    button(7).whileTrue(Intake.intakeCoral)
-    button(7).onTrue(Intake.intakeCoralThenHold())
+
+    // Pivot control tuning
+    //    button(7).onTrue(Pivot.goToRawUntil(10.degrees){true})
+    //    button(8).onTrue(Pivot.goToRawUntil(66.degrees){true}) // coral station angle
+    //    button(9).onTrue(Pivot.goToRawUntil(90.degrees){true})
+
+    // Elevator control tuning
+    //    button(10).onTrue(Elevator.goToRawUntil(0.25.inches){true})
+    //    button(11).onTrue(Elevator.goToRawUntil(20.inches){true}) // l3 height
+    //    button(12).onTrue(Elevator.goToRawUntil(50.inches){true}) // l4 height
+
+    // Wrist control tuning
+    //    button(10).onTrue(Wrist.goToRawUntil(13.degrees){true})
+    //    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
+    //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
+
     button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Climber.extend)
     button(10).whileTrue(Climber.retract)
