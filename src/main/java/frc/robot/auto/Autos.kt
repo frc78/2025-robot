@@ -18,6 +18,7 @@ object Autos {
             AutoBuilder.followPath(lineToIJ),
             Chassis.driveToRightBranch,
             SuperStructure.smartGoTo(RobotState.L4),
+            Commands.waitUntil{SuperStructure.a},
             Intake.scoreCoral,
             SuperStructure.smartGoTo(RobotState.CoralStation),
             Chassis.driveToClosestCoralStation,
