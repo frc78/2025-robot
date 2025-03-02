@@ -442,13 +442,13 @@ object Chassis :
             },
             {
                 // Any way to be able to use the variables from above?
-                val strafeSpeed =
-                    Robot.driveController.hid.velocityY.metersPerSecond
-                    Transform2d(
+                val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
+                Transform2d(
                         FieldGeometry.getClosestCoralStation(Chassis.state.Pose.translation)
                             .getParallelUnitVector() * strafeSpeed,
                         Rotation2d(),
-                    ).also{Logger.recordOutput("Drive changing velocity", it)}
+                    )
+                    .also { Logger.recordOutput("Drive changing velocity", it) }
             },
         )
 

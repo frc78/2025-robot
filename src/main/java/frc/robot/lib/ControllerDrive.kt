@@ -33,14 +33,16 @@ val XboxController.triggerAdjust
 val obstacleSlowdown
     get() =
         distanceSlowdown(
-                FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation).also {
-                    Logger.recordOutput("closestCoralStationDistance", it)
-                },
-                1.5,
-                1.0,
-                0.5,
-            ) * (if (Intake.hasBranchCoral) 0 else 1)
-            .also { Logger.recordOutput("obstacleSlowdown", it) }
+            FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation).also {
+                Logger.recordOutput("closestCoralStationDistance", it)
+            },
+            1.5,
+            1.0,
+            0.5,
+        ) *
+            (if (Intake.hasBranchCoral) 0 else 1).also {
+                Logger.recordOutput("obstacleSlowdown", it)
+            }
 
 /** Cumulates the enabled speed modifiers into one coefficient */
 val XboxController.speedModifiers
