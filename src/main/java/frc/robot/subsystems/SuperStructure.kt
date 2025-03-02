@@ -112,9 +112,4 @@ object SuperStructure {
             .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
             .withName("Go to $state pivot first")
-
-    fun goToScoreReefFromPreScore(state: RobotState): Command =
-        Wrist.goTo(state)
-            .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
-            .andThen(Elevator.goTo(state))
 }
