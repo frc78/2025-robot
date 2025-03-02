@@ -42,8 +42,9 @@ private fun CommandXboxController.configureDriveBasicLayout() {
 
 // Driving with snapping bindings for reef alignment
 private fun CommandXboxController.configureDriveSnappingLayout() {
-    leftBumper().whileTrue(Chassis.driveToLeftBranch)
-    rightBumper().whileTrue(Chassis.driveToRightBranch)
+    leftBumper().and(rightBumper().negate()).whileTrue(Chassis.driveToLeftBranch)
+    rightBumper().and(leftBumper().negate()).whileTrue(Chassis.driveToRightBranch)
+    leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
 }
