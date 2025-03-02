@@ -62,7 +62,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
-    y().whileTrue(Chassis.snapToClosestSubstation())
+    y().whileTrue(Chassis.snapToClosestSubstation().withName("Snap to closest substation").also{SmartDashboard.putData("Snap to closest substation", it)})
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {

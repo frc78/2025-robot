@@ -122,6 +122,11 @@ object Chassis :
             .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
             .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
 
+    private val RobotRelative =
+        SwerveRequest.RobotCentric()
+            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
+            .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
+
     // Create these once to avoid memory allocation
     private val StrafeLeft =
         ApplyRobotSpeeds()
@@ -358,24 +363,34 @@ object Chassis :
                     FieldCentricFacingAngle.HeadingController.atSetpoint()
             }
 
-    fun driveToChangingPose(pose: () -> Pose2d, vel: () -> Transform2d): Command =
+    fun driveToChangingPose(
+        pose: () -> Pose2d,
+        vel: () -> Transform2d,
+        endWhenGoal: Boolean,
+    ): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
-                    val robot = Chassis.state.Pose
+                        val robot = Chassis.state.Pose
 
-                    xController.setGoal(xController.goal.position + (vel().x * 0.02))
-                    yController.setGoal(yController.goal.position + (vel().y * 0.02))
-                    val xOutput = xController.calculate(robot.x) + vel().x
-                    val yOutput = yController.calculate(robot.y) + vel().y
-                    Logger.recordOutput("DriveToPose xOutput", xOutput)
-                    Logger.recordOutput("DriveToPose yOutput", yOutput)
-                    FieldCentricFacingAngle.withVelocityX(xOutput)
-                        .withVelocityY(yOutput)
-                        .withTargetDirection(
-                            FieldCentricFacingAngle.TargetDirection.plus(vel().rotation)
-                        )
-                }
+                        xController.setGoal(xController.goal.position + (vel().x * 0.02))
+                        yController.setGoal(yController.goal.position + (vel().y * 0.02))
+                        val xOutput = xController.calculate(robot.x) + vel().x
+                        val yOutput = yController.calculate(robot.y) + vel().y
+                        Logger.recordOutput("DriveToPose xOutput", xOutput)
+                        Logger.recordOutput("DriveToPose yOutput", yOutput)
+                        FieldCentricFacingAngle.withVelocityX(xOutput)
+                            .withVelocityY(yOutput)
+                            .withTargetDirection(
+                                FieldCentricFacingAngle.TargetDirection.plus(vel().rotation)
+                            )
+                    }
+                    .until {
+                        endWhenGoal &&
+                            xController.atGoal() &&
+                            yController.atGoal() &&
+                            FieldCentricFacingAngle.HeadingController.atSetpoint()
+                    }
             )
 
     val driveToClosestReef by command { driveToPose { closestReef } }
@@ -421,36 +436,44 @@ object Chassis :
     fun snapToClosestSubstation(): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
-            {
-                val targetDistanceFromSubstation = 0.5
-                val position = Chassis.state.Pose.translation
-                val closestSubstation = FieldGeometry.getClosestCoralStation(position)
-                val closestSubstationPoint =
-                    closestSubstation
-                        .getVectorFromClosestPoint(position)
-                        .unaryMinus()
-                        .plus(position)
-                val offsetTranslation =
-                    closestSubstation
-                        .getPerpendicularUnitVector()
-                        .times(targetDistanceFromSubstation)
-                Pose2d(
-                        closestSubstationPoint.plus(offsetTranslation),
-                        closestSubstation.getPerpendicularUnitVector().unaryMinus().angle,
-                    )
-                    .also { Logger.recordOutput("Drive to closest substation", it) }
-            },
-            {
-                // Any way to be able to use the variables from above?
-                val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
-                Transform2d(
-                        FieldGeometry.getClosestCoralStation(Chassis.state.Pose.translation)
-                            .getParallelUnitVector() * strafeSpeed,
-                        Rotation2d(),
-                    )
-                    .also { Logger.recordOutput("Drive changing velocity", it) }
-            },
-        )
+                {
+                    val targetDistanceFromSubstation = 0.5
+                    val position = Chassis.state.Pose.translation
+                    val closestSubstation = FieldGeometry.getClosestCoralStation(position)
+                    val closestSubstationPoint =
+                        closestSubstation
+                            .getVectorFromClosestPoint(position)
+                            .unaryMinus()
+                            .plus(position)
+                    val offsetTranslation =
+                        closestSubstation
+                            .getPerpendicularUnitVector()
+                            .times(targetDistanceFromSubstation)
+                    Pose2d(
+                            closestSubstationPoint.plus(offsetTranslation),
+                            closestSubstation.getPerpendicularUnitVector().unaryMinus().angle,
+                        )
+                        .also { Logger.recordOutput("Drive to closest substation", it) }
+                },
+                {
+                    // Any way to be able to use the variables from above?
+                    val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
+                    Transform2d(
+                            FieldGeometry.getClosestCoralStation(Chassis.state.Pose.translation)
+                                .getParallelUnitVector() * strafeSpeed,
+                            Rotation2d(),
+                        )
+                        .also { Logger.recordOutput("Drive changing velocity", it) }
+                },
+                true,
+            )
+            .andThen(
+                applyRequest {
+                    RobotRelative.withVelocityX(Robot.driveController.hid.velocityX)
+                        .withVelocityY(Robot.driveController.hid.velocityY)
+                        .withRotationalRate(Robot.driveController.hid.velocityRot)
+                }
+            )
 
     val strafeLeft by command { applyRequest { StrafeLeft } }
     val strafeRight by command { applyRequest { StrafeRight } }

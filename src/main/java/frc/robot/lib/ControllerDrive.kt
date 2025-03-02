@@ -3,6 +3,9 @@ package frc.robot.lib
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.RobotBase.isReal
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.XboxController
 import frc.robot.lib.bindings.DRIVE_MODIFIERS
 import frc.robot.subsystems.Intake
@@ -39,8 +42,7 @@ val obstacleSlowdown
             1.5,
             1.0,
             0.5,
-        ) *
-            (if (Intake.hasBranchCoral) 0 else 1).also {
+        ).also {
                 Logger.recordOutput("obstacleSlowdown", it)
             }
 
@@ -48,7 +50,7 @@ val obstacleSlowdown
 val XboxController.speedModifiers
     get() =
         (if (DRIVE_MODIFIERS.triggerAdjust) triggerAdjust else 1.0) *
-            (if (DRIVE_MODIFIERS.distanceSlowing) obstacleSlowdown else 1.0)
+            (if (DRIVE_MODIFIERS.distanceSlowing && !Intake.hasBranchCoral) obstacleSlowdown else 1.0)
 
 val XboxController.velocityX: LinearVelocity
     get() {
