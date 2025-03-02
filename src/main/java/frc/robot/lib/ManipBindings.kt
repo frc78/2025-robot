@@ -88,8 +88,9 @@ private fun CommandXboxController.configureManipButtonLayout() {
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
                 .alongWith(Intake.intakeCoralThenHold())
-//                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here instead of timer
-//                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+            //                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here
+            // instead of timer
+            //                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
     // Algae Stuff
@@ -108,11 +109,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
 
-    leftBumper().onTrue(
-        SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
-            .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-            .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
-    )
+    leftBumper()
+        .onTrue(
+            SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
+                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+        )
 
     leftTrigger(0.55)
         .onTrue(

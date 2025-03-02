@@ -85,10 +85,7 @@ object Wrist : SubsystemBase("Wrist") {
             MotionMagic.MotionMagicJerk = 30.0
         }
 
-    private val leader =
-        TalonFX(13, "*").apply {
-            configurator.apply(standardConfig)
-        }
+    private val leader = TalonFX(13, "*").apply { configurator.apply(standardConfig) }
 
     val motionMagic = MotionMagicVoltage(0.degrees)
     val positionVoltage = PositionVoltage(0.degrees)
@@ -109,16 +106,27 @@ object Wrist : SubsystemBase("Wrist") {
             .until(endCondition)
 
     fun goTo(state: RobotState): Command =
-        DeferredCommand({
-            if (Intake.detectAlgaeByCurrent()) {
-                runOnce { leader.configurator.apply(hasAlgaeConfig) }
-                    .andThen(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
-            } else {
-                PrintCommand("Wrist going to $state - ${state.wristAngle}")
-                    .alongWith(runOnce { leader.configurator.apply(standardConfig) })
-                    .andThen(runOnce { leader.setControl(motionMagic.withPosition(state.wristAngle)) })
-            }
-        }, setOf(Wrist))
+        DeferredCommand(
+            {
+                if (Intake.detectAlgaeByCurrent()) {
+                    runOnce { leader.configurator.apply(hasAlgaeConfig) }
+                        .andThen(
+                            runOnce {
+                                leader.setControl(motionMagic.withPosition(state.wristAngle))
+                            }
+                        )
+                } else {
+                    PrintCommand("Wrist going to $state - ${state.wristAngle}")
+                        .alongWith(runOnce { leader.configurator.apply(standardConfig) })
+                        .andThen(
+                            runOnce {
+                                leader.setControl(motionMagic.withPosition(state.wristAngle))
+                            }
+                        )
+                }
+            },
+            setOf(Wrist),
+        )
 
     fun goToAndWaitUntilAtAngle(state: RobotState): Command =
         PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")

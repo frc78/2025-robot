@@ -13,6 +13,7 @@ import frc.robot.lib.inches
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     // pivot  elevator  wrist
+    InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
     Stow(5.degrees, 0.25.inches, 20.degrees),
     PreScore(60.degrees, 0.25.inches, 20.degrees),
     L1(60.degrees, 0.25.inches, 60.degrees),
@@ -98,13 +99,17 @@ object SuperStructure {
 
     fun goToMoveElevatorFirst(state: RobotState): Command =
         Wrist.goTo(state)
-            .alongWith(Elevator.goToRawUntil(state.elevatorHeight){ Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD})
+            .alongWith(
+                Elevator.goToRawUntil(state.elevatorHeight) {
+                    Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD
+                }
+            )
             .andThen(Pivot.goTo(state))
             .withName("Go to $state elevator first")
 
     fun goToMovePivotFirst(state: RobotState): Command =
         Wrist.goTo(state)
-            .alongWith(Pivot.goToRawUntil(state.pivotAngle){Pivot.canExtendElevator})
+            .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
             .withName("Go to $state pivot first")
 

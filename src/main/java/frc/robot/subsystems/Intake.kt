@@ -18,7 +18,6 @@ import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import frc.robot.lib.meters
 import org.littletonrobotics.junction.Logger
-import kotlin.time.Duration.Companion.milliseconds
 
 object Intake : Subsystem {
     init {
@@ -179,5 +178,4 @@ object Intake : Subsystem {
             .andThen(Commands.idle())
             .until { detectAlgaeByCurrent() }
             .andThen({ leader.set(-0.8) })
-
 }
