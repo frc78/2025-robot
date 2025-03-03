@@ -68,6 +68,7 @@ val backRight = if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
  * be used in command-based projects.
  */
+@Suppress("TooManyFunctions")
 object Chassis :
     TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
     Subsystem {

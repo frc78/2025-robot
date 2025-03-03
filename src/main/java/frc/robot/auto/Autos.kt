@@ -26,6 +26,7 @@ object Autos {
             Intake.intakeCoralThenHold(),
         )
     }
+    @Suppress("SpreadOperator")
     val FourCoralAuto by command {
         Commands.sequence(
             Intake.intakeCoralThenHold(),
