@@ -34,10 +34,11 @@ fun CommandXboxController.configureDriverBindings() {
 private fun CommandXboxController.configureDriveBasicLayout() {
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
-            withVelocityX(hid.velocityX)
-                .withVelocityY(hid.velocityY)
-                .withRotationalRate(hid.velocityRot)
-        }
+                withVelocityX(hid.velocityX)
+                    .withVelocityY(hid.velocityY)
+                    .withRotationalRate(hid.velocityRot)
+            }
+            .withName("Field centric xbox drive")
 }
 
 // Driving with snapping bindings for reef alignment
