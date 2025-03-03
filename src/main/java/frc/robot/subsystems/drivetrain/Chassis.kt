@@ -37,17 +37,16 @@ import frc.robot.IS_COMP
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.Alignments.REEF_TO_BRANCH_LEFT
-import frc.robot.lib.Alignments.REEF_TO_BRANCH_RIGHT
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
+import frc.robot.lib.Alignments.closestLeftBranch
 import frc.robot.lib.Alignments.closestReef
+import frc.robot.lib.Alignments.closestRightBranch
 import frc.robot.lib.Branch
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.command
 import frc.robot.lib.feetPerSecond
 import frc.robot.lib.inches
-import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.volts
@@ -69,6 +68,7 @@ val backRight = if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
  * be used in command-based projects.
  */
+@Suppress("TooManyFunctions")
 object Chassis :
     TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
     Subsystem {
@@ -333,6 +333,11 @@ object Chassis :
             TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 3.5),
         )
 
+    /** Drives to a pose such that the coral is at x=0 */
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
+        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+    }
+
     fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
                 val fieldRelative =
@@ -362,29 +367,17 @@ object Chassis :
                     FieldCentricFacingAngle.HeadingController.atSetpoint()
             }
             // Stop movement
-            .andThen(runOnce { setControl(ApplyRobotSpeeds().withSpeeds(ChassisSpeeds())) })
+            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
     val driveToLeftBranch by command {
-        driveToPose {
-                closestReef
-                    .transformBy(REEF_TO_BRANCH_LEFT)
-                    .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-            }
-            .withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPose {
-                closestReef
-                    .transformBy(REEF_TO_BRANCH_RIGHT)
-                    .transformBy((Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)))
-            }
-            .withName("Drive to branch right")
+        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
     }
-
-    val driveToClosestBranch by command { driveToPose { closestBranch } }
 
     val driveToSelectedBranch by command {
         ConditionalCommand(driveToLeftBranch, driveToRightBranch, { SelectedBranch == Branch.LEFT })
@@ -407,12 +400,8 @@ object Chassis :
     val strafeLeft by command { applyRequest { StrafeLeft } }
     val strafeRight by command { applyRequest { StrafeRight } }
 
-    @Suppress("UnusedPrivateProperty")
-    private val driveToClosestCoralStation by command {
-        driveToPose {
-                closestCoralStation.transformBy(Transform2d(0.5.meters, 0.meters, Rotation2d.kPi))
-            }
-            .withName("Drive to coral station")
+    val driveToClosestCoralStation by command {
+        driveToPose { closestCoralStation }.withName("Drive to coral station")
     }
 
     init {

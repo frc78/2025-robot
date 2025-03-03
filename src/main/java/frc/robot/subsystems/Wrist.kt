@@ -9,8 +9,11 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.wpilibj.RobotController
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
@@ -21,10 +24,13 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.degrees
+import frc.robot.lib.radians
+import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import java.util.function.BooleanSupplier
+import kotlin.math.PI
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
@@ -215,9 +221,22 @@ object Wrist : SubsystemBase("Wrist") {
         //        SmartDashboard.putData("Zero wrist", resetPosition)
     }
 
+    private val simState by lazy { leader.simState }
+    private val armSim by lazy {
+        SingleJointedArmSim(DCMotor.getKrakenX60Foc(1), GEAR_RATIO, .07, .3, 0.0, PI, false, 0.00)
+    }
+
+    override fun simulationPeriodic() {
+        simState.setSupplyVoltage(RobotController.getBatteryVoltage())
+        armSim.setInputVoltage(simState.motorVoltage)
+        armSim.update(0.02)
+        simState.setRawRotorPosition(armSim.angleRads.radians * GEAR_RATIO)
+        simState.setRotorVelocity(armSim.velocityRadPerSec.radiansPerSecond * GEAR_RATIO)
+    }
+
     override fun periodic() {
         super.periodic()
-        Logger.recordOutput("wrist/angle", angle)
+        Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
     }
 }
