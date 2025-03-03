@@ -3,9 +3,13 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import com.ctre.phoenix6.SignalLogger
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.hal.FRCNetComm
+import edu.wpi.first.hal.HAL
+import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
@@ -13,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
+import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
@@ -36,7 +41,6 @@ import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
-import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 // Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
@@ -47,16 +51,26 @@ object Robot : LoggedRobot() {
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
 
     init {
+        HAL.report(
+            FRCNetComm.tResourceType.kResourceType_Language,
+            FRCNetComm.tInstances.kLanguage_Kotlin,
+            0,
+            WPILibVersion.Version,
+        )
         DriverStation.silenceJoystickConnectionWarning(true)
-        Logger.recordMetadata("IS_TEST ?", "$IS_TEST")
-        if (isReal()) {
-            // Log to a USB stick ("/U/logs")
-            Logger.addDataReceiver(WPILOGWriter())
-        }
+        Logger.recordMetadata("IS_COMP", "$IS_COMP")
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
-        PowerDistribution(1, PowerDistribution.ModuleType.kCTRE)
-        Logger.start()
+        PowerDistribution(1, PowerDistribution.ModuleType.kRev)
+        if (isReal()) {
+            Logger.start()
+            // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
+            // file
+            DataLogManager.start()
+            SignalLogger.start()
+        }
+        // Record both DS control and joystick data
+        DriverStation.startDataLog(DataLogManager.getLog())
         Chassis.configureAutoBuilder()
         Chassis.registerTelemetry(Telemetry::telemeterize)
 
