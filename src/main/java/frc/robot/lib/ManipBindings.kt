@@ -63,19 +63,17 @@ private fun CommandXboxController.configureManipButtonLayout() {
     //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
     // Coral Stuff
-    //    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
-    //    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)) // TODO test all these!
 
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.L1)
-    ) // TODO tune prescore to support goToScoreReefFromPreScore
-    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
-    //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
-    // control?
+//    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
+//    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
+//    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
+//    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+
+    // TODO ultimately a driver control?
     rightTrigger(0.55)
         .onTrue(
             Intake.outtakeCoral

@@ -4,6 +4,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
@@ -20,6 +21,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
     L4(89.75.degrees, 48.inches, 26.degrees),
+    IntermediaryL4(89.75.degrees, 48.inches, 120.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
     CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 161.2.degrees),
@@ -50,6 +52,10 @@ object SuperStructure {
 
     val goToSelectedLevel by command {
         DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
+    }
+
+    fun isAtSetpoint(state: RobotState): Boolean {
+        return (Pivot.isAtSetpoint(state.pivotAngle) && Elevator.isAtSetpoint(state.elevatorHeight) && Wrist.isAtSetpoint(state.wristAngle))
     }
 
     // Command factory to go to a specific robot state
@@ -86,9 +92,23 @@ object SuperStructure {
     fun goToScoreCoral(state: RobotState): Command =
         DeferredCommand(
             {
+                // TODO check if in good state for this first? or safe to assume PreScore/Stow?
                 when (state) {
-                    RobotState.L2, RobotState.L3 -> smartGoTo(state)
-                    RobotState.L4 -> smartGoTo(state)
+                    RobotState.L2 ->
+                        // Move wrist and elevator first, wait for wrist before moving pivot
+                        Wrist.goToRawUntil(state.wristAngle){ Wrist.angle < 45.degrees }
+                            .alongWith(Elevator.goTo(state))
+                            .andThen(Pivot.goTo(state))
+                    RobotState.L3 ->
+                        // Move wrist and elevator first, wait for elevator before moving pivot
+                        Wrist.goTo(state)
+                            .alongWith(Elevator.goToRawUntil(state.elevatorHeight)
+                            { Elevator.position > 10.inches })
+                            .andThen(Pivot.goTo(state))
+                    RobotState.L4 ->
+                        smartGoTo(RobotState.IntermediaryL4) // same as L4 but has wrist pointing upwards
+                            .andThen(Commands.waitUntil { isAtSetpoint(RobotState.IntermediaryL4) })
+                            .andThen(smartGoTo(state))
                     else -> smartGoTo(state)
                 }
             }, setOf(Pivot, Elevator, Wrist)
