@@ -59,7 +59,7 @@ object Elevator : SubsystemBase("Elevator") {
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     private val MAX_HEIGHT = 54.inches
-    private val AT_HEIGHT_THRESHOLD = 5.inches
+    private val SETPOINT_THRESHOLD = 5.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -127,8 +127,8 @@ object Elevator : SubsystemBase("Elevator") {
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
 
-    fun isAtHeight(target: Distance): Boolean {
-        return abs((position - target).inches) < AT_HEIGHT_THRESHOLD.inches
+    fun isAtSetpoint(target: Distance): Boolean {
+        return abs((position - target).inches) < SETPOINT_THRESHOLD.inches
     }
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =
@@ -140,7 +140,7 @@ object Elevator : SubsystemBase("Elevator") {
         PrintCommand("Elevator waiting until it gets to $state - ${state.elevatorHeight}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until { isAtHeight(state.elevatorHeight) }
+            .until { isAtSetpoint(state.elevatorHeight) }
 
     val manualUp by command {
         startEnd(

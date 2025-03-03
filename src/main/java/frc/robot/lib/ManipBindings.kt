@@ -193,9 +193,13 @@ fun CommandJoystick.configureManipTestBindings() {
     //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
 
     button(7).onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    button(7).onFalse(SuperStructure.smartGoTo(RobotState.FullyClimbed))
+    button(8).onTrue(
+        Wrist.goTo(RobotState.FullyClimbed)
+            .alongWith(Elevator.goTo(RobotState.FullyClimbed))
+            .alongWith(Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle){Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD})
+            .andThen(Climber.extend)
+    )
 
-    button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Climber.extend)
     button(10).whileTrue(Climber.retract)
     button(11).whileTrue(Wrist.manualUp())

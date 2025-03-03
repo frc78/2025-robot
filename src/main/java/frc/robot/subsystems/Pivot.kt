@@ -39,9 +39,11 @@ object Pivot : SubsystemBase("Pivot") {
     private val cancoder = CANcoder(5, "*")
 
     // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val SETPOINT_THRESHOLD = 8.degrees
+    private val SETPOINT_THRESHOLD = 4.degrees
     // how vertical the pivot needs to be for the elevator to extend
     private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
+    // how horizontal the pivot needs to be for the
+    val EXTEND_FOOT_THRESHOLD = 10.degrees
 
     private val leader =
         TalonFX(9, "*").apply {
@@ -89,6 +91,10 @@ object Pivot : SubsystemBase("Pivot") {
     // Checks if the pivot is sufficiently vertical to extend the elevator
     val canExtendElevator: Boolean
         get() = angle > RAISE_ELEVATOR_THRESHOLD
+
+    fun isAtSetpoint(target: Angle): Boolean {
+        return abs((angle - target).degrees) < SETPOINT_THRESHOLD.degrees
+    }
 
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =

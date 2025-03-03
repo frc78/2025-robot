@@ -16,7 +16,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
     Stow(5.degrees, 0.25.inches, 20.degrees),
     PreScore(60.degrees, 0.25.inches, 20.degrees),
-    L1(60.degrees, 0.25.inches, 60.degrees),
+    L1(60.degrees, 0.25.inches, 170.degrees),
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
     L4(89.75.degrees, 48.inches, 26.degrees),
@@ -35,8 +35,6 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 
     /*
     PRESETS STILL TO GET!! as of March 1 2025
-    - algae ground intake
-    - algae processor
     - coral L1
     - pre-climb
     - climbed
