@@ -76,13 +76,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
     y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
     //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
     // control?
-    rightTrigger(0.55)
-        .onTrue(
-            Intake.outtakeCoral
-                .andThen(Commands.waitTime(0.2.seconds))
-                .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.retractAfterScoring())
-        )
+    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.retractAfterScoring()))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -116,13 +110,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
-    leftTrigger(0.55)
-        .onTrue(
-            Intake.outtakeAlgae
-                .andThen(Commands.waitTime(0.5.seconds))
-                .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.retractAfterScoring())
-        )
+    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.retractAfterScoring()))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {

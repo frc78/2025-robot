@@ -195,7 +195,7 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     override fun periodic() {
-        Logger.recordOutput("pivot/angle", angle)
+        Logger.recordOutput("pivot/angle_degrees", angle.degrees)
         Logger.recordOutput("pivot/at_position", atPosition)
     }
 
