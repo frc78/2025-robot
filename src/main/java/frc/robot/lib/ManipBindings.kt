@@ -81,7 +81,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
             Intake.outtakeCoral
                 .andThen(Commands.waitTime(0.2.seconds))
                 .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.retractAfterScoring())
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
         )
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
@@ -121,7 +121,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
             Intake.outtakeAlgae
                 .andThen(Commands.waitTime(0.5.seconds))
                 .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.retractAfterScoring())
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
         )
 }
 

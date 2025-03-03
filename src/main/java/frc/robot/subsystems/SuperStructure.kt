@@ -59,19 +59,6 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state all at once")
 
-    // Command for the superstructure to automatically retract to CoralStation preset after
-    // outtaking a gamepiece
-    fun retractAfterScoring(): Command =
-        Wrist.goTo(RobotState.CoralStation)
-            // Wait for elevator to be down *enough* to move pivot, not necessarily all the way with
-            // smooth motion
-            .andThen(
-                Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight) {
-                    Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD
-                }
-            )
-            .andThen(Pivot.goTo(RobotState.CoralStation))
-
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
@@ -94,6 +81,18 @@ object SuperStructure {
                 setOf(Pivot, Elevator, Wrist),
             )
             .withName("Smart Go To ${state.name}")
+
+    // Do fancier experimental movement to avoid hitting coral on branches for L2, L3, L4
+    fun goToScoreCoral(state: RobotState): Command =
+        DeferredCommand(
+            {
+                when (state) {
+                    RobotState.L2, RobotState.L3 -> smartGoTo(state)
+                    RobotState.L4 -> smartGoTo(state)
+                    else -> smartGoTo(state)
+                }
+            }, setOf(Pivot, Elevator, Wrist)
+        )
 
     fun goToMoveElevatorFirst(state: RobotState): Command =
         Wrist.goTo(state)
