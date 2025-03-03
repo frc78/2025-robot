@@ -1,9 +1,7 @@
 package frc.robot.auto
 
-import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj2.command.Commands
-import frc.robot.lib.Alignments
+import frc.robot.lib.Alignments.Branch
 import frc.robot.lib.command
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
@@ -11,35 +9,42 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 object Autos {
-    val FourCoralAuto by command {
-        val lineToIJ = PathPlannerPath.fromPathFile("AutoLine to IJ").mirrorPath()
-        val ijToCoral = PathPlannerPath.fromPathFile("IJToCoral")
+
+    private val goToL4AndScore by command {
         Commands.sequence(
-            AutoBuilder.followPath(lineToIJ),
-            Chassis.driveToRightBranch,
             SuperStructure.smartGoTo(RobotState.L4),
-            Commands.waitUntil{SuperStructure.a},
+            Commands.waitUntil { SuperStructure.atPosition },
             Intake.scoreCoral,
-            SuperStructure.smartGoTo(RobotState.CoralStation),
-            Chassis.driveToClosestCoralStation,
-            (Intake.intakeCoralThenHold()),
-            (SuperStructure.smartGoTo(RobotState.PreScore)).alongWith(Chassis.driveToLeftBranch),
-            SuperStructure.smartGoTo(RobotState.L4),
-            Intake.scoreCoral,
-            SuperStructure.smartGoTo(RobotState.CoralStation),
-            Chassis.driveToClosestCoralStation,
-            (Intake.intakeCoralThenHold()),
-            (SuperStructure.smartGoTo(RobotState.PreScore)).alongWith(Chassis.driveToRightBranch),
-            SuperStructure.smartGoTo(RobotState.L4),
-            Intake.scoreCoral,
+            SuperStructure.retractAfterScoring(),
+        )
+    }
+
+    private val goToCoralStationAndGetCoral by command {
+        Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
             Chassis.driveToClosestCoralStation,
             Intake.intakeCoralThenHold(),
-            (Intake.intakeCoralThenHold()),
-            (SuperStructure.smartGoTo(RobotState.PreScore)).alongWith(Chassis.driveToPose { Alignments.ReefFace.AB.pose }),
-            Chassis.driveToLeftBranch,
-            SuperStructure.smartGoTo(RobotState.L4),
-            Intake.scoreCoral,
+        )
+    }
+    val FourCoralAuto by command {
+        Commands.sequence(
+            Intake.intakeCoralThenHold(),
+            *listOf(
+                    listOf(Branch.E, Branch.J),
+                    listOf(Branch.D, Branch.K),
+                    listOf(Branch.C, Branch.L),
+                    listOf(Branch.A, Branch.B),
+                )
+                .map {
+                    Commands.sequence(
+                        Chassis.driveToPoseWithCoralOffset {
+                            Chassis.state.Pose.nearest(it.map { it.pose })
+                        },
+                        goToL4AndScore,
+                        goToCoralStationAndGetCoral,
+                    )
+                }
+                .toTypedArray(),
         )
     }
 }
