@@ -95,22 +95,28 @@ object SuperStructure {
                 when (state) {
                     RobotState.L2 ->
                         // Move wrist and elevator first, wait for wrist before moving pivot
-                        Wrist.goToRawUntil(state.wristAngle){ Wrist.angle < 45.degrees }
+                        Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 45.degrees }
                             .alongWith(Elevator.goTo(state))
                             .andThen(Pivot.goTo(state))
                     RobotState.L3 ->
                         // Move wrist and elevator first, wait for elevator before moving pivot
                         Wrist.goTo(state)
-                            .alongWith(Elevator.goToRawUntil(state.elevatorHeight)
-                            { Elevator.position > 10.inches })
+                            .alongWith(
+                                Elevator.goToRawUntil(state.elevatorHeight) {
+                                    Elevator.position > 10.inches
+                                }
+                            )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        smartGoTo(RobotState.IntermediaryL4) // same as L4 but has wrist pointing upwards
-                            .andThen(Commands.waitUntil { SuperStructure.atPosition(RobotState.IntermediaryL4) })
+                        smartGoTo(
+                                RobotState.IntermediaryL4
+                            ) // same as L4 but has wrist pointing upwards
+                            .andThen(Commands.waitUntil { atPosition })
                             .andThen(smartGoTo(state))
                     else -> smartGoTo(state)
                 }
-            }, setOf(Pivot, Elevator, Wrist)
+            },
+            setOf(Pivot, Elevator, Wrist),
         )
 
     fun goToMoveElevatorFirst(state: RobotState): Command =

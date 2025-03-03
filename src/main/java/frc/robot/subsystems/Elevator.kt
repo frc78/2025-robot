@@ -134,7 +134,8 @@ object Elevator : SubsystemBase("Elevator") {
     }
 
     val atPosition: Boolean
-        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) <
+        get() =
+            (leader.position.value - motionMagic.positionMeasure).abs(Degrees) <
                 .5.inches.toDrumRotations().degrees
 
     fun goToAndWaitUntilStowed(state: RobotState): Command =

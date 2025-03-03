@@ -15,7 +15,7 @@ object Autos {
             SuperStructure.smartGoTo(RobotState.L4),
             Commands.waitUntil { SuperStructure.atPosition },
             Intake.scoreCoral,
-            SuperStructure.retractAfterScoring(),
+            SuperStructure.smartGoTo(RobotState.CoralStation),
         )
     }
 
