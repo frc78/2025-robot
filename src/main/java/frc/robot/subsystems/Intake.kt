@@ -17,11 +17,12 @@ import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import frc.robot.lib.meters
+import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
 object Intake : Subsystem {
     init {
-        defaultCommand = Commands.idle(this)
+        defaultCommand = Commands.idle(this).withName("Intake idle")
     }
 
     private val canRange: CANrange =
@@ -150,19 +151,17 @@ object Intake : Subsystem {
         startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
     }
 
-    val stopRollers by command { runOnce { leader.set(0.0) } }
+    val outtakeCoral by command { startEnd({ leader.set(-1.0) }, { leader.set(0.0) }) }
 
-    val outtakeCoral by command { runOnce { leader.set(-1.0) } }
-
-    val outtakeAlgae by command { runOnce { leader.set(1.0) } }
+    val outtakeAlgae by command { startEnd({ leader.set(1.0) }, { leader.set(0.0) }) }
 
     val intakeAlgae by command { runOnce { leader.set(-1.0) } }
 
     val intakeCoral by command { runOnce { leader.set(0.6) } }
 
-    val scoreCoral by command {
-        Commands.idle() // TODO score coral
-    }
+    /** Outtake and then stop after delay */
+    val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
+    val scoreAlgae by command { outtakeAlgae.withTimeout(0.5.seconds) }
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =

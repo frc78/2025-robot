@@ -146,6 +146,8 @@ object Robot : LoggedRobot() {
 
         SmartDashboard.putBoolean("Has Algae", hasAlgae)
         SmartDashboard.putBoolean("Can Extend Elevator", Pivot.canExtendElevator)
+
+        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
     }
 
     override fun simulationPeriodic() {

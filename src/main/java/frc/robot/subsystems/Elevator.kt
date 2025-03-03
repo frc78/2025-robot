@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.command
+import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
 import frc.robot.lib.meters
@@ -131,6 +133,10 @@ object Elevator : SubsystemBase("Elevator") {
         return abs((position - target).inches) < SETPOINT_THRESHOLD.inches
     }
 
+    val atPosition: Boolean
+        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) <
+                .5.inches.toDrumRotations().degrees
+
     fun goToAndWaitUntilStowed(state: RobotState): Command =
         PrintCommand("Elevator stowing").alongWith(goTo(state)).andThen(Commands.idle()).until {
             isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD
@@ -231,6 +237,7 @@ object Elevator : SubsystemBase("Elevator") {
     override fun periodic() {
         Logger.recordOutput("elevator/position", position)
         Logger.recordOutput("elevator/stowed", isStowed)
+        Logger.recordOutput("elevator/at_position", atPosition)
     }
 
     override fun simulationPeriodic() {

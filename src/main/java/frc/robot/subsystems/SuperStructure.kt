@@ -20,7 +20,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L1(60.degrees, 0.25.inches, 170.degrees),
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
-    L4(89.75.degrees, 48.inches, 26.degrees),
+    L4(91.degrees, 48.inches, 26.degrees),
     IntermediaryL4(89.75.degrees, 48.inches, 120.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
     CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
@@ -50,12 +50,11 @@ object SuperStructure {
         RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
     }
 
+    val atPosition
+        get() = Pivot.atPosition && Elevator.atPosition && Wrist.atPosition
+
     val goToSelectedLevel by command {
         DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
-    }
-
-    fun isAtSetpoint(state: RobotState): Boolean {
-        return (Pivot.isAtSetpoint(state.pivotAngle) && Elevator.isAtSetpoint(state.elevatorHeight) && Wrist.isAtSetpoint(state.wristAngle))
     }
 
     // Command factory to go to a specific robot state
@@ -107,7 +106,7 @@ object SuperStructure {
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
                         smartGoTo(RobotState.IntermediaryL4) // same as L4 but has wrist pointing upwards
-                            .andThen(Commands.waitUntil { isAtSetpoint(RobotState.IntermediaryL4) })
+                            .andThen(Commands.waitUntil { SuperStructure.atPosition(RobotState.IntermediaryL4) })
                             .andThen(smartGoTo(state))
                     else -> smartGoTo(state)
                 }

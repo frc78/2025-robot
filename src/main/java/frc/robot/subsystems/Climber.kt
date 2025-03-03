@@ -33,7 +33,7 @@ object Climber : SubsystemBase("Climber") {
         }
 
     init {
-        defaultCommand = Commands.idle(this)
+        defaultCommand = Commands.idle(this).withName("Climber idle")
         leader.set(0.0)
     }
 

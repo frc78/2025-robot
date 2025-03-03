@@ -73,14 +73,15 @@ private fun CommandXboxController.configureManipButtonLayout() {
 //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
 //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
 
-    // TODO ultimately a driver control?
-    rightTrigger(0.55)
-        .onTrue(
-            Intake.outtakeCoral
-                .andThen(Commands.waitTime(0.2.seconds))
-                .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
-        )
+    a().onTrue(
+        SuperStructure.smartGoTo(RobotState.L1)
+    ) // TODO tune prescore to support goToScoreReefFromPreScore
+    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
+    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
+    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+    //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
+    // control?
+    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.retractAfterScoring()))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -114,13 +115,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
-    leftTrigger(0.55)
-        .onTrue(
-            Intake.outtakeAlgae
-                .andThen(Commands.waitTime(0.5.seconds))
-                .andThen(Intake.stopRollers)
-                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
-        )
+    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
