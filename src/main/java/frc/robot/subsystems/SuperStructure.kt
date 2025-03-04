@@ -17,7 +17,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
     Stow(5.degrees, 0.25.inches, 20.degrees),
     PreScore(60.degrees, 0.25.inches, 20.degrees),
-    L1(45.degrees, 0.25.inches, 166.degrees),
+    L1(40.degrees, 0.25.inches, 166.degrees),
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
     L4(91.degrees, 48.inches, 26.degrees),
@@ -95,7 +95,7 @@ object SuperStructure {
                 when (state) {
                     RobotState.L2 ->
                         // Move wrist and elevator first, wait for wrist before moving pivot
-                        Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 45.degrees }
+                        Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 90.degrees }
                             .alongWith(Elevator.goTo(state))
                             .andThen(Pivot.goTo(state))
                     RobotState.L3 ->
@@ -103,15 +103,13 @@ object SuperStructure {
                         Wrist.goTo(state)
                             .alongWith(
                                 Elevator.goToRawUntil(state.elevatorHeight) {
-                                    Elevator.position > 10.inches
+                                    Elevator.position > 5.inches
                                 }
                             )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        smartGoTo(
-                                RobotState.IntermediaryL4
-                            ) // same as L4 but has wrist pointing upwards
-                            .andThen(Commands.waitUntil { atPosition })
+                        smartGoTo(RobotState.L4)
+                            .andThen(Wrist.goToRawUntil(120.degrees){Elevator.position > 38.inches}) //
                             .andThen(smartGoTo(state))
                     else -> smartGoTo(state)
                 }

@@ -73,14 +73,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
     //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
     //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
 
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.L1)
-    ) // TODO tune prescore to support goToScoreReefFromPreScore
-    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
-    //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
-    // control?
     rightTrigger(0.55)
         .onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
