@@ -99,21 +99,14 @@ object Pivot : SubsystemBase("Pivot") {
 
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
-        runOnce { leader.setControl(motionMagic.withPosition(setpoint)) }
-            .andThen(Commands.idle())
+        run { leader.setControl(motionMagic.withPosition(setpoint).withLimitForwardMotion(Climber.isExtended)) }
             .until(endCondition)
 
     val atPosition
         get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
 
     fun goTo(state: RobotState): Command =
-        PrintCommand("Pivot going to $state - ${state.pivotAngle}")
-            .alongWith(runOnce { leader.setControl(motionMagic.withPosition(state.pivotAngle)) })
-
-    fun goToAndWaitUntilSetpoint(state: RobotState): Command =
-        PrintCommand("Pivot going vertical").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            abs((angle - state.pivotAngle).degrees) < SETPOINT_THRESHOLD.degrees
-        }
+        goToRawUntil(state.pivotAngle, {true})
 
     val angle: Angle
         get() = leader.position.value
