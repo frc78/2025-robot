@@ -13,17 +13,8 @@ import frc.robot.subsystems.drivetrain.Chassis
 private val DRIVE_LAYOUT =
     DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
 
-val DRIVE_MODIFIERS =
-    DriveModifiers(triggerAdjust = true, distanceSlowing = true).also {
-        SmartDashboard.putBoolean("trigger_adjust", it.triggerAdjust)
-        SmartDashboard.putBoolean("distance_slowing", it.distanceSlowing)
-    }
-
-/**
- * Stores values for whether to apply trigger speed, distance slowing, and any other future speed
- * modifiers
- */
-class DriveModifiers(val triggerAdjust: Boolean = false, val distanceSlowing: Boolean = false)
+val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
+val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
 
 private enum class DriveLayout {
     BASIC,

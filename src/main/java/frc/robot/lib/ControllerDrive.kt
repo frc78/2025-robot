@@ -3,8 +3,10 @@ package frc.robot.lib
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.XboxController
-import frc.robot.lib.bindings.DRIVE_MODIFIERS
+import frc.robot.lib.bindings.DISTANCE_SLOWING
+import frc.robot.lib.bindings.TRIGGER_ADJUST
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
@@ -33,20 +35,23 @@ val XboxController.triggerAdjust
 val obstacleSlowdown
     get() =
         distanceSlowdown(
-                FieldGeometry.distanceToClosestCoralStation(Chassis.state.Pose.translation).also {
-                    Logger.recordOutput("closestCoralStationDistance", it)
-                },
-                1.5,
-                1.0,
-                0.5,
+                FieldGeometry.distanceToClosestLine(
+                        FieldGeometry.CORAL_STATIONS,
+                        Chassis.state.Pose.translation,
+                    )
+                    .also { Logger.recordOutput("closestCoralStationDistance", it) },
+                startSlowDistance = 1.0,
+                maxSlowDistance = 0.75,
+                maxSlowdownCoefficient = 0.4,
             )
             .also { Logger.recordOutput("obstacleSlowdown", it) }
 
 /** Cumulates the enabled speed modifiers into one coefficient */
 val XboxController.speedModifiers
     get() =
-        (if (DRIVE_MODIFIERS.triggerAdjust) triggerAdjust else 1.0) *
-            (if (DRIVE_MODIFIERS.distanceSlowing && !Intake.hasBranchCoral) obstacleSlowdown
+        (if (TRIGGER_ADJUST) triggerAdjust else 1.0) *
+            (if (DISTANCE_SLOWING && if (RobotBase.isReal()) !Intake.hasBranchCoral else true)
+                obstacleSlowdown
             else 1.0)
 
 val XboxController.velocityX: LinearVelocity
