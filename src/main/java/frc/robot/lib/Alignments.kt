@@ -142,4 +142,16 @@ object Alignments {
         val pose
             get() = if (left) reefFace.leftBranch else reefFace.rightBranch
     }
+
+    val PROCESSOR = Transform2d(0.9.meters, 0.0.meters, Rotation2d.k180deg)
+
+    private val PROCESSOR_POSE_RED =
+        intArrayOf(3).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(PROCESSOR)
+        }
+
+    private val PROCESSOR_POSE_BLUE =
+        intArrayOf(16).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(PROCESSOR)
+        }
 }
