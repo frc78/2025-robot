@@ -8,7 +8,6 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.seconds
 import frc.robot.subsystems.*
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator

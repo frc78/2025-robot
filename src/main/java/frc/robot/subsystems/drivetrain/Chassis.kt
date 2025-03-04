@@ -42,19 +42,17 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.Branch
 import frc.robot.lib.*
-import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_LEFT
-import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_RIGHT
+import frc.robot.lib.Branch
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
+import frc.robot.lib.FieldPoses.closestLeftBranch
 import frc.robot.lib.FieldPoses.closestReef
+import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.command
-import frc.robot.lib.feetPerSecond
 import frc.robot.lib.inches
 import frc.robot.lib.metersPerSecond
-import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
@@ -358,7 +356,7 @@ object Chassis :
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
-    private fun driveToPose(pose: () -> Pose2d): Command =
+    private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
             val fieldRelative =
                 ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
@@ -425,6 +423,8 @@ object Chassis :
                             FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
                     }
             )
+            // Stop movement
+            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
@@ -505,11 +505,15 @@ object Chassis :
             )
             .andThen(
                 applyRequest {
-                    RobotRelative.withVelocityX(Robot.driveController.hid.velocityX)
+                    RobotRelative.withVelocityX(Robot.driveController.hid.wideVelocityX)
                         .withVelocityY(Robot.driveController.hid.velocityY)
                         .withRotationalRate(Robot.driveController.hid.velocityRot)
                 }
             )
+
+    val driveToClosestCoralStation by command {
+        driveToPose { closestCoralStation }.withName("Drive to coral station")
+    }
 
     fun snapToBarge(): Command =
         // Our target distance from the line segment of the substation
@@ -546,7 +550,7 @@ object Chassis :
             )
             .andThen(
                 applyRequest {
-                    RobotRelative.withVelocityX(Robot.driveController.hid.velocityX)
+                    RobotRelative.withVelocityX(Robot.driveController.hid.wideVelocityX)
                         .withVelocityY(Robot.driveController.hid.velocityY)
                         .withRotationalRate(Robot.driveController.hid.velocityRot)
                 }

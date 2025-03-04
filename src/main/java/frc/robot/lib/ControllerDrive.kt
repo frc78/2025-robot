@@ -60,6 +60,12 @@ val XboxController.velocityX: LinearVelocity
         return maxTranslation * x * speedModifiers
     }
 
+val XboxController.wideVelocityX: LinearVelocity
+    get() {
+        val x = MathUtil.applyDeadband(-leftY, 0.5)
+        return maxTranslation * x * speedModifiers * 0.8
+    }
+
 val XboxController.velocityY: LinearVelocity
     get() {
         val y = MathUtil.applyDeadband(-leftX, JOYSTICK_DEADBAND)
