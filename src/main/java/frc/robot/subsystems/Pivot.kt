@@ -156,7 +156,11 @@ object Pivot : SubsystemBase("Pivot") {
     private val voltageOut = VoltageOut(0.0)
     val moveUp by command {
         startEnd(
-            { leader.setControl(voltageOut.withOutput(2.volts).withLimitForwardMotion(Climber.isExtended)) },
+            {
+                leader.setControl(
+                    voltageOut.withOutput(2.volts).withLimitForwardMotion(Climber.isExtended)
+                )
+            },
             { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }

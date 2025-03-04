@@ -4,7 +4,6 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
@@ -95,17 +94,25 @@ object SuperStructure {
                     RobotState.L2 ->
                         // Move wrist and elevator first, wait for wrist before moving pivot
                         Elevator.goTo(state)
-                            .andThen(Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 140.degrees })
+                            .andThen(
+                                Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 140.degrees }
+                            )
                             .andThen(Pivot.goTo(state))
                     RobotState.L3 ->
                         // Move wrist and elevator first, wait for elevator before moving pivot
                         Wrist.goTo(state)
-                            .andThen(Elevator.goToRawUntil(state.elevatorHeight) { Elevator.position > 0.inches })
+                            .andThen(
+                                Elevator.goToRawUntil(state.elevatorHeight) {
+                                    Elevator.position > 0.inches
+                                }
+                            )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
                         smartGoTo(state)
-                            .andThen(Wrist.goToRawUntil(120.degrees){Elevator.position > 20.inches}) //
-                            .andThen(Wrist.goToRawUntil(state.wristAngle){true})
+                            .andThen(
+                                Wrist.goToRawUntil(120.degrees) { Elevator.position > 20.inches }
+                            ) //
+                            .andThen(Wrist.goToRawUntil(state.wristAngle) { true })
                     else -> smartGoTo(state)
                 }
             },
