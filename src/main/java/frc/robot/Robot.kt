@@ -160,7 +160,7 @@ object Robot : LoggedRobot() {
         Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
 
         SmartDashboard.putBoolean("Has Algae", hasAlgae)
-        SmartDashboard.putNumber("Intake Current", Intake.torqueCurrent.amps)
+        SmartDashboard.putBoolean("Can Extend Elevator", Pivot.canExtendElevator)
 
         Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
     }

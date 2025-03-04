@@ -16,14 +16,15 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
     Stow(5.degrees, 0.25.inches, 20.degrees),
     PreScore(60.degrees, 0.25.inches, 20.degrees),
-    L1(60.degrees, 0.25.inches, 60.degrees),
+    L1(40.degrees, 0.25.inches, 166.degrees),
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
     L4(91.degrees, 48.inches, 26.degrees),
+    IntermediaryL4(89.75.degrees, 48.inches, 120.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
     CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 161.2.degrees),
-    CoralGroundPickup(5.degrees, 5.inches, 74.degrees),
+    CoralGroundPickup(13.89.degrees, 0.25.inches, 183.degrees),
     Processor(23.degrees, 0.25.inches, 101.degrees),
     HighAlgaeIntake(97.2.degrees, 17.33.inches, 10.degrees),
     LowAlgaeIntake(100.degrees, 0.25.inches, 15.3.degrees),
@@ -35,8 +36,6 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 
     /*
     PRESETS STILL TO GET!! as of March 1 2025
-    - algae ground intake
-    - algae processor
     - coral L1
     - pre-climb
     - climbed
@@ -64,19 +63,6 @@ object SuperStructure {
             .andThen(Wrist.goTo(state))
             .withName("Go to $state all at once")
 
-    // Command for the superstructure to automatically retract to CoralStation preset after
-    // outtaking a gamepiece
-    fun retractAfterScoring(): Command =
-        Wrist.goTo(RobotState.CoralStation)
-            // Wait for elevator to be down *enough* to move pivot, not necessarily all the way with
-            // smooth motion
-            .andThen(
-                Elevator.goToRawUntil(RobotState.CoralStation.elevatorHeight) {
-                    Elevator.position < Elevator.MOVE_PIVOT_THRESHOLD
-                }
-            )
-            .andThen(Pivot.goTo(RobotState.CoralStation))
-
     // Command factory to go to a specific robot state
     fun smartGoTo(state: RobotState): Command =
         DeferredCommand(
@@ -99,6 +85,39 @@ object SuperStructure {
                 setOf(Pivot, Elevator, Wrist),
             )
             .withName("Smart Go To ${state.name}")
+
+    // Do fancier experimental movement to avoid hitting coral on branches for L2, L3, L4
+    fun goToScoreCoral(state: RobotState): Command =
+        DeferredCommand(
+            {
+                when (state) {
+                    RobotState.L2 ->
+                        // Move wrist and elevator first, wait for wrist before moving pivot
+                        Elevator.goTo(state)
+                            .andThen(
+                                Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 140.degrees }
+                            )
+                            .andThen(Pivot.goTo(state))
+                    RobotState.L3 ->
+                        // Move wrist and elevator first, wait for elevator before moving pivot
+                        Wrist.goTo(state)
+                            .andThen(
+                                Elevator.goToRawUntil(state.elevatorHeight) {
+                                    Elevator.position > 0.inches
+                                }
+                            )
+                            .andThen(Pivot.goTo(state))
+                    RobotState.L4 ->
+                        smartGoTo(state)
+                            .andThen(
+                                Wrist.goToRawUntil(120.degrees) { Elevator.position > 20.inches }
+                            ) //
+                            .andThen(Wrist.goToRawUntil(state.wristAngle) { true })
+                    else -> smartGoTo(state)
+                }
+            },
+            setOf(Pivot, Elevator, Wrist),
+        )
 
     fun goToMoveElevatorFirst(state: RobotState): Command =
         Wrist.goTo(state)

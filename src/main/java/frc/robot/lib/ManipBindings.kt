@@ -63,20 +63,18 @@ private fun CommandXboxController.configureManipButtonLayout() {
     //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
     // Coral Stuff
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)) // TODO test all these!
+
     //    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
     //    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
     //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
     //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
 
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.L1)
-    ) // TODO tune prescore to support goToScoreReefFromPreScore
-    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
-    //    rightTrigger(0.55).whileTrue(Intake.manualOuttakeCoral) // TODO ultimately a driver
-    // control?
-    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.retractAfterScoring()))
+    rightTrigger(0.55)
+        .onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -110,7 +108,8 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
-    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.retractAfterScoring()))
+    leftTrigger(0.55)
+        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
@@ -181,9 +180,18 @@ fun CommandJoystick.configureManipTestBindings() {
     //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
 
     button(7).onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    button(7).onFalse(SuperStructure.smartGoTo(RobotState.FullyClimbed))
+    button(8)
+        .onTrue(
+            Wrist.goTo(RobotState.FullyClimbed)
+                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
+                .alongWith(
+                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
+                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
+                    }
+                )
+                .andThen(Climber.extend)
+        )
 
-    button(8).whileTrue(Intake.outtakeCoral)
     button(9).whileTrue(Climber.extend)
     button(10).whileTrue(Climber.retract)
     button(11).whileTrue(Wrist.manualUp())
