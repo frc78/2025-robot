@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.command
@@ -99,14 +98,17 @@ object Pivot : SubsystemBase("Pivot") {
 
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
     fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
-        run { leader.setControl(motionMagic.withPosition(setpoint).withLimitForwardMotion(Climber.isExtended)) }
+        run {
+                leader.setControl(
+                    motionMagic.withPosition(setpoint).withLimitForwardMotion(Climber.isExtended)
+                )
+            }
             .until(endCondition)
 
     val atPosition
         get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
 
-    fun goTo(state: RobotState): Command =
-        goToRawUntil(state.pivotAngle, {true})
+    fun goTo(state: RobotState): Command = goToRawUntil(state.pivotAngle) { true }
 
     val angle: Angle
         get() = leader.position.value
@@ -133,7 +135,7 @@ object Pivot : SubsystemBase("Pivot") {
     private val voltageOut = VoltageOut(0.0)
     val moveUp by command {
         startEnd(
-            { leader.setControl(voltageOut.withOutput(2.volts)) },
+            { leader.setControl(voltageOut.withOutput(2.volts).withLimitForwardMotion(Climber.isExtended)) },
             { leader.setControl(motionMagic.withPosition(leader.position.value)) },
         )
     }
@@ -178,20 +180,6 @@ object Pivot : SubsystemBase("Pivot") {
                 runOnce { SignalLogger.stop() },
             )
             .withName("Pivot SysId")
-
-    val manualUp by command {
-        startEnd(
-            { leader.setControl(voltageOut.withOutput(2.volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
-        )
-    }
-
-    val manualDown by command {
-        startEnd(
-            { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(voltageOut.withOutput(0.volts)) },
-        )
-    }
 
     override fun periodic() {
         Logger.recordOutput("pivot/angle_degrees", angle.degrees)
