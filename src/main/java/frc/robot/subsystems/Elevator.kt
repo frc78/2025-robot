@@ -1,6 +1,7 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.SignalLogger
+import com.ctre.phoenix6.configs.Slot0Configs
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.IS_COMP
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -47,20 +49,33 @@ object Elevator : SubsystemBase("Elevator") {
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
     // Constants for the feedforward calculation
-    private const val K_S = 0.23487
-    private const val K_V = 0.60823
-    private const val K_A = 0.034044
-    private const val K_G = 0.55356
+    private val ALPHA_BOT_CONFIGS =
+        Slot0Configs().apply {
+            kS = 0.23487
+            kV = 0.60823
+            kA = 0.034044
+            kG = 0.55356
 
-    // PID gains
-    private const val K_P = 34.887
-    private const val K_I = 0.0
-    private const val K_D = 1.2611
+            kP = 34.887
+            kI = 0.0
+            kD = 1.2611
+        }
+    private val COMP_BOT_CONFIGS =
+        Slot0Configs().apply {
+            kS = 0.23487
+            kV = 0.60823
+            kA = 0.034044
+            kG = 0.55356
+
+            kP = 34.887
+            kI = 0.0
+            kD = 1.2611
+        }
 
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
-    private val MAX_HEIGHT = 54.inches
+    private val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
     private val SETPOINT_THRESHOLD = 5.inches
 
     private val leader =
@@ -79,13 +94,7 @@ object Elevator : SubsystemBase("Elevator") {
                     MotorOutput.Inverted = InvertedValue.Clockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
-                    Slot0.kS = K_S
-                    Slot0.kV = K_V
-                    Slot0.kA = K_A
-                    Slot0.kG = K_G
-                    Slot0.kP = K_P
-                    Slot0.kI = K_I
-                    Slot0.kD = K_D
+                    Slot0 = if (IS_COMP) COMP_BOT_CONFIGS else ALPHA_BOT_CONFIGS
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
