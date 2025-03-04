@@ -13,6 +13,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.command
+import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
 import frc.robot.lib.meters
@@ -58,7 +60,7 @@ object Elevator : SubsystemBase("Elevator") {
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
-    private val MAX_HEIGHT = 53.inches
+    private val MAX_HEIGHT = 54.inches
     private val AT_HEIGHT_THRESHOLD = 5.inches
 
     private val leader =
@@ -126,6 +128,11 @@ object Elevator : SubsystemBase("Elevator") {
 
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
+
+    val atPosition
+        get() =
+            (leader.position.value - motionMagic.positionMeasure).abs(Degrees) <
+                .5.inches.toDrumRotations().degrees
 
     fun isAtHeight(target: Distance): Boolean {
         return abs((position - target).inches) < AT_HEIGHT_THRESHOLD.inches
@@ -231,6 +238,7 @@ object Elevator : SubsystemBase("Elevator") {
     override fun periodic() {
         Logger.recordOutput("elevator/position", position)
         Logger.recordOutput("elevator/stowed", isStowed)
+        Logger.recordOutput("elevator/at_position", atPosition)
     }
 
     override fun simulationPeriodic() {

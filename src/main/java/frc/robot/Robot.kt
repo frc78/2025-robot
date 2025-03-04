@@ -40,6 +40,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 
 // Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
+val IS_COMP = "COMP" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
@@ -134,7 +135,7 @@ object Robot : LoggedRobot() {
     }
 
     private val hasAlgae: Boolean
-        get() = Intake.hasAlgaeByCurrent()
+        get() = Intake.detectAlgaeByCurrent()
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
@@ -151,6 +152,8 @@ object Robot : LoggedRobot() {
 
         SmartDashboard.putBoolean("Has Algae", hasAlgae)
         SmartDashboard.putNumber("Intake Current", Intake.torqueCurrent.amps)
+
+        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
     }
 
     override fun simulationPeriodic() {

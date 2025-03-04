@@ -40,10 +40,11 @@ fun CommandXboxController.configureDriverBindings() {
 private fun CommandXboxController.configureDriveBasicLayout() {
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
-            withVelocityX(hid.velocityX)
-                .withVelocityY(hid.velocityY)
-                .withRotationalRate(hid.velocityRot)
-        }
+                withVelocityX(hid.velocityX)
+                    .withVelocityY(hid.velocityY)
+                    .withRotationalRate(hid.velocityRot)
+            }
+            .withName("Field centric xbox drive")
 }
 
 // Driving with snapping bindings for reef alignment
@@ -65,7 +66,7 @@ private fun CommandXboxController.configureDriveManualSequencingLayout() {
     leftTrigger(0.55)
         .onTrue(SuperStructure.goToSelectedLevel)
         .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    rightTrigger(0.55).onTrue(Intake.scoreCoral).onFalse(Intake.defaultCommand)
+    rightTrigger(0.55).whileTrue(Intake.scoreCoral)
     a().whileTrue(Intake.outtakeCoral) // Spencer added, does this work here though?
 }
 

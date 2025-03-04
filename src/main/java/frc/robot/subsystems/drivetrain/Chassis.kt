@@ -37,11 +37,12 @@ import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.IS_TEST
+import frc.robot.IS_COMP
 import frc.robot.Robot
-import frc.robot.generated.TestBotTunerConstants
+import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
+import frc.robot.lib.Branch
 import frc.robot.lib.*
 import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_LEFT
 import frc.robot.lib.FieldPoses.REEF_TO_BRANCH_RIGHT
@@ -49,6 +50,13 @@ import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.command
+import frc.robot.lib.feetPerSecond
+import frc.robot.lib.inches
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
@@ -56,25 +64,25 @@ import kotlin.math.PI
 import org.littletonrobotics.junction.Logger
 
 val drivetrainConstants: SwerveDrivetrainConstants =
-    if (IS_TEST) TestBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
+    if (IS_COMP) CompBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
 val frontLeft:
     SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_TEST) TestBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
+    if (IS_COMP) CompBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
 val frontRight:
     SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_TEST) TestBotTunerConstants.FrontRight else TunerConstants.FrontRight
+    if (IS_COMP) CompBotTunerConstants.FrontRight else TunerConstants.FrontRight
 val backLeft:
     SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_TEST) TestBotTunerConstants.BackLeft else TunerConstants.BackLeft
+    if (IS_COMP) CompBotTunerConstants.BackLeft else TunerConstants.BackLeft
 val backRight:
     SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_TEST) TestBotTunerConstants.BackRight else TunerConstants.BackRight
+    if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants.BackRight
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
  * be used in command-based projects.
  */
-@Suppress("UnusedPrivateProperty")
+@Suppress("UnusedPrivateProperty", "TooManyFunctions")
 object Chassis :
     TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
     Subsystem {
@@ -345,7 +353,12 @@ object Chassis :
             TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond, 3.5),
         )
 
-    private fun primeDriveToPose(pose: () -> Pose2d) =
+    /** Drives to a pose such that the coral is at x=0 */
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
+        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+    }
+
+    private fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
             val fieldRelative =
                 ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
@@ -376,6 +389,8 @@ object Chassis :
                     yController.atGoal() &&
                     FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
             }
+            // Stop movement
+            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     private fun driveToChangingPose(
         pose: () -> Pose2d,
@@ -414,21 +429,11 @@ object Chassis :
     val driveToClosestReef by command { driveToPose { closestReef } }
 
     val driveToLeftBranch by command {
-        driveToPose {
-                closestReef
-                    .transformBy(REEF_TO_BRANCH_LEFT)
-                    .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-            }
-            .withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPose {
-                closestReef
-                    .transformBy(REEF_TO_BRANCH_RIGHT)
-                    .transformBy((Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)))
-            }
-            .withName("Drive to branch right")
+        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
     }
 
     val driveToSelectedBranch by command {
