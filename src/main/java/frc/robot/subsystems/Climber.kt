@@ -19,6 +19,9 @@ object Climber : SubsystemBase("Climber") {
 
     private val positionVoltage = PositionVoltage(0.0)
 
+    val isExtended: Boolean
+        get() = leader.position.value > extendedPosition / 2.0
+
     private val leader =
         TalonFX(14, "*").apply {
             configurator.apply(

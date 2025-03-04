@@ -79,10 +79,22 @@ object Alignments {
         get() = Chassis.state.Pose.nearest(branchPoses)
 
     val closestLeftBranch: Pose2d
-        get() = closestBranch.transformBy(REEF_TO_BRANCH_LEFT)
+        get() {
+            if (closestReef == reefPoses[3]) {
+                return closestReef.transformBy(REEF_TO_BRANCH_RIGHT)
+            } else {
+                return closestReef.transformBy(REEF_TO_BRANCH_LEFT)
+            }
+        }
 
     val closestRightBranch: Pose2d
-        get() = closestBranch.transformBy(REEF_TO_BRANCH_RIGHT)
+        get() {
+            if (closestReef == reefPoses[3]) {
+                return closestReef.transformBy(REEF_TO_BRANCH_LEFT)
+            } else {
+                return closestReef.transformBy(REEF_TO_BRANCH_RIGHT)
+            }
+        }
 
     val closestCoralStation: Pose2d
         get() {
