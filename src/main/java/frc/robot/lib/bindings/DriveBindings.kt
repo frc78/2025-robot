@@ -1,7 +1,10 @@
-package frc.robot.lib
+package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.lib.velocityRot
+import frc.robot.lib.velocityX
+import frc.robot.lib.velocityY
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -9,6 +12,9 @@ import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
     DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
+
+val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
+val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
 
 private enum class DriveLayout {
     BASIC,
@@ -48,6 +54,12 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
+    y().whileTrue(
+        Chassis.snapToClosestSubstation().withName("Snap to closest substation").also {
+            SmartDashboard.putData("Snap to closest substation", it)
+        }
+    )
+    b().whileTrue(Chassis.snapToBarge())
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {

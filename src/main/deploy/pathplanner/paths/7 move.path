@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 1.3019526725789339
+    "rotation": 1.301952672578934
   },
   "reversed": false,
   "folder": "Pathfinder Path #2",

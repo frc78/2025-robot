@@ -10,7 +10,7 @@ import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 
 /** Poses that the robot can auto-align to */
-object Alignments {
+object FieldPoses {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.7.meters, 0.meters, Rotation2d.kZero)
@@ -62,13 +62,11 @@ object Alignments {
         }
 
     private val reefPoses
-        get() =
-            if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) BLUE_REEF_POSES
-            else RED_REEF_POSES
+        get() = if (Robot.alliance == Alliance.Blue) BLUE_REEF_POSES else RED_REEF_POSES
 
     private val branchPoses
         get() =
-            if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
+            if (Robot.alliance == Alliance.Blue) {
                 BLUE_BRANCH_POSES
             } else RED_BRANCH_POSES
 

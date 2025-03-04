@@ -265,3 +265,4 @@ gradle-app.setting
 /simgui-window.json
 /ctre_sim
 /bin
+/.kotlin/sessions
