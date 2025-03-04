@@ -91,26 +91,21 @@ object SuperStructure {
     fun goToScoreCoral(state: RobotState): Command =
         DeferredCommand(
             {
-                // TODO check if in good state for this first? or safe to assume PreScore/Stow?
                 when (state) {
                     RobotState.L2 ->
                         // Move wrist and elevator first, wait for wrist before moving pivot
-                        Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 90.degrees }
-                            .alongWith(Elevator.goTo(state))
+                        Elevator.goTo(state)
+                            .andThen(Wrist.goToRawUntil(state.wristAngle) { Wrist.angle < 140.degrees })
                             .andThen(Pivot.goTo(state))
                     RobotState.L3 ->
                         // Move wrist and elevator first, wait for elevator before moving pivot
                         Wrist.goTo(state)
-                            .alongWith(
-                                Elevator.goToRawUntil(state.elevatorHeight) {
-                                    Elevator.position > 5.inches
-                                }
-                            )
+                            .andThen(Elevator.goToRawUntil(state.elevatorHeight) { Elevator.position > 0.inches })
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        smartGoTo(RobotState.L4)
-                            .andThen(Wrist.goToRawUntil(120.degrees){Elevator.position > 38.inches}) //
-                            .andThen(smartGoTo(state))
+                        smartGoTo(state)
+                            .andThen(Wrist.goToRawUntil(120.degrees){Elevator.position > 20.inches}) //
+                            .andThen(Wrist.goToRawUntil(state.wristAngle){true})
                     else -> smartGoTo(state)
                 }
             },
