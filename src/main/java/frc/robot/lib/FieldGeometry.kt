@@ -31,7 +31,7 @@ object FieldGeometry {
             }
 
     private val BLUE_BARGE_ALIGNMENT_LINE_LEFT =
-        LineSegment(Translation2d(7.5, 7.374), Translation2d(7.5, 4.815))
+        LineSegment(Translation2d(7.65, 7.374), Translation2d(7.65, 4.815))
     private val BLUE_BARGE_ALIGNMENT_LINE_RIGHT = BLUE_BARGE_ALIGNMENT_LINE_LEFT.mirror()
 
     private val RED_BARGE_ALIGNMENT_LINE_RIGHT =

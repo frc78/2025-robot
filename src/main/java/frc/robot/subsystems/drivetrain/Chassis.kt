@@ -528,8 +528,8 @@ object Chassis :
                             .plus(position)
                     Pose2d(
                             closestBargePoint,
-                            if (position.x <= FieldGeometry.FIELD_X_LENGTH / 2) Rotation2d.kZero
-                            else Rotation2d.k180deg,
+                            if (position.x <= FieldGeometry.FIELD_X_LENGTH / 2) Rotation2d.k180deg
+                            else Rotation2d.kZero,
                         )
                         .also { Logger.recordOutput("Drive to barge", it) }
                 },
