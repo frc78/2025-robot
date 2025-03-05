@@ -141,7 +141,7 @@ object FieldPoses {
             get() = if (left) reefFace.leftBranch else reefFace.rightBranch
     }
 
-    val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.0.meters, Rotation2d.k180deg)
+    private val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.0.meters, Rotation2d.k180deg)
 
     private val PROCESSOR_POSES =
         intArrayOf(3, 16).map {

@@ -43,16 +43,11 @@ import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.*
-import frc.robot.lib.Alignments.closestBranch
-import frc.robot.lib.Alignments.closestCoralStation
-import frc.robot.lib.Alignments.closestLeftBranch
-import frc.robot.lib.Alignments.closestProcessor
-import frc.robot.lib.Alignments.closestReef
-import frc.robot.lib.Alignments.closestRightBranch
 import frc.robot.lib.Branch
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBranch
+import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.ScoreSelector.SelectedBranch
