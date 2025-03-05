@@ -187,6 +187,16 @@ object Pivot : SubsystemBase("pivot") {
             ),
         )
 
+    fun coast() {
+        leader.setNeutralMode(NeutralModeValue.Coast)
+        follower.setNeutralMode(NeutralModeValue.Coast)
+    }
+
+    fun brake() {
+        leader.setNeutralMode(NeutralModeValue.Brake)
+        follower.setNeutralMode(NeutralModeValue.Brake)
+    }
+
     val sysId =
         Commands.sequence(
                 runOnce { SignalLogger.start() },

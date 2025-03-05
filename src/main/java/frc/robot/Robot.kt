@@ -20,8 +20,11 @@ import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
@@ -83,6 +86,11 @@ object Robot : LoggedRobot() {
         CommandXboxController(0).configureDriverBindings()
         CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
+
+        Pivot.coast()
+        RobotModeTriggers.disabled()
+            .and(Trigger({ Pivot.angle > 45.degrees }))
+            .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
