@@ -142,7 +142,7 @@ object Robot : LoggedRobot() {
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
-//        Vision.setupSimulation()
+        //        Vision.setupSimulation()
     }
 
     private val hasAlgae: Boolean
