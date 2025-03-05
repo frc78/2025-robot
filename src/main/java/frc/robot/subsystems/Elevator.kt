@@ -104,10 +104,10 @@ object Elevator : SubsystemBase("Elevator") {
                         //                        .withMotionMagicAcceleration((898.69 *
                         // 0.5).radiansPerSecondPerSecond)
                         .withMotionMagicCruiseVelocity(
-                            9.49
+                            18.0
                         ) // rotations per second, equal to old radians per second above
-                        .withMotionMagicAcceleration(20.0)
-                        .withMotionMagicJerk(100.0)
+                        .withMotionMagicAcceleration(200.0)
+                        .withMotionMagicJerk(1000.0)
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
