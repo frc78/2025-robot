@@ -48,6 +48,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
+    a().whileTrue(Chassis.driveToProcessor)
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {

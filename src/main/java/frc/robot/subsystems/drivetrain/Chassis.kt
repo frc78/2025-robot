@@ -40,6 +40,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.Alignments.closestBranch
 import frc.robot.lib.Alignments.closestCoralStation
 import frc.robot.lib.Alignments.closestLeftBranch
+import frc.robot.lib.Alignments.closestProcessor
 import frc.robot.lib.Alignments.closestReef
 import frc.robot.lib.Alignments.closestRightBranch
 import frc.robot.lib.Branch
@@ -382,6 +383,8 @@ object Chassis :
     val driveToSelectedBranch by command {
         ConditionalCommand(driveToLeftBranch, driveToRightBranch, { SelectedBranch == Branch.LEFT })
     }
+
+    val driveToProcessor by command { driveToPose { closestProcessor } }
 
     fun snapToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
