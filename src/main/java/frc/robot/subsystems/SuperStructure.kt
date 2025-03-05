@@ -2,7 +2,6 @@ package frc.robot.subsystems
 
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
@@ -46,7 +45,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
 object SuperStructure {
 
     init {
-        RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
+        //        RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
     }
 
     val atPosition

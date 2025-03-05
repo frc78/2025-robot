@@ -86,19 +86,19 @@ object Robot : LoggedRobot() {
         CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
 
-        SmartDashboard.putData(
-            "Flip driver station",
-            Commands.runOnce({
-                println("Flipping driver station perspective")
-                Chassis.setOperatorPerspectiveForward(
-                    if (
-                        Chassis.operatorForwardDirection == Chassis.kBlueAlliancePerspectiveRotation
-                    )
-                        Chassis.kRedAlliancePerspectiveRotation
-                    else Chassis.kBlueAlliancePerspectiveRotation
-                )
-            }),
-        )
+//        SmartDashboard.putData(
+//            "Flip driver station",
+//            Commands.runOnce({
+//                println("Flipping driver station perspective")
+//                Chassis.setOperatorPerspectiveForward(
+//                    if (
+//                        Chassis.operatorForwardDirection == Chassis.kBlueAlliancePerspectiveRotation
+//                    )
+//                        Chassis.kRedAlliancePerspectiveRotation
+//                    else Chassis.kBlueAlliancePerspectiveRotation
+//                )
+//            }),
+//        )
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
