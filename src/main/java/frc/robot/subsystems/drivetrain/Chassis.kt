@@ -42,8 +42,8 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.*
 import frc.robot.lib.Branch
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBranch
@@ -54,6 +54,7 @@ import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.metersPerSecond
+import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
@@ -169,7 +170,7 @@ object Chassis :
                 { state.Speeds }, // Supplier of current robot speeds
                 // Consumer of ChassisSpeeds and feedforwards to drive the robot
                 { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
-                    Chassis.setControl(
+                    setControl(
                         pathApplyRobotSpeeds
                             .withSpeeds(speeds)
                             .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
@@ -393,27 +394,32 @@ object Chassis :
 
     private fun driveToChangingPose(
         pose: () -> Pose2d,
-        vel: () -> ChassisSpeeds,
+        strafeOverride: () -> ChassisSpeeds,
         endWhenGoal: Boolean,
     ): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
                         val robot = Chassis.state.Pose
+                        val requestedDriveDelta = strafeOverride() * .02
 
                         xController.setGoal(
-                            xController.goal.position + (vel().vxMetersPerSecond * 0.02)
+                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond
                         )
                         yController.setGoal(
-                            yController.goal.position + (vel().vyMetersPerSecond * 0.02)
+                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond
                         )
-                        val xOutput = xController.calculate(robot.x) + vel().vxMetersPerSecond
-                        val yOutput = yController.calculate(robot.y) + vel().vyMetersPerSecond
+                        val xOutput =
+                            xController.calculate(robot.x) + requestedDriveDelta.vxMetersPerSecond
+                        val yOutput =
+                            yController.calculate(robot.y) + requestedDriveDelta.vyMetersPerSecond
                         FieldCentricFacingAngleAlignments.withVelocityX(xOutput)
                             .withVelocityY(yOutput)
                             .withTargetDirection(
                                 FieldCentricFacingAngleAlignments.TargetDirection.plus(
-                                    Rotation2d.fromRadians(vel().omegaRadiansPerSecond)
+                                    Rotation2d.fromRadians(
+                                        requestedDriveDelta.omegaRadiansPerSecond
+                                    )
                                 )
                             )
                     }
@@ -460,7 +466,10 @@ object Chassis :
         return applyRequest { FieldCentric.block() }
     }
 
-    fun snapToClosestSubstation(): Command =
+    fun snapToClosestSubstation(
+        strafeSpeedY: () -> Double,
+        withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
+    ): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
                 {
@@ -493,36 +502,32 @@ object Chassis :
                 },
                 {
                     // Any way to be able to use the variables from above?
-                    val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
                     val speedTranslation =
                         FieldGeometry.getClosestLine(
                                 FieldGeometry.CORAL_STATIONS,
-                                Chassis.state.Pose.translation,
+                                state.Pose.translation,
                             )
-                            .getParallelUnitVector() * strafeSpeed
+                            .getParallelUnitVector() * strafeSpeedY()
                     ChassisSpeeds(speedTranslation.x, speedTranslation.y, 0.0).also {
                         Logger.recordOutput("Drive changing velocity", it)
                     }
                 },
                 true,
             )
-            .andThen(
-                applyRequest {
-                    RobotRelative.withVelocityX(Robot.driveController.hid.wideVelocityX)
-                        .withVelocityY(Robot.driveController.hid.velocityY)
-                        .withRotationalRate(Robot.driveController.hid.velocityRot)
-                }
-            )
+            .andThen(applyRequest { RobotRelative.withSpeeds() })
 
     val driveToClosestCoralStation by command {
         driveToPose { closestCoralStation }.withName("Drive to coral station")
     }
 
-    fun snapToBarge(): Command =
+    fun snapToBarge(
+        strafeSpeedY: () -> Double,
+        withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
+    ): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
                 {
-                    val position = Chassis.state.Pose.translation
+                    val position = state.Pose.translation
                     // Gets position of closes point on the alignment line
                     val closestBargePoint =
                         FieldGeometry.getClosestLine(FieldGeometry.BARGE_ALIGNMENT_LINES, position)
@@ -538,24 +543,17 @@ object Chassis :
                 },
                 {
                     // Any way to be able to use the variables from above?
-                    val strafeSpeed = Robot.driveController.hid.velocityY.metersPerSecond
                     val speedTranslation =
                         FieldGeometry.getClosestLine(
                                 FieldGeometry.BARGE_ALIGNMENT_LINES,
                                 Chassis.state.Pose.translation,
                             )
-                            .getParallelUnitVector() * strafeSpeed
+                            .getParallelUnitVector() * strafeSpeedY()
                     ChassisSpeeds(speedTranslation.x, speedTranslation.y, 0.0).also {
                         Logger.recordOutput("Drive ", it)
                     }
                 },
                 true,
             )
-            .andThen(
-                applyRequest {
-                    RobotRelative.withVelocityX(Robot.driveController.hid.wideVelocityX)
-                        .withVelocityY(Robot.driveController.hid.velocityY)
-                        .withRotationalRate(Robot.driveController.hid.velocityRot)
-                }
-            )
+            .andThen(applyRequest { RobotRelative.withSpeeds() })
 }

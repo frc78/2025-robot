@@ -2,9 +2,11 @@ package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.lib.metersPerSecond
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
+import frc.robot.lib.wideVelocityX
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -55,11 +57,27 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
 
     x().whileTrue(Chassis.snapToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) })
     a().whileTrue(
-        Chassis.snapToClosestSubstation().withName("Snap to closest substation").also {
-            SmartDashboard.putData("Snap to closest substation", it)
-        }
+        Chassis.snapToClosestSubstation(
+                { hid.velocityY.metersPerSecond },
+                {
+                    withVelocityX(hid.wideVelocityX)
+                        .withVelocityY(hid.velocityY)
+                        .withRotationalRate(hid.velocityRot)
+                },
+            )
+            .withName("Snap to closest substation")
+            .also { SmartDashboard.putData("Snap to closest substation", it) }
     )
-    y().whileTrue(Chassis.snapToBarge())
+    y().whileTrue(
+        Chassis.snapToBarge(
+            { hid.velocityY.metersPerSecond },
+            {
+                withVelocityX(hid.wideVelocityX)
+                    .withVelocityY(hid.velocityY)
+                    .withRotationalRate(hid.velocityRot)
+            },
+        )
+    )
     b().whileTrue(Chassis.driveToProcessor)
 }
 
