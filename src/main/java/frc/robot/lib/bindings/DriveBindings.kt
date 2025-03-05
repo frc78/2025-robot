@@ -60,6 +60,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
         }
     )
     y().whileTrue(Chassis.snapToBarge())
+    b().whileTrue(Chassis.driveToProcessor)
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {

@@ -140,4 +140,14 @@ object FieldPoses {
         val pose
             get() = if (left) reefFace.leftBranch else reefFace.rightBranch
     }
+
+    val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.0.meters, Rotation2d.k180deg)
+
+    private val PROCESSOR_POSES =
+        intArrayOf(3, 16).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(PROCESSOR_TO_BOT)
+        }
+
+    val closestProcessor: Pose2d
+        get() = Chassis.state.Pose.nearest(PROCESSOR_POSES)
 }
