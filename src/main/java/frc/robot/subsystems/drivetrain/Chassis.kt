@@ -2,17 +2,14 @@ package frc.robot.subsystems.drivetrain
 
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
-import com.ctre.phoenix6.configs.CANcoderConfiguration
-import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants
 import com.ctre.phoenix6.swerve.SwerveModule
-import com.ctre.phoenix6.swerve.SwerveModuleConstants
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.util.DriveFeedforwards
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.controller.ProfiledPIDController
@@ -34,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ConditionalCommand
+import edu.wpi.first.wpilibj2.command.DeferredCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
@@ -54,7 +52,10 @@ import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.metersPerSecond
+import frc.robot.lib.metersPerSecondPerSecond
 import frc.robot.lib.rotateByAlliance
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
@@ -63,20 +64,13 @@ import java.text.ParseException
 import kotlin.math.PI
 import org.littletonrobotics.junction.Logger
 
-val drivetrainConstants: SwerveDrivetrainConstants =
+private val drivetrainConstants =
     if (IS_COMP) CompBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
-val frontLeft:
-    SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_COMP) CompBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
-val frontRight:
-    SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
+private val frontLeft = if (IS_COMP) CompBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
+private val frontRight =
     if (IS_COMP) CompBotTunerConstants.FrontRight else TunerConstants.FrontRight
-val backLeft:
-    SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_COMP) CompBotTunerConstants.BackLeft else TunerConstants.BackLeft
-val backRight:
-    SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> =
-    if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants.BackRight
+private val backLeft = if (IS_COMP) CompBotTunerConstants.BackLeft else TunerConstants.BackLeft
+private val backRight = if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants.BackRight
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -178,7 +172,7 @@ object Chassis :
                     )
                 },
                 PPHolonomicDriveController( // PID constants for translation
-                    PIDConstants(10.0, 0.0, 0.0), // PID constants for rotation
+                    PIDConstants(20.0, 0.0, 0.0), // PID constants for rotation
                     PIDConstants(7.0, 0.0, 0.0),
                 ),
                 config,
@@ -362,9 +356,27 @@ object Chassis :
             .apply { setTolerance(0.05, 0.1) }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = pathfindToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
+
+    fun pathfindToPose(pose: () -> Pose2d) =
+        DeferredCommand(
+            {
+                AutoBuilder.pathfindToPose(
+                    // Stay back 1 foot from the end point
+                    pose(), // .transformBy(Transform2d(.3.meters, 0.meters, Rotation2d.kZero)),
+                    PathConstraints(
+                        4.metersPerSecond,
+                        4.metersPerSecondPerSecond,
+                        1.rotationsPerSecond,
+                        10.rotationsPerSecondPerSecond,
+                        12.0.volts,
+                    ),
+                )
+            },
+            setOf(this),
+        )
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
@@ -455,7 +467,7 @@ object Chassis :
         ConditionalCommand(driveToLeftBranch, driveToRightBranch) { SelectedBranch == Branch.LEFT }
     }
 
-    val driveToProcessor by command { driveToPose { closestProcessor } }
+    val driveToProcessor by command { pathfindToPose { closestProcessor } }
 
     fun snapToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle

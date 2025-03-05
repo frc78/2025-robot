@@ -16,6 +16,7 @@ import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.Units.RadiansPerSecondPerSecond
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.Units.RotationsPerSecond
+import edu.wpi.first.units.Units.RotationsPerSecondPerSecond
 import edu.wpi.first.units.Units.Second
 import edu.wpi.first.units.Units.Seconds
 import edu.wpi.first.units.Units.Volts
@@ -69,6 +70,8 @@ val Number.degrees: Angle
     get() = Degrees.of(this.toDouble())
 val Number.rotationsPerSecond: AngularVelocity
     get() = RotationsPerSecond.of(this.toDouble())
+val Number.rotationsPerSecondPerSecond: AngularAcceleration
+    get() = RotationsPerSecondPerSecond.of(this.toDouble())
 val Number.voltsPerSecond: Velocity<VoltageUnit>
     get() = Volts.of(this.toDouble()).per(Second)
 val Number.rotations: Angle
