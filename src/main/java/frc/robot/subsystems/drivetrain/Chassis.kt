@@ -339,17 +339,17 @@ object Chassis :
 
     private val xController =
         ProfiledPIDController(
-            5.0,
+            1.0,
             0.0,
             1.0,
-            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * 1, 2.5),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * 0.8, 2.5),
         )
     private val yController =
         ProfiledPIDController(
-            5.0,
+            1.0,
             0.0,
             1.0,
-            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * 1, 2.5),
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * 0.8, 2.5),
         )
 
     /** Drives to a pose such that the coral is at x=0 */
