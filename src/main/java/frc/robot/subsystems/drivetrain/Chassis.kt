@@ -336,7 +336,7 @@ object Chassis :
         ProfiledPIDController(
                 10.0,
                 0.0,
-                1.0,
+                0.0,
                 TrapezoidProfile.Constraints(
                     TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
                     3.5,
@@ -347,7 +347,7 @@ object Chassis :
         ProfiledPIDController(
                 10.0,
                 0.0,
-                1.0,
+                0.0,
                 TrapezoidProfile.Constraints(
                     TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
                     3.5,
@@ -356,11 +356,11 @@ object Chassis :
             .apply { setTolerance(0.05, 0.1) }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = pathfindToPose {
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
-    fun pathfindToPose(pose: () -> Pose2d) =
+    private fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
             {
                 AutoBuilder.pathfindToPose(

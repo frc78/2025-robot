@@ -28,7 +28,7 @@ class Camera(val name: String, val transform: Transform3d) {
 
     // TODO guessed values, should tune one day
     private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(2.0, 2.0, 1.0)
-    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.5, 0.5, 0.5)
+    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.1, 0.1, 0.1)
 
     var currentStds: Matrix<N3, N1> = singleTagStds
         private set
