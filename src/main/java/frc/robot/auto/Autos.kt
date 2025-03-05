@@ -12,10 +12,10 @@ object Autos {
 
     private val goToL4AndScore by command {
         Commands.sequence(
-            SuperStructure.smartGoTo(RobotState.L4),
+            SuperStructure.goToScoreCoral(RobotState.L4),
             Commands.waitUntil { SuperStructure.atPosition },
             Intake.scoreCoral,
-            SuperStructure.retractAfterScoring(),
+            SuperStructure.smartGoTo(RobotState.CoralStation),
         )
     }
 

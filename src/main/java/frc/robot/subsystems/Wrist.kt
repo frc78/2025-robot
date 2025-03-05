@@ -38,7 +38,7 @@ object Wrist : SubsystemBase("Wrist") {
     private var lowerLimit = 10.degrees
     private var upperLimit = 175.degrees
     private const val GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 32 * 16.0)
-    private val AT_ANGLE_THRESHOLD = 3.degrees
+    private val SETPOINT_THRESHOLD = 3.degrees
 
     private val standardConfig =
         TalonFXConfiguration().apply {
@@ -106,8 +106,8 @@ object Wrist : SubsystemBase("Wrist") {
         leader.setControl(motionMagic.withPosition(lowerLimit))
     }
 
-    fun isAtAngle(target: Angle): Boolean {
-        return abs((angle - target).degrees) < AT_ANGLE_THRESHOLD.degrees
+    fun isAtSetpoint(target: Angle): Boolean {
+        return abs((angle - target).degrees) < SETPOINT_THRESHOLD.degrees
     }
 
     // Moves the wrist to <setpoint> and holds the command until <endCondition> is true
@@ -143,7 +143,7 @@ object Wrist : SubsystemBase("Wrist") {
         PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
             .alongWith(goTo(state))
             .andThen(Commands.idle())
-            .until { isAtAngle(state.wristAngle) }
+            .until { isAtSetpoint(state.wristAngle) }
 
     val angle: Angle
         get() = leader.position.value
