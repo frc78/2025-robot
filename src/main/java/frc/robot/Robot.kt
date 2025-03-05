@@ -52,9 +52,6 @@ object Robot : LoggedRobot() {
     val alliance: DriverStation.Alliance
         get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
 
-    // Because I needed it for driveToChangingPose
-    val driveController = CommandXboxController(0)
-
     init {
         HAL.report(
             FRCNetComm.tResourceType.kResourceType_Language,
@@ -85,7 +82,7 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-        driveController.configureDriverBindings()
+        CommandXboxController(0).configureDriverBindings()
         CommandJoystick(5).configureManipTestBindings()
         CommandXboxController(1).configureManipulatorBindings()
 
