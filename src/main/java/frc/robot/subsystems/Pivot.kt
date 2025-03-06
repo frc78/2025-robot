@@ -18,6 +18,7 @@ import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -197,7 +198,7 @@ object Pivot : SubsystemBase("Pivot") {
                     leader.position.value <= 10.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value >= 10.degrees
+                    leader.position.value >= 160.degrees
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
                     leader.position.value <= 10.degrees
@@ -205,6 +206,10 @@ object Pivot : SubsystemBase("Pivot") {
                 runOnce { SignalLogger.stop() },
             )
             .withName("Pivot SysId")
+
+    init {
+        SmartDashboard.putData(sysId)
+    }
 
     override fun periodic() {
         Logger.recordOutput("pivot/angle_degrees", angle.degrees)
