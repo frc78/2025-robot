@@ -49,6 +49,7 @@ import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.metersPerSecond
@@ -122,6 +123,7 @@ object Chassis :
 
     /* Swerve requests to apply during SysId characterization */
     private val translationCharacterization = SwerveRequest.SysIdSwerveTranslation()
+    private val translationCharacterizationCurrent = SysIdSwerveTranslationTorqueCurrentFOC()
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
@@ -224,6 +226,28 @@ object Chassis :
             ),
         )
 
+    /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
+    private val sysIdRoutineTranslationCurrent =
+        SysIdRoutine(
+            SysIdRoutine.Config(
+                null, // Use default ramp rate (1 A/s)
+                4.0.volts,
+                5.seconds,
+            ) // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            { state: SysIdRoutineLog.State ->
+                SignalLogger.writeString("SysIdTranslation_State", state.toString())
+            },
+            Mechanism(
+                { output: Voltage ->
+                    // output is actually amps, but SysId only supports "volts"
+                    setControl(translationCharacterizationCurrent.withCurrent(output.volts))
+                },
+                null,
+                this,
+            ),
+        )
+
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
     @Suppress("UnusedPrivateProperty")
     private val m_sysIdRoutineSteer =
@@ -314,10 +338,14 @@ object Chassis :
     val sysIdRoutine by command {
         runOnce { SignalLogger.start() }
             .andThen(sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(sysIdDynamic(SysIdRoutine.Direction.kForward))
+            .andThen(Commands.waitSeconds(1.0))
             .andThen(sysIdDynamic(SysIdRoutine.Direction.kReverse))
-            .andThen({ SignalLogger.start() })
+            .andThen(Commands.waitSeconds(1.0))
+            .andThen({ SignalLogger.stop() })
     }
 
     override fun periodic() {
