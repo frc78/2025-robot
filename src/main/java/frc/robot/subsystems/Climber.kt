@@ -22,7 +22,7 @@ object Climber : SubsystemBase("Climber") {
         get() = leader.position.value > extendedPosition / 2.0
 
     private val leader =
-        TalonFX(14, "*").apply {
+        TalonFX(16, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
