@@ -63,14 +63,14 @@ object Elevator : SubsystemBase("Elevator") {
         }
     private val COMP_BOT_CONFIGS =
         Slot0Configs().apply {
-            kS = 0.23487
-            kV = 0.60823
-            kA = 0.034044
-            kG = 0.55356
+            kS = 0.21739
+            kV = 0.56149
+            kA = 0.013467
+            kG = 0.32537
 
-            kP = 34.887
+            kP = 10.614
             kI = 0.0
-            kD = 1.2611
+            kD = 0.26475
         }
 
     private const val GEAR_RATIO = 5.0
@@ -99,14 +99,7 @@ object Elevator : SubsystemBase("Elevator") {
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
-                    MotionMagic
-                        //                        .withMotionMagicCruiseVelocity((119.17 *
-                        // 0.5).radiansPerSecond)
-                        //                        .withMotionMagicAcceleration((898.69 *
-                        // 0.5).radiansPerSecondPerSecond)
-                        .withMotionMagicCruiseVelocity(
-                            18.0
-                        ) // rotations per second, equal to old radians per second above
+                    MotionMagic.withMotionMagicCruiseVelocity(18.0)
                         .withMotionMagicAcceleration(200.0)
                         .withMotionMagicJerk(1000.0)
                 }
@@ -201,7 +194,9 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val sysIdRoutine =
         SysIdRoutine(
-            SysIdRoutine.Config(null, null, null, { SignalLogger.writeString("elevator_state", "$it") }),
+            SysIdRoutine.Config(null, 3.volts, null) {
+                SignalLogger.writeString("elevator_state", "$it")
+            },
             SysIdRoutine.Mechanism(
                 { leader.setControl(voltageOut.withOutput(it)) },
                 null,
@@ -225,13 +220,13 @@ object Elevator : SubsystemBase("Elevator") {
                     )
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 40.inches.toDrumRotations()
+                    leader.position.value > 50.inches.toDrumRotations()
                 },
                 sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
                     leader.position.value < 6.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 40.inches.toDrumRotations()
+                    leader.position.value > 50.inches.toDrumRotations()
                 },
                 sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
                     leader.position.value < 6.inches.toDrumRotations()
