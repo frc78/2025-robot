@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
+import com.ctre.phoenix6.signals.UpdateModeValue
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
@@ -35,6 +36,7 @@ object Intake : Subsystem {
                     // High FOV along length of coral
                     FovParams.FOVRangeY = 27.0
                     ProximityParams.ProximityThreshold = 40.centimeters.meters
+                    ToFParams.UpdateMode = UpdateModeValue.ShortRange100Hz
                 }
             )
         }
@@ -54,16 +56,18 @@ object Intake : Subsystem {
         (-25).amps // Current spike threshold for detecting when we have an algae
     private var algaeSpikeStartTime = -1.0
 
-    val ALPHA_BOT_MOTOR_OUTPUT_CONFIG = MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
-    val COMP_BOT_MOTOR_OUTPUT_CONFIG = MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
+    private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
+        MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
+    private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
+        MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
-                    MotorOutput = if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
-
+                    MotorOutput =
+                        if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
                 }
             )
         }
