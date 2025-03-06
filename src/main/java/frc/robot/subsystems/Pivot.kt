@@ -33,7 +33,6 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
@@ -61,13 +60,13 @@ object Pivot : SubsystemBase("Pivot") {
 
     private val COMP_BOT_SLOT0_CONFIGS =
         Slot0Configs()
-            .withKP(50.365) // 24.365
-            .withKI(0.1)
-            .withKD(0.22908)
-            .withKS(0.1755)
-            .withKV(31.983)
-            .withKA(0.49753)
-            .withKG(0.22628)
+            .withKP(22.117)
+            .withKI(0.0)
+            .withKD(0.29431)
+            .withKS(0.24723)
+            .withKV(29.598)
+            .withKA(0.42529)
+            .withKG(0.0082199)
 
     private val COMP_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
@@ -119,7 +118,7 @@ object Pivot : SubsystemBase("Pivot") {
     }
 
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
-    fun goToRawUntil(setpoint: Angle, endCondition: BooleanSupplier): Command =
+    fun goToRawUntil(setpoint: Angle, endCondition: () -> Boolean): Command =
         run {
                 leader.setControl(
                     motionMagic.withPosition(setpoint).withLimitForwardMotion(Climber.isExtended)
