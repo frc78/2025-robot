@@ -1,5 +1,6 @@
 package frc.robot.lib
 
+import edu.wpi.first.units.AngularAccelerationUnit
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Centimeters
 import edu.wpi.first.units.Units.Degrees
@@ -72,6 +73,8 @@ val Number.rotationsPerSecond: AngularVelocity
     get() = RotationsPerSecond.of(this.toDouble())
 val Number.rotationsPerSecondPerSecond: AngularAcceleration
     get() = RotationsPerSecondPerSecond.of(this.toDouble())
+val Number.rotationsPerSecondCubed: Velocity<AngularAccelerationUnit>
+    get() = RotationsPerSecondPerSecond.of(this.toDouble()).per(Second)
 val Number.voltsPerSecond: Velocity<VoltageUnit>
     get() = Volts.of(this.toDouble()).per(Second)
 val Number.rotations: Angle
