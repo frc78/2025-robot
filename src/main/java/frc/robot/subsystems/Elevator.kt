@@ -18,6 +18,7 @@ import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
@@ -91,7 +92,7 @@ object Elevator : SubsystemBase("Elevator") {
                     SoftwareLimitSwitch.ReverseSoftLimitEnable = false
                     SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0.0
 
-                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
                     Slot0 = if (IS_COMP) COMP_BOT_CONFIGS else ALPHA_BOT_CONFIGS
@@ -200,7 +201,7 @@ object Elevator : SubsystemBase("Elevator") {
 
     private val sysIdRoutine =
         SysIdRoutine(
-            SysIdRoutine.Config(null, null, null, { SignalLogger.writeString("state", "$it") }),
+            SysIdRoutine.Config(null, null, null, { SignalLogger.writeString("elevator_state", "$it") }),
             SysIdRoutine.Mechanism(
                 { leader.setControl(voltageOut.withOutput(it)) },
                 null,
@@ -241,7 +242,7 @@ object Elevator : SubsystemBase("Elevator") {
     }
 
     init {
-        //        SmartDashboard.putData(sysId)
+        SmartDashboard.putData(sysId)
     }
 
     override fun periodic() {
