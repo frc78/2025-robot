@@ -56,6 +56,7 @@ import frc.robot.lib.metersPerSecondPerSecond
 import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.rotationsPerSecondPerSecond
+import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
@@ -210,7 +211,7 @@ object Chassis :
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
                 4.0.volts,
-                null,
+                5.seconds,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
             { state: SysIdRoutineLog.State ->
@@ -308,6 +309,15 @@ object Chassis :
      */
     fun sysIdDynamic(direction: SysIdRoutine.Direction?): Command {
         return sysIdRoutineToApply.dynamic(direction)
+    }
+
+    val sysIdRoutine by command {
+        runOnce { SignalLogger.start() }
+            .andThen(sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+            .andThen(sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+            .andThen(sysIdDynamic(SysIdRoutine.Direction.kForward))
+            .andThen(sysIdDynamic(SysIdRoutine.Direction.kReverse))
+            .andThen({ SignalLogger.start() })
     }
 
     override fun periodic() {
