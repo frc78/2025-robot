@@ -1,6 +1,7 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.configs.CANrangeConfiguration
+import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
+import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
@@ -52,13 +54,16 @@ object Intake : Subsystem {
         (-25).amps // Current spike threshold for detecting when we have an algae
     private var algaeSpikeStartTime = -1.0
 
+    val ALPHA_BOT_MOTOR_OUTPUT_CONFIG = MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
+    val COMP_BOT_MOTOR_OUTPUT_CONFIG = MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
-                    MotorOutput.Inverted = InvertedValue.Clockwise_Positive
+                    MotorOutput = if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
+
                 }
             )
         }
