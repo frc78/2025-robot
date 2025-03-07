@@ -6,7 +6,6 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
-import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.command
 import frc.robot.lib.rotations
 import org.littletonrobotics.junction.Logger
@@ -26,8 +25,8 @@ object Climber : Subsystem {
         TalonFX(16, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
-                    CurrentLimits.StatorCurrentLimit = 40.0
-                    CurrentLimits.SupplyCurrentLimit = 20.0
+                    CurrentLimits.StatorCurrentLimit = 80.0
+                    CurrentLimits.SupplyCurrentLimit = 40.0
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     Feedback.SensorToMechanismRatio = 20.0 / 12.0
                     Slot0.kP = 10.0

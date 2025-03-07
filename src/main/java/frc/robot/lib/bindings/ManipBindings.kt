@@ -59,12 +59,6 @@ private fun CommandXboxController.configureManipDpadLayout() {
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureManipButtonLayout() {
-    //    leftBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.LEFT }))
-    //    rightBumper().onTrue(Commands.runOnce({ SelectedBranch = Branch.RIGHT }))
-    //    y().onTrue(Commands.runOnce({ SelectedLevel = Level.L4 }))
-    //    a().onTrue(Commands.runOnce({ SelectedLevel = Level.L3 }))
-    //    x().onTrue(Commands.runOnce({ SelectedLevel = Level.L2 }))
-    //    b().onTrue(Commands.runOnce({ SelectedLevel = Level.L1 }))
 
     // Coral Stuff
     a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
@@ -72,10 +66,18 @@ private fun CommandXboxController.configureManipButtonLayout() {
     x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
     y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)) // TODO test all these!
 
-    //    a().onTrue(SuperStructure.smartGoTo(RobotState.L1))
-    //    b().onTrue(SuperStructure.smartGoTo(RobotState.L2))
-    //    x().onTrue(SuperStructure.smartGoTo(RobotState.L3))
-    //    y().onTrue(SuperStructure.smartGoTo(RobotState.L4))
+    start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
+    back()
+        .onTrue(
+            Wrist.goTo(RobotState.FullyClimbed)
+                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
+                .alongWith(
+                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
+                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
+                    }
+                )
+                .andThen(Climber.extend)
+        )
 
     rightTrigger(0.55)
         .onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
@@ -84,9 +86,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
                 .alongWith(Intake.intakeCoralThenHold())
-            //                .andThen(Commands.waitTime(1.seconds)) // TODO use robot pose here
-            // instead of timer
-            //                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
 
     // Algae Stuff
