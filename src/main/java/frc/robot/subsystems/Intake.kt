@@ -133,7 +133,7 @@ object Intake : Subsystem {
             goes toward -X The offset is the value that puts the coral at 0 when it is in the middle of the intake.
             Because the axis are inverse from each other (-X for the CANrange goes in the same direction as +X for
             the robot), the adjusted values must be negated in order to sync the two coordinate systems */
-            return -(canRange.distance.value - canRangeOffset)
+            return canRange.distance.value - canRangeOffset
         }
 
     override fun periodic() {

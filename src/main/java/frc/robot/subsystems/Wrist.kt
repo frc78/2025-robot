@@ -40,7 +40,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Wrist : Subsystem {
+object Wrist : SubsystemBase("wrist") {
     private var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
     private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)
