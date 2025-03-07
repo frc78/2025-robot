@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
 import frc.robot.lib.ScoreSelector
-import frc.robot.lib.amps
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
@@ -136,20 +135,20 @@ object Robot : LoggedRobot() {
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
         Vision.update()
-        ScoreSelector.telemeterize()
+//        ScoreSelector.telemeterize()
 
         // Should these be in corresponding subsystems?
-        Logger.recordOutput("Pivot", Pivot.angle.degrees)
-        Logger.recordOutput("Elevator", Elevator.position.inches)
-        Logger.recordOutput("Wrist", Wrist.angle.degrees)
+        //        Logger.recordOutput("Pivot", Pivot.angle.degrees)
+        //        Logger.recordOutput("Elevator", Elevator.position.inches)
+        //        Logger.recordOutput("Wrist", Wrist.angle.degrees)
+        //
+        //        Logger.recordOutput("Ele Stowed", Elevator.isStowed)
+        //        Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
 
-        Logger.recordOutput("Ele Stowed", Elevator.isStowed)
-        Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
+        //        SmartDashboard.putBoolean("Has Algae", hasAlgae) SmartDashboard.putBoolean("Can
+        // Extend Elevator", Pivot.canExtendElevator)
 
-        SmartDashboard.putBoolean("Has Algae", hasAlgae)
-        SmartDashboard.putBoolean("Can Extend Elevator", Pivot.canExtendElevator)
-
-        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
+        //        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
     }
 
     override fun simulationPeriodic() {

@@ -144,29 +144,13 @@ object Intake : Subsystem {
         Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
     }
 
-    val manualIntakeCoral by command {
-        startEnd({ leader.set(0.6) }, { leader.set(0.0) }).withName("Intake Coral")
+    val outtakeCoral by command {
+        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("outtakeCoral")
     }
 
-    val manualOuttakeCoral by command {
-        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Outtake Coral")
+    val outtakeAlgae by command {
+        startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("outtakeAlgae")
     }
-
-    val manualIntakeAlgae by command {
-        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("Intake Algae")
-    }
-
-    val manualOuttakeAlgae by command {
-        startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("Outtake Algae")
-    }
-
-    val outtakeCoral by command { startEnd({ leader.set(-1.0) }, { leader.set(0.0) }) }
-
-    val outtakeAlgae by command { startEnd({ leader.set(1.0) }, { leader.set(0.0) }) }
-
-    val intakeAlgae by command { runOnce { leader.set(-1.0) } }
-
-    val intakeCoral by command { runOnce { leader.set(0.6) } }
 
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
