@@ -212,8 +212,8 @@ object Chassis :
         SysIdRoutine(
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
-                4.0.volts,
-                5.seconds,
+                5.0.volts,
+                2.seconds,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
             { state: SysIdRoutineLog.State ->
@@ -230,9 +230,9 @@ object Chassis :
     private val sysIdRoutineTranslationCurrent =
         SysIdRoutine(
             SysIdRoutine.Config(
-                null, // Use default ramp rate (1 A/s)
-                4.0.volts,
-                5.seconds,
+                6.voltsPerSecond, // Use default ramp rate (1 A/s)
+                10.0.volts,
+                4.seconds,
             ) // Use default timeout (10 s)
             // Log state with SignalLogger class
             { state: SysIdRoutineLog.State ->
@@ -299,7 +299,7 @@ object Chassis :
         )
 
     /* The SysId routine to test */
-    private val sysIdRoutineToApply = sysIdRoutineTranslation
+    private val sysIdRoutineToApply = sysIdRoutineTranslationCurrent
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
@@ -345,7 +345,7 @@ object Chassis :
             .andThen(Commands.waitSeconds(1.0))
             .andThen(sysIdDynamic(SysIdRoutine.Direction.kReverse))
             .andThen(Commands.waitSeconds(1.0))
-            .andThen({ SignalLogger.stop() })
+            .finallyDo { _ -> SignalLogger.stop() }
     }
 
     override fun periodic() {
