@@ -377,10 +377,10 @@ object Chassis :
                 0.0,
                 TrapezoidProfile.Constraints(
                     TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    3.5,
+                    2.5,
                 ),
             )
-            .apply { setTolerance(0.05, 0.1) }
+            .apply { setTolerance(0.05, 0.05) }
     private val yController =
         ProfiledPIDController(
                 10.0,
@@ -388,10 +388,10 @@ object Chassis :
                 0.0,
                 TrapezoidProfile.Constraints(
                     TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    3.5,
+                    2.5,
                 ),
             )
-            .apply { setTolerance(0.05, 0.1) }
+            .apply { setTolerance(0.05, 0.05) }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
