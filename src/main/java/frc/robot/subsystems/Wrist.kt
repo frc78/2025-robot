@@ -17,8 +17,11 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Commands.runOnce
+import edu.wpi.first.wpilibj2.command.Commands.startEnd
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -37,7 +40,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Wrist : SubsystemBase("Wrist") {
+object Wrist : Subsystem {
     private var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
     private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)

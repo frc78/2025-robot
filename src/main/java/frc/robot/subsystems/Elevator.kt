@@ -21,7 +21,10 @@ import edu.wpi.first.wpilibj.simulation.ElevatorSim
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Commands.runOnce
+import edu.wpi.first.wpilibj2.command.Commands.startEnd
 import edu.wpi.first.wpilibj2.command.PrintCommand
+import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -41,7 +44,7 @@ import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Elevator : SubsystemBase("Elevator") {
+object Elevator : Subsystem {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
     val IS_STOWED_THRESHOLD = 3.inches

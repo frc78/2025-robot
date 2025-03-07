@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
 import frc.robot.lib.command
@@ -36,7 +36,7 @@ import frc.robot.lib.voltsPerSecond
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Pivot : SubsystemBase("Pivot") {
+object Pivot : Subsystem {
 
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12) // 266.25
     private val cancoder = CANcoder(5, "*")
