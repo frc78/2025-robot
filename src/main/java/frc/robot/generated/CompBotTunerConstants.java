@@ -212,7 +212,7 @@ public class CompBotTunerConstants {
                   kFrontLeftSteerMotorInverted,
                   kFrontLeftEncoderInverted)
               .withDriveMotorGains(
-                  new Slot0Configs().withKS(4.421).withKV(0.0).withKA(.34925).withKP(.044277));
+                  new Slot0Configs().withKS(4.421).withKV(0.0).withKA(.34925).withKP(32.951));
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       FrontRight =
@@ -227,7 +227,7 @@ public class CompBotTunerConstants {
                   kFrontRightSteerMotorInverted,
                   kFrontRightEncoderInverted)
               .withDriveMotorGains(
-                  new Slot0Configs().withKS(4.5537).withKV(0.0).withKA(0.32663).withKP(0.0088897));
+                  new Slot0Configs().withKS(4.5537).withKV(0.0).withKA(0.32663).withKP(33.512));
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackLeft =
@@ -242,7 +242,7 @@ public class CompBotTunerConstants {
                   kBackLeftSteerMotorInverted,
                   kBackLeftEncoderInverted)
               .withDriveMotorGains(
-                  new Slot0Configs().withKS(4.6448).withKV(0.0).withKA(.31804).withKP(.0221));
+                  new Slot0Configs().withKS(4.6448).withKV(0.0).withKA(.31804).withKP(33.208));
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackRight =
@@ -257,7 +257,7 @@ public class CompBotTunerConstants {
                   kBackRightSteerMotorInverted,
                   kBackRightEncoderInverted)
               .withDriveMotorGains(
-                  new Slot0Configs().withKS(4.753).withKV(0.0).withKA(0.30923).withKP(0.042373));
+                  new Slot0Configs().withKS(4.753).withKV(0.0).withKA(0.30923).withKP(32.934));
 
   /** Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected device types. */
   public static class CompBotTunerSwerveDrivetrain
