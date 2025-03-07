@@ -5,7 +5,10 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
+import edu.wpi.first.wpilibj.DriverStation.Alliance.Blue
+import edu.wpi.first.wpilibj.DriverStation.Alliance.Red
 import frc.robot.Robot
+import frc.robot.Robot.alliance
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 
@@ -61,8 +64,7 @@ object FieldPoses {
             }
         }
 
-    private val reefPoses
-        get() = if (Robot.alliance == Alliance.Blue) BLUE_REEF_POSES else RED_REEF_POSES
+    private val reefPoses = BLUE_REEF_POSES + RED_REEF_POSES
 
     private val branchPoses
         get() =
@@ -78,19 +80,25 @@ object FieldPoses {
 
     val closestLeftBranch: Pose2d
         get() {
-            if (closestReef == reefPoses[3]) {
-                return closestReef.transformBy(REEF_TO_BRANCH_RIGHT)
-            } else {
-                return closestReef.transformBy(REEF_TO_BRANCH_LEFT)
+            closestReef.let {
+                if (
+                    alliance == Blue && it == BLUE_REEF_POSES[3] ||
+                        (alliance == Red && it == RED_REEF_POSES[3])
+                ) {
+                    return it.transformBy(REEF_TO_BRANCH_RIGHT)
+                } else return it.transformBy(REEF_TO_BRANCH_LEFT)
             }
         }
 
     val closestRightBranch: Pose2d
         get() {
-            if (closestReef == reefPoses[3]) {
-                return closestReef.transformBy(REEF_TO_BRANCH_LEFT)
-            } else {
-                return closestReef.transformBy(REEF_TO_BRANCH_RIGHT)
+            closestReef.let {
+                return if (
+                    alliance == Blue && it == BLUE_REEF_POSES[3] ||
+                        (alliance == Red && it == RED_REEF_POSES[3])
+                ) {
+                    it.transformBy(REEF_TO_BRANCH_LEFT)
+                } else it.transformBy(REEF_TO_BRANCH_RIGHT)
             }
         }
 
