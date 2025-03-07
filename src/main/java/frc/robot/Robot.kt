@@ -4,7 +4,6 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
@@ -14,15 +13,16 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj.util.WPILibVersion
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.auto.Autos
-import frc.robot.lib.ScoreSelector
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
@@ -91,9 +91,9 @@ object Robot : LoggedRobot() {
     }
 
     private val autoChooser =
-        AutoBuilder.buildAutoChooser("test").also {
-            it.addOption("FourCoral", Autos.FourCoralAuto)
-            SmartDashboard.putData("Auto Mode", it)
+        SendableChooser<Command>().apply {
+            setDefaultOption("Four Coral", Autos.FourCoralAuto)
+            SmartDashboard.putData("Auto Mode", this)
         }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
@@ -129,26 +129,11 @@ object Robot : LoggedRobot() {
         //        Vision.setupSimulation()
     }
 
-    private val hasAlgae: Boolean
-        get() = Intake.detectAlgaeByCurrent()
-
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
-        Vision.update()
-//        ScoreSelector.telemeterize()
-
-        // Should these be in corresponding subsystems?
-        //        Logger.recordOutput("Pivot", Pivot.angle.degrees)
-        //        Logger.recordOutput("Elevator", Elevator.position.inches)
-        //        Logger.recordOutput("Wrist", Wrist.angle.degrees)
-        //
-        //        Logger.recordOutput("Ele Stowed", Elevator.isStowed)
-        //        Logger.recordOutput("Intake Current", Intake.supplyCurrent.amps)
-
-        //        SmartDashboard.putBoolean("Has Algae", hasAlgae) SmartDashboard.putBoolean("Can
-        // Extend Elevator", Pivot.canExtendElevator)
-
-        //        Logger.recordOutput("superstructure/atPosition", SuperStructure.atPosition)
+        if (isReal()) {
+            Vision.update()
+        }
     }
 
     override fun simulationPeriodic() {
