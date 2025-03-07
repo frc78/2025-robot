@@ -16,6 +16,11 @@ object FieldPoses {
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.7.meters, 0.meters, Rotation2d.kZero)
     private val CORAL_TO_BOT_TRANSFORM = Transform2d(.5.meters, 0.meters, Rotation2d.k180deg)
 
+    private val ALL_REEF_POSES =
+        intArrayOf(18, 17, 22, 21, 20, 19, 7, 8, 9, 10, 11, 6).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
+        }
+
     // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
         intArrayOf(18, 17, 22, 21, 20, 19).map {
@@ -61,8 +66,7 @@ object FieldPoses {
             }
         }
 
-    private val reefPoses
-        get() = if (Robot.alliance == Alliance.Blue) BLUE_REEF_POSES else RED_REEF_POSES
+    private val reefPoses = ALL_REEF_POSES
 
     private val branchPoses
         get() =
