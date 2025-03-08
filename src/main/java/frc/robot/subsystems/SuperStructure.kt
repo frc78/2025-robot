@@ -28,7 +28,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     HighAlgaeIntake(97.2.degrees, 17.33.inches, 11.25.degrees),
     LowAlgaeIntake(100.degrees, 0.25.inches, 17.2125.degrees),
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
-    ReadyToClimb(78.degrees, 0.25.inches, 180.degrees),
+    ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
     AlgaeStorage(0.degrees, 0.inches, 0.degrees),
     CoralStorage(0.degrees, 0.inches, 0.degrees),
