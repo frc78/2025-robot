@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.pathplanner.lib.commands.FollowPathCommand
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
@@ -88,11 +89,15 @@ object Robot : LoggedRobot() {
         // it,
         // but the lowest safe limit is greater than this due to the top elevator supports
         Wrist.initializePosition()
+
+        // Warm up the path planner
+        FollowPathCommand.warmupCommand().schedule()
     }
 
     private val autoChooser =
         SendableChooser<Command>().apply {
             setDefaultOption("Four Coral", Autos.FourCoralAuto)
+            addOption("Center Algae", Autos.CenterAlgae)
             SmartDashboard.putData("Auto Mode", this)
         }
 

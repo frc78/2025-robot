@@ -6,6 +6,7 @@ import edu.wpi.first.units.Units.Centimeters
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.FeetPerSecond
 import edu.wpi.first.units.Units.Inches
+import edu.wpi.first.units.Units.InchesPerSecond
 import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.MetersPerSecond
@@ -51,6 +52,8 @@ val Number.seconds: Time
     get() = Seconds.of(this.toDouble())
 val Number.metersPerSecond: LinearVelocity
     get() = MetersPerSecond.of(this.toDouble())
+val Number.inchesPerSecond: LinearVelocity
+    get() = InchesPerSecond.of(this.toDouble())
 val Number.feetPerSecond: LinearVelocity
     get() = FeetPerSecond.of(this.toDouble())
 val Number.volts: Voltage

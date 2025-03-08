@@ -524,6 +524,11 @@ object Chassis :
         return applyRequest { FieldCentric.block() }
     }
 
+    fun robotCentricDrive(block: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric) =
+        applyRequest {
+            RobotRelative.block()
+        }
+
     fun snapToClosestSubstation(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
