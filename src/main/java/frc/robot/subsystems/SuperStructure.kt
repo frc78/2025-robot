@@ -16,7 +16,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     Stow(5.degrees, 0.25.inches, 22.5.degrees),
     PreScore(60.degrees, 0.25.inches, 22.5.degrees),
     L1(40.degrees, 0.25.inches, 186.75.degrees),
-    L2(88.degrees, 0.25.inches, 28.9.degrees),
+    L2(88.degrees, 0.25.inches, 30.9.degrees),
     L3(90.6.degrees, 16.4.inches, 33.5.degrees),
     L4(91.degrees, 45.8.inches, 29.25.degrees),
     IntermediaryL4(89.75.degrees, 48.inches, 120.degrees),
