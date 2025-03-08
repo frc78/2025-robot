@@ -70,6 +70,7 @@ object Robot : LoggedRobot() {
             // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
             // file
             DataLogManager.start()
+            SignalLogger.setPath("/U/ctre-logs")
             SignalLogger.start()
         }
         // Record both DS control and joystick data

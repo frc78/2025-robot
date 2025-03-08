@@ -1,8 +1,10 @@
 package frc.robot.auto
 
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
+import frc.robot.lib.metersPerSecond
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -10,10 +12,10 @@ import frc.robot.subsystems.drivetrain.Chassis
 
 object Autos {
 
-    private val goToL4AndScore by command {
-        Commands.sequence(
-            SuperStructure.goToScoreCoral(RobotState.L4),
-            Commands.waitUntil { SuperStructure.atPosition },
+    private fun goToLevelAndScore(level: RobotState): Command {
+        return Commands.sequence(
+            SuperStructure.goToScoreCoral(level),
+            Commands.waitUntil { SuperStructure.atPosition }.withTimeout(3.0),
             Intake.scoreCoral,
             SuperStructure.smartGoTo(RobotState.CoralStation),
         )
@@ -22,8 +24,7 @@ object Autos {
     private val goToCoralStationAndGetCoral by command {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
-            Chassis.driveToClosestCoralStation,
-            Intake.intakeCoralThenHold(),
+            Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestSubstation( {0.0}, { this.withVelocityX(0.05.metersPerSecond)})),
         )
     }
     @Suppress("SpreadOperator")
@@ -36,13 +37,13 @@ object Autos {
                     listOf(Branch.C, Branch.L),
                     listOf(Branch.A, Branch.B),
                 )
-                .map {
+                .mapIndexed { i, branches ->
                     Commands.sequence(
                         Chassis.driveToPoseWithCoralOffset {
-                            Chassis.state.Pose.nearest(it.map { it.pose })
+                            Chassis.state.Pose.nearest(branches.map { it.pose })
                         },
-                        goToL4AndScore,
-                        goToCoralStationAndGetCoral,
+                        if (i == 0) goToLevelAndScore(RobotState.L2) else goToLevelAndScore(RobotState.L4),
+                        goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
                 .toTypedArray(),

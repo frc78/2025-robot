@@ -507,7 +507,7 @@ object Chassis :
 
     val driveToProcessor by command { pathfindToPose { closestProcessor } }
 
-    fun snapToReef(
+    fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
     ): Command {
         return applyRequest {
@@ -524,14 +524,14 @@ object Chassis :
         return applyRequest { FieldCentric.block() }
     }
 
-    fun snapToClosestSubstation(
+    fun driveToClosestSubstation(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
     ): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
                 {
-                    val targetDistanceFromSubstation = 0.5
+                    val targetDistanceFromSubstation = 0.55
                     val position = Chassis.state.Pose.translation
                     // Gets closest substation line segment
                     val closestSubstation =
@@ -574,11 +574,7 @@ object Chassis :
             )
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
-    val driveToClosestCoralStation by command {
-        driveToPose { closestCoralStation }.withName("Drive to coral station")
-    }
-
-    fun snapToBarge(
+    fun driveToBarge(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
     ): Command =
