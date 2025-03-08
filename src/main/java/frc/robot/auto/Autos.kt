@@ -24,7 +24,14 @@ object Autos {
     private val goToCoralStationAndGetCoral by command {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
-            Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestSubstation( {0.0}, { this.withVelocityX(0.05.metersPerSecond)})),
+            Intake.intakeCoralThenHold()
+                .deadlineFor(
+                    Chassis.driveToClosestSubstation(
+                        { 0.0 },
+                        { this.withVelocityX(0.05.metersPerSecond) },
+                        0.45,
+                    )
+                ),
         )
     }
     @Suppress("SpreadOperator")
@@ -42,7 +49,8 @@ object Autos {
                         Chassis.driveToPoseWithCoralOffset {
                             Chassis.state.Pose.nearest(branches.map { it.pose })
                         },
-                        if (i == 0) goToLevelAndScore(RobotState.L2) else goToLevelAndScore(RobotState.L4),
+                        if (i == 0) goToLevelAndScore(RobotState.L2)
+                        else goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }

@@ -527,11 +527,11 @@ object Chassis :
     fun driveToClosestSubstation(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
+        distanceToSubstation: Double,
     ): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
                 {
-                    val targetDistanceFromSubstation = 0.55
                     val position = Chassis.state.Pose.translation
                     // Gets closest substation line segment
                     val closestSubstation =
@@ -547,9 +547,7 @@ object Chassis :
                     // Calculates a translation that is going to offset the point on the line
                     // segment to get the goal position
                     val offsetTranslation =
-                        closestSubstation
-                            .getPerpendicularUnitVector()
-                            .times(targetDistanceFromSubstation)
+                        closestSubstation.getPerpendicularUnitVector().times(distanceToSubstation)
                     // Translates the point on the line segment by the offset to get the goal
                     // position
                     Pose2d(

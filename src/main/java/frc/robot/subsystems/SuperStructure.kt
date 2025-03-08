@@ -107,16 +107,24 @@ object SuperStructure {
                             )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        Wrist.goToRawUntil(120.degrees) {true}
-                            .alongWith(Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees })
-                            .andThen(Elevator.goToRawUntil(state.elevatorHeight){Elevator.position > 8.inches})
-                            .andThen(Wrist.goToRawUntil(state.wristAngle){true})
+                        Wrist.goToRawUntil(120.degrees) { true }
+                            .alongWith(
+                                Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees }
+                            )
+                            .andThen(
+                                Elevator.goToRawUntil(state.elevatorHeight) {
+                                    Elevator.position > 8.inches
+                                }
+                            )
+                            .andThen(Wrist.goToRawUntil(state.wristAngle) { true })
                     // OLD and JERKY
-//                        smartGoTo(state)
-//                            .andThen(
-//                                Wrist.goToRawUntil(120.degrees) { Elevator.position > 20.inches }
-//                            ) //
-//                            .andThen(Wrist.goToRawUntil(state.wristAngle) { true })
+                    //                        smartGoTo(state)
+                    //                            .andThen(
+                    //                                Wrist.goToRawUntil(120.degrees) {
+                    // Elevator.position > 20.inches }
+                    //                            ) //
+                    //                            .andThen(Wrist.goToRawUntil(state.wristAngle) {
+                    // true })
                     else -> smartGoTo(state)
                 }
             },
