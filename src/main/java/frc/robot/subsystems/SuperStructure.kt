@@ -85,6 +85,12 @@ object SuperStructure {
             )
             .withName("Smart Go To ${state.name}")
 
+    // Safely retract from getting algae from reef by moving pivot down a bit first
+    fun retractWithAlgae(): Command =
+        Pivot.goToRawUntil(RobotState.PreScore.pivotAngle){ Pivot.angle < 75.degrees }
+            .andThen(Elevator.goToRawUntil(RobotState.PreScore.elevatorHeight){true})
+            .alongWith(Wrist.goToRawUntil(RobotState.PreScore.wristAngle){true})
+
     // Do fancier experimental movement to avoid hitting coral on branches for L2, L3, L4
     fun goToScoreCoral(state: RobotState): Command =
         DeferredCommand(

@@ -384,7 +384,7 @@ object Chassis :
                     2.5,
                 ),
             )
-            .apply { setTolerance(0.02, 0.02) }
+            .apply { setTolerance(0.035, 0.035) }
     private val yController =
         ProfiledPIDController(
                 10.0,
@@ -395,7 +395,7 @@ object Chassis :
                     2.5,
                 ),
             )
-            .apply { setTolerance(0.02, 0.02) }
+            .apply { setTolerance(0.035, 0.035) }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {

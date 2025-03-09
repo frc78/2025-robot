@@ -93,13 +93,15 @@ private fun CommandXboxController.configureManipButtonLayout() {
         .onTrue(
             SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+                .andThen(SuperStructure.retractWithAlgae())
+//                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
     povDown()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+                .andThen(SuperStructure.retractWithAlgae())
+//                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
