@@ -60,7 +60,7 @@ object Pivot : SubsystemBase("pivot") {
 
     private val COMP_BOT_SLOT0_CONFIGS =
         Slot0Configs()
-            .withKP(50.117)
+            .withKP(200.0)
             .withKI(0.0)
             .withKD(0.29431)
             .withKS(0.24723)
