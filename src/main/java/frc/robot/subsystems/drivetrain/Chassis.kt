@@ -88,6 +88,8 @@ object Chassis :
     private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
     private val closestCoralStationPub =
         table.getStructTopic("closest_coral", Pose2d.struct).publish()
+    private val closestProcessorPub =
+        table.getStructTopic("closest_processor", Pose2d.struct).publish()
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -127,7 +129,8 @@ object Chassis :
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
-    private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
+    private val pathApplyRobotSpeeds =
+        ApplyRobotSpeeds().withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
 
     // For use with commands which are still taking driver input for translation
     private val FieldCentricFacingAngleDriver: SwerveRequest.FieldCentricFacingAngle =
@@ -368,6 +371,7 @@ object Chassis :
         closestReefPub.set(closestReef)
         closestBranchPub.set(closestBranch)
         closestCoralStationPub.set(closestCoralStation)
+        closestProcessorPub.set(closestProcessor)
     }
 
     private val xController =
@@ -380,7 +384,7 @@ object Chassis :
                     2.5,
                 ),
             )
-            .apply { setTolerance(0.05, 0.05) }
+            .apply { setTolerance(0.035, 0.035) }
     private val yController =
         ProfiledPIDController(
                 10.0,
@@ -391,7 +395,7 @@ object Chassis :
                     2.5,
                 ),
             )
-            .apply { setTolerance(0.05, 0.05) }
+            .apply { setTolerance(0.035, 0.035) }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
@@ -429,7 +433,13 @@ object Chassis :
             FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
         })
 
-    fun driveToPose(pose: () -> Pose2d): Command =
+    private val isAtPIDGoal: Boolean
+        get() =
+            xController.atGoal() &&
+                yController.atGoal() &&
+                FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
+
+    private fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
@@ -442,11 +452,11 @@ object Chassis :
                     FieldCentricFacingAngleAlignments.withVelocityX(xOutput).withVelocityY(yOutput)
                 }
             )
-            .until {
-                xController.atGoal() &&
-                    yController.atGoal() &&
-                    FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
-            }
+            .raceWith(
+                Commands.waitUntil { isAtPIDGoal }
+                    .andThen(Commands.waitSeconds(0.5))
+                    .andThen(Commands.waitUntil { isAtPIDGoal })
+            )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
@@ -481,13 +491,13 @@ object Chassis :
                                 )
                             )
                     }
-                    .until {
-                        endWhenGoal &&
-                            xController.atGoal() &&
-                            yController.atGoal() &&
-                            FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
-                    }
+                    .raceWith(
+                        Commands.waitUntil { endWhenGoal && isAtPIDGoal }
+                            .andThen(Commands.waitSeconds(0.5))
+                            .andThen(Commands.waitUntil { endWhenGoal && isAtPIDGoal })
+                    )
             )
+
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
@@ -507,7 +517,7 @@ object Chassis :
 
     val driveToProcessor by command { pathfindToPose { closestProcessor } }
 
-    fun snapToReef(
+    fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
     ): Command {
         return applyRequest {
@@ -524,14 +534,14 @@ object Chassis :
         return applyRequest { FieldCentric.block() }
     }
 
-    fun snapToClosestSubstation(
+    fun driveToClosestSubstation(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
+        distanceToSubstation: Double,
     ): Command =
         // Our target distance from the line segment of the substation
         driveToChangingPose(
                 {
-                    val targetDistanceFromSubstation = 0.5
                     val position = Chassis.state.Pose.translation
                     // Gets closest substation line segment
                     val closestSubstation =
@@ -547,9 +557,7 @@ object Chassis :
                     // Calculates a translation that is going to offset the point on the line
                     // segment to get the goal position
                     val offsetTranslation =
-                        closestSubstation
-                            .getPerpendicularUnitVector()
-                            .times(targetDistanceFromSubstation)
+                        closestSubstation.getPerpendicularUnitVector().times(distanceToSubstation)
                     // Translates the point on the line segment by the offset to get the goal
                     // position
                     Pose2d(
@@ -574,11 +582,7 @@ object Chassis :
             )
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
-    val driveToClosestCoralStation by command {
-        driveToPose { closestCoralStation }.withName("Drive to coral station")
-    }
-
-    fun snapToBarge(
+    fun driveToBarge(
         strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
     ): Command =

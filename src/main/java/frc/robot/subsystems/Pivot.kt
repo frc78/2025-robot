@@ -21,8 +21,6 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Commands.runOnce
-import edu.wpi.first.wpilibj2.command.Commands.startEnd
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -52,7 +50,7 @@ object Pivot : SubsystemBase("pivot") {
 
     private val ALPHA_BOT_SLOT0_CONFIGS =
         Slot0Configs()
-            .withKP(50.365) // 24.365
+            .withKP(65.365) // 24.365
             .withKI(0.1)
             .withKD(0.22908)
             .withKS(0.1755)
@@ -62,7 +60,7 @@ object Pivot : SubsystemBase("pivot") {
 
     private val COMP_BOT_SLOT0_CONFIGS =
         Slot0Configs()
-            .withKP(40.117)
+            .withKP(200.0)
             .withKI(0.0)
             .withKD(0.29431)
             .withKS(0.24723)
@@ -188,6 +186,16 @@ object Pivot : SubsystemBase("pivot") {
                 "pivot",
             ),
         )
+
+    fun coast() {
+        leader.setNeutralMode(NeutralModeValue.Coast)
+        follower.setNeutralMode(NeutralModeValue.Coast)
+    }
+
+    fun brake() {
+        leader.setNeutralMode(NeutralModeValue.Brake)
+        follower.setNeutralMode(NeutralModeValue.Brake)
+    }
 
     val sysId =
         Commands.sequence(

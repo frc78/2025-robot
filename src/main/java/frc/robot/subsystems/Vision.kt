@@ -69,10 +69,10 @@ object Vision {
             Camera(
                     "BowCam",
                     Transform3d(
-                        9.780.inches,
-                        (-11.746).inches,
+                        11.830.inches,
+                        (-11.491).inches,
                         6.610.inches,
-                        Rotation3d(0.degrees, (-14).degrees, 28.579.degrees),
+                        Rotation3d(0.degrees, (-14).degrees, 28.597.degrees),
                     ),
                 )
                 .takeIf { !IS_TEST },

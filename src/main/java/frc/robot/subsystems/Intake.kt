@@ -145,7 +145,7 @@ object Intake : Subsystem {
     }
 
     val outtakeCoral by command {
-        startEnd({ leader.set(-1.0) }, { leader.set(0.0) }).withName("outtakeCoral")
+        startEnd({ leader.set(-0.5) }, { leader.set(0.0) }).withName("outtakeCoral")
     }
 
     val outtakeAlgae by command {
@@ -162,7 +162,7 @@ object Intake : Subsystem {
             .alongWith(runOnce { leader.set(0.6) })
             .andThen(Commands.idle())
             .until { hasCoralByCurrent() }
-            .andThen({ leader.set(0.08) })
+            .andThen({ leader.set(0.035) })
 
     fun intakeAlgaeThenHold(): Command =
         PrintCommand("Intake algae then hold")
