@@ -129,7 +129,8 @@ object Chassis :
     private val steerCharacterization = SwerveRequest.SysIdSwerveSteerGains()
     private val rotationCharacterization = SwerveRequest.SysIdSwerveRotation()
 
-    private val pathApplyRobotSpeeds = ApplyRobotSpeeds()
+    private val pathApplyRobotSpeeds =
+        ApplyRobotSpeeds().withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
 
     // For use with commands which are still taking driver input for translation
     private val FieldCentricFacingAngleDriver: SwerveRequest.FieldCentricFacingAngle =
