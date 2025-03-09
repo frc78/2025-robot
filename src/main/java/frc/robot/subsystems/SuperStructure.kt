@@ -25,7 +25,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
     CoralGroundPickup(13.89.degrees, 0.25.inches, 205.875.degrees),
     Processor(23.degrees, 0.25.inches, 113.625.degrees),
-    HighAlgaeIntake(97.2.degrees, 17.33.inches, 11.25.degrees),
+    HighAlgaeIntake(97.2.degrees, 20.33.inches, 11.25.degrees),
     LowAlgaeIntake(100.degrees, 0.25.inches, 17.2125.degrees),
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
@@ -87,7 +87,7 @@ object SuperStructure {
 
     // Safely retract from getting algae from reef by moving pivot down a bit first
     fun retractWithAlgae(): Command =
-        Pivot.goToRawUntil(RobotState.PreScore.pivotAngle){ Pivot.angle < 88.degrees }
+        Pivot.goToRawUntil(RobotState.PreScore.pivotAngle){ Pivot.angle < 94.degrees }
             .andThen(Elevator.goToRawUntil(RobotState.PreScore.elevatorHeight){true})
             .alongWith(Wrist.goToRawUntil(RobotState.PreScore.wristAngle){true})
 
