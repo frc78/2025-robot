@@ -21,7 +21,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L4(91.degrees, 45.8.inches, 29.25.degrees),
     IntermediaryL4(89.75.degrees, 48.inches, 120.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
-    CoralStation(63.92.degrees, 0.25.inches, 176.degrees),
+    CoralStation(61.92.degrees, 0.25.inches, 176.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
     CoralGroundPickup(13.89.degrees, 0.25.inches, 205.875.degrees),
     Processor(23.degrees, 0.25.inches, 113.625.degrees),
