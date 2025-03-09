@@ -376,23 +376,22 @@ object Chassis :
 
     private val xController =
         ProfiledPIDController(
-                10.0,
+                0.0,
                 0.0,
                 0.0,
                 TrapezoidProfile.Constraints(
                     TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
+                    5.0,
                 ),
             )
             .apply { setTolerance(0.02, 0.02) }
     private val yController =
         ProfiledPIDController(
-                10.0,
+                0.0,
                 0.0,
                 0.0,
                 TrapezoidProfile.Constraints(
-                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
+                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8, 5.0,
                 ),
             )
             .apply { setTolerance(0.02, 0.02) }
@@ -449,13 +448,11 @@ object Chassis :
                     val yOutput = yController.calculate(robot.y)
                     Logger.recordOutput("DriveToPose xOutput", xOutput)
                     Logger.recordOutput("DriveToPose yOutput", yOutput)
-                    FieldCentricFacingAngleAlignments.withVelocityX(xOutput).withVelocityY(yOutput)
-                }
+                    FieldCentricFacingAngleAlignments.withVelocityX(xController.setpoint.velocity + xOutput).withVelocityY(
+                        yController.setpoint.velocity + yOutput)
+                }.until(
+                     { isAtPIDGoal && false}
             )
-            .raceWith(
-                Commands.waitUntil { isAtPIDGoal }
-                    .andThen(Commands.waitSeconds(0.5))
-                    .andThen(Commands.waitUntil { isAtPIDGoal })
             )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
