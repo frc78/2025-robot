@@ -474,11 +474,6 @@ object Chassis :
                         .withVelocityY(yController.setpoint.velocity + yOutput)
                 }
             )
-            .raceWith(
-                Commands.waitUntil { isAtPIDGoal }
-                    .andThen(Commands.waitSeconds(0.5))
-                    .andThen(Commands.waitUntil { isAtPIDGoal })
-            )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
