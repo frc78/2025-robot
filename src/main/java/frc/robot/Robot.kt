@@ -65,14 +65,12 @@ object Robot : LoggedRobot() {
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kRev)
-        if (isReal()) {
-            Logger.start()
-            // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
-            // file
-            DataLogManager.start()
-            SignalLogger.setPath("/U/ctre-logs")
-            SignalLogger.start()
-        }
+        Logger.start()
+        // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
+        // file
+        DataLogManager.start()
+        SignalLogger.setPath("/U/ctre-logs")
+        SignalLogger.start()
         // Record both DS control and joystick data
         DriverStation.startDataLog(DataLogManager.getLog())
         Chassis.configureAutoBuilder()

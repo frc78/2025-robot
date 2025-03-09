@@ -12,7 +12,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.util.DriveFeedforwards
 import edu.wpi.first.math.Matrix
-import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
@@ -375,27 +374,13 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(
-                10.0,
-                0.0,
-                0.0,
-                TrapezoidProfile.Constraints(
-                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
-                ),
-            )
-            .apply { setTolerance(0.02, 0.02) }
+        TrapezoidProfile(
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * .8, 40.0)
+        )
     private val yController =
-        ProfiledPIDController(
-                10.0,
-                0.0,
-                0.0,
-                TrapezoidProfile.Constraints(
-                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
-                ),
-            )
-            .apply { setTolerance(0.02, 0.02) }
+        TrapezoidProfile(
+            TrapezoidProfile.Constraints(TunerConstants.kSpeedAt12Volts.metersPerSecond * .8, 40.0)
+        )
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
@@ -422,43 +407,48 @@ object Chassis :
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-            val fieldRelative =
-                ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
-            xController.reset(state.Pose.translation.x, fieldRelative.vxMetersPerSecond)
-            yController.reset(state.Pose.translation.y, fieldRelative.vyMetersPerSecond)
-            val target = pose()
-            Logger.recordOutput("DriveToPose target", target)
-            xController.goal = TrapezoidProfile.State(target.x, 0.0)
-            yController.goal = TrapezoidProfile.State(target.y, 0.0)
-            FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+            Logger.recordOutput("DriveToPose Target", pose())
+            FieldCentricFacingAngleAlignments.withTargetDirection(pose().rotation)
         })
 
-    private val isAtPIDGoal: Boolean
-        get() =
-            xController.atGoal() &&
-                yController.atGoal() &&
-                FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
+    //    private val isAtPIDGoal: Boolean
+    //        get() =
+    //            xController.() &&
+    //                yController.atGoal() &&
+    //                FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
     private fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
-                    val robot = Chassis.state.Pose
-
-                    val xOutput = xController.calculate(robot.x)
-                    val yOutput = yController.calculate(robot.y)
-                    Logger.recordOutput("DriveToPose xOutput", xOutput)
-                    Logger.recordOutput("DriveToPose yOutput", yOutput)
-                    FieldCentricFacingAngleAlignments.withVelocityX(xOutput).withVelocityY(yOutput)
+                    val target = pose()
+                    val fieldRelative =
+                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                    val nextXState =
+                        xController.calculate(
+                            .02,
+                            TrapezoidProfile.State(
+                                state.Pose.translation.x,
+                                fieldRelative.vxMetersPerSecond,
+                            ),
+                            TrapezoidProfile.State(target.x, 0.0),
+                        )
+                    val nextYState =
+                        yController.calculate(
+                            .02,
+                            TrapezoidProfile.State(
+                                state.Pose.translation.y,
+                                fieldRelative.vyMetersPerSecond,
+                            ),
+                            TrapezoidProfile.State(target.y, 0.0),
+                        )
+                    //                    Logger.recordOutput("DriveToPose state", nextState)
+                    Logger.recordOutput("DriveToPose xOutput", nextXState.velocity)
+                    Logger.recordOutput("DriveToPose yOutput", nextYState.velocity)
+                    FieldCentricFacingAngleAlignments.withVelocityX(nextXState.velocity)
+                        .withVelocityY(nextYState.velocity)
                 }
             )
-            .raceWith(
-                Commands.waitUntil { isAtPIDGoal }
-                    .andThen(Commands.waitSeconds(0.5))
-                    .andThen(Commands.waitUntil { isAtPIDGoal })
-            )
-            // Stop movement
-            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     private fun driveToChangingPose(
         pose: () -> Pose2d,
@@ -468,38 +458,27 @@ object Chassis :
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
-                        val robot = Chassis.state.Pose
-                        val requestedDriveDelta = strafeOverride() * .02
+                    val robot = Chassis.state.Pose
+                    val fieldRelative =
+                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                    val requestedDriveDelta = strafeOverride() * .02
 
-                        xController.setGoal(
-                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond
+                    val nextX =
+                        xController.calculate(
+                            0.02,
+                            TrapezoidProfile.State(robot.x, fieldRelative.vxMetersPerSecond),
+                            TrapezoidProfile.State(pose().translation.x, 0.0),
                         )
-                        yController.setGoal(
-                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond
+                    val nextY =
+                        yController.calculate(
+                            0.02,
+                            TrapezoidProfile.State(robot.y, fieldRelative.vyMetersPerSecond),
+                            TrapezoidProfile.State(pose().translation.y, 0.0),
                         )
-                        val xOutput =
-                            xController.calculate(robot.x) + requestedDriveDelta.vxMetersPerSecond
-                        val yOutput =
-                            yController.calculate(robot.y) + requestedDriveDelta.vyMetersPerSecond
-                        FieldCentricFacingAngleAlignments.withVelocityX(xOutput)
-                            .withVelocityY(yOutput)
-                            .withTargetDirection(
-                                FieldCentricFacingAngleAlignments.TargetDirection.plus(
-                                    Rotation2d.fromRadians(
-                                        requestedDriveDelta.omegaRadiansPerSecond
-                                    )
-                                )
-                            )
-                    }
-                    .raceWith(
-                        Commands.waitUntil { endWhenGoal && isAtPIDGoal }
-                            .andThen(Commands.waitSeconds(0.5))
-                            .andThen(Commands.waitUntil { endWhenGoal && isAtPIDGoal })
-                    )
+                    FieldCentricFacingAngleAlignments.withVelocityX(nextX.velocity)
+                        .withVelocityY(nextY.velocity + requestedDriveDelta.vyMetersPerSecond)
+                }
             )
-
-            // Stop movement
-            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
