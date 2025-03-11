@@ -460,19 +460,24 @@ object Chassis :
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
-                    val robot = Chassis.state.Pose
+                        val robot = Chassis.state.Pose
 
-                    val xOutput = xController.calculate(robot.x)
-                    val yOutput = yController.calculate(robot.y)
-                    Logger.recordOutput("DriveToPose xOutput", xOutput)
-                    Logger.recordOutput("DriveToPose xsetpoint", xController.setpoint.velocity)
-                    Logger.recordOutput("DriveToPose yOutput", yOutput)
-                    Logger.recordOutput("DriveToPose ySetpoint", yController.setpoint.velocity)
-                    FieldCentricFacingAngleAlignments.withVelocityX(
-                            xController.setpoint.velocity + xOutput
-                        )
-                        .withVelocityY(yController.setpoint.velocity + yOutput)
-                }
+                        val xOutput = xController.calculate(robot.x)
+                        val yOutput = yController.calculate(robot.y)
+                        Logger.recordOutput("DriveToPose xOutput", xOutput)
+                        Logger.recordOutput("DriveToPose xsetpoint", xController.setpoint.velocity)
+                        Logger.recordOutput("DriveToPose yOutput", yOutput)
+                        Logger.recordOutput("DriveToPose ySetpoint", yController.setpoint.velocity)
+                        FieldCentricFacingAngleAlignments.withVelocityX(
+                                xController.setpoint.velocity + xOutput
+                            )
+                            .withVelocityY(yController.setpoint.velocity + yOutput)
+                    }
+                    .until {
+                        xController.atGoal() &&
+                            yController.atGoal() &&
+                            FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
+                    }
             )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
