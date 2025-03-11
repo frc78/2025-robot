@@ -80,7 +80,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightTrigger(0.55)
-        .onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+        .onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.Stow)))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -110,11 +110,11 @@ private fun CommandXboxController.configureManipButtonLayout() {
         .onTrue(
             SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
+                .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
 
     leftTrigger(0.55)
-        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.Stow)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {

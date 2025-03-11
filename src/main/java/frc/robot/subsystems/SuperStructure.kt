@@ -13,8 +13,8 @@ import frc.robot.lib.inches
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     // pivot  elevator  wrist
     InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
-    Stow(5.degrees, 0.25.inches, 22.5.degrees),
-    PreScore(60.degrees, 0.25.inches, 22.5.degrees),
+    Stow(40.degrees, 0.25.inches, 22.5.degrees), // TODO ballpark vals, check with driver practice
+    AlgaeStorage(60.degrees, 0.25.inches, 22.5.degrees),
     L1(40.degrees, 0.25.inches, 186.75.degrees),
     L2(88.degrees, 0.25.inches, 30.9.degrees),
     L3(90.6.degrees, 16.4.inches, 33.5.degrees),
@@ -30,7 +30,6 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
-    AlgaeStorage(0.degrees, 0.inches, 0.degrees),
     CoralStorage(0.degrees, 0.inches, 0.degrees),
 
     /*
@@ -87,9 +86,9 @@ object SuperStructure {
 
     // Safely retract from getting algae from reef by moving pivot down a bit first
     fun retractWithAlgae(): Command =
-        Pivot.goToRawUntil(RobotState.PreScore.pivotAngle) { Pivot.angle < 94.degrees }
-            .andThen(Elevator.goToRawUntil(RobotState.PreScore.elevatorHeight) { true })
-            .alongWith(Wrist.goToRawUntil(RobotState.PreScore.wristAngle) { true })
+        Pivot.goToRawUntil(RobotState.AlgaeStorage.pivotAngle) { Pivot.angle < 94.degrees }
+            .andThen(Elevator.goToRawUntil(RobotState.AlgaeStorage.elevatorHeight) { true })
+            .alongWith(Wrist.goToRawUntil(RobotState.AlgaeStorage.wristAngle) { true })
 
     // Do fancier experimental movement to avoid hitting coral on branches for L2, L3, L4
     fun goToScoreCoral(state: RobotState): Command =
