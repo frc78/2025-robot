@@ -11,16 +11,16 @@ import com.ctre.phoenix6.swerve.SwerveRequest
 import edu.wpi.first.units.measure.Current
 
 class SysIdSwerveTranslationTorqueCurrentFOC : SwerveRequest {
-    private var AmpsToApply: Double = 0.0
+    private var ampsToApply: Double = 0.0
 
     /** Local reference to a voltage request for the drive motors */
-    private val m_driveRequest = TorqueCurrentFOC(0.0)
+    private val driveRequest = TorqueCurrentFOC(0.0)
 
     /** Local reference to a position voltage request for the steer motors */
-    private val m_steerRequest_Voltage = PositionVoltage(0.0)
+    private val steerRequestVoltage = PositionVoltage(0.0)
 
     /** Local reference to a position torque current request for the steer motors */
-    private val m_steerRequest_TorqueCurrent = PositionTorqueCurrentFOC(0.0)
+    private val steerRequestTorqueCurrent = PositionTorqueCurrentFOC(0.0)
 
     override fun apply(
         parameters: SwerveDrivetrain.SwerveControlParameters,
@@ -31,14 +31,14 @@ class SysIdSwerveTranslationTorqueCurrentFOC : SwerveRequest {
             when (it.steerClosedLoopOutputType) {
                 SwerveModuleConstants.ClosedLoopOutputType.Voltage ->
                     it.apply(
-                        m_driveRequest.withOutput(AmpsToApply),
-                        m_steerRequest_Voltage.withPosition(0.0),
+                        driveRequest.withOutput(ampsToApply),
+                        steerRequestVoltage.withPosition(0.0),
                     )
 
                 SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC ->
                     it.apply(
-                        m_driveRequest.withOutput(AmpsToApply),
-                        m_steerRequest_TorqueCurrent.withPosition(0.0),
+                        driveRequest.withOutput(ampsToApply),
+                        steerRequestTorqueCurrent.withPosition(0.0),
                     )
             }
         }
@@ -51,10 +51,7 @@ class SysIdSwerveTranslationTorqueCurrentFOC : SwerveRequest {
      * @param volts Current to apply
      * @return this request
      */
-    fun withCurrent(amps: Double): SysIdSwerveTranslationTorqueCurrentFOC {
-        AmpsToApply = amps
-        return this
-    }
+    fun withCurrent(amps: Double) = this.apply { ampsToApply = amps }
 
     /**
      * Sets the current to apply to the drive wheels.
@@ -62,8 +59,5 @@ class SysIdSwerveTranslationTorqueCurrentFOC : SwerveRequest {
      * @param amps Current to apply
      * @return this request
      */
-    fun withCurrent(amps: Current): SysIdSwerveTranslationTorqueCurrentFOC {
-        AmpsToApply = amps.amps
-        return this
-    }
+    fun withCurrent(amps: Current) = this.apply { ampsToApply = amps.amps }
 }
