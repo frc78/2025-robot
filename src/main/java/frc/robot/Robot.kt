@@ -65,8 +65,8 @@ object Robot : LoggedRobot() {
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kRev)
+        Logger.start()
         if (isReal()) {
-            Logger.start()
             // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
             // file
             DataLogManager.start()
@@ -163,6 +163,8 @@ object Robot : LoggedRobot() {
         // Stop logging at the end of the match
         if (DriverStation.isFMSAttached()) {
             Logger.end()
+            DataLogManager.stop()
+            SignalLogger.stop()
         }
     }
 

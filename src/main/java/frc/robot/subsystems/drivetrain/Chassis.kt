@@ -6,6 +6,7 @@ import com.ctre.phoenix6.swerve.SwerveModule
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
@@ -16,9 +17,11 @@ import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
@@ -50,10 +53,13 @@ import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
+import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.inches
+import frc.robot.lib.kilogramSquareMeters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.metersPerSecondPerSecond
+import frc.robot.lib.pounds
 import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.rotationsPerSecondPerSecond
@@ -163,7 +169,24 @@ object Chassis :
 
     fun configureAutoBuilder() {
         try {
-            val config = RobotConfig.fromGUISettings()
+            val config =
+                RobotConfig(
+                    116.pounds,
+                    3.123.kilogramSquareMeters,
+                    ModuleConfig(
+                        2.inches,
+                        3.metersPerSecond,
+                        1.2,
+                        DCMotor.getKrakenX60Foc(1),
+                        7.13,
+                        80.amps,
+                        1,
+                    ),
+                    Translation2d(frontLeft.LocationX, frontLeft.LocationY),
+                    Translation2d(frontRight.LocationX, frontRight.LocationY),
+                    Translation2d(backLeft.LocationX, backLeft.LocationY),
+                    Translation2d(backRight.LocationX, backRight.LocationY),
+                )
             AutoBuilder.configure(
                 { state.Pose }, // Supplier of current robot pose
                 this::resetPose, // Consumer for seeding pose against auto
@@ -375,27 +398,13 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(
-                10.0,
-                0.0,
-                0.0,
-                TrapezoidProfile.Constraints(
-                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
-                ),
-            )
-            .apply { setTolerance(0.035, 0.035) }
+        ProfiledPIDController(10.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 5.0)).apply {
+            setTolerance(0.035, 0.035)
+        }
     private val yController =
-        ProfiledPIDController(
-                10.0,
-                0.0,
-                0.0,
-                TrapezoidProfile.Constraints(
-                    TunerConstants.kSpeedAt12Volts.metersPerSecond * .8,
-                    2.5,
-                ),
-            )
-            .apply { setTolerance(0.035, 0.035) }
+        ProfiledPIDController(10.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 5.0)).apply {
+            setTolerance(0.035, 0.035)
+        }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
@@ -448,8 +457,13 @@ object Chassis :
                     val xOutput = xController.calculate(robot.x)
                     val yOutput = yController.calculate(robot.y)
                     Logger.recordOutput("DriveToPose xOutput", xOutput)
+                    Logger.recordOutput("DriveToPose xsetpoint", xController.setpoint.velocity)
                     Logger.recordOutput("DriveToPose yOutput", yOutput)
-                    FieldCentricFacingAngleAlignments.withVelocityX(xOutput).withVelocityY(yOutput)
+                    Logger.recordOutput("DriveToPose ySetpoint", yController.setpoint.velocity)
+                    FieldCentricFacingAngleAlignments.withVelocityX(
+                            xController.setpoint.velocity + xOutput
+                        )
+                        .withVelocityY(yController.setpoint.velocity + yOutput)
                 }
             )
             .raceWith(
@@ -469,20 +483,22 @@ object Chassis :
             .andThen(
                 applyRequest {
                         val robot = Chassis.state.Pose
-                        val requestedDriveDelta = strafeOverride() * .02
+                        val requestedDriveDelta = strafeOverride()
 
                         xController.setGoal(
-                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond
+                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond * .02
                         )
+                        xController.calculate(robot.x)
+
                         yController.setGoal(
-                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond
+                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond * .02
                         )
-                        val xOutput =
-                            xController.calculate(robot.x) + requestedDriveDelta.vxMetersPerSecond
-                        val yOutput =
-                            yController.calculate(robot.y) + requestedDriveDelta.vyMetersPerSecond
-                        FieldCentricFacingAngleAlignments.withVelocityX(xOutput)
-                            .withVelocityY(yOutput)
+                        val xOutput = xController.calculate(robot.x)
+                        val yOutput = yController.calculate(robot.y)
+                        FieldCentricFacingAngleAlignments.withVelocityX(
+                                xController.setpoint.velocity + xOutput
+                            )
+                            .withVelocityY(yController.setpoint.velocity + yOutput)
                             .withTargetDirection(
                                 FieldCentricFacingAngleAlignments.TargetDirection.plus(
                                     Rotation2d.fromRadians(
