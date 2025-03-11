@@ -39,7 +39,7 @@ object Autos {
         Commands.sequence(
             Intake.intakeCoralThenHold(),
             *listOf(
-                    listOf(Branch.E, Branch.J),
+                    listOf(Branch.E, Branch.I),
                     listOf(Branch.D, Branch.K),
                     listOf(Branch.C, Branch.L),
                     listOf(Branch.A, Branch.B),
@@ -49,7 +49,7 @@ object Autos {
                         Chassis.driveToPoseWithCoralOffset {
                             Chassis.state.Pose.nearest(branches.map { it.pose })
                         },
-                        if (i == 0) goToLevelAndScore(RobotState.L2)
+                        if (i == 0) goToLevelAndScore(RobotState.L4)
                         else goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )

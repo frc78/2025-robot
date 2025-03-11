@@ -18,6 +18,8 @@ object Telemetry {
     private val drivePose = driveStateTable.getStructTopic("Pose", Pose2d.struct).publish()
     private val driveSpeeds =
         driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish()
+    private val fieldRelativeSpeeds =
+        driveStateTable.getStructTopic("FieldRelativeSpeeds", ChassisSpeeds.struct).publish()
     private val driveModuleStates =
         driveStateTable.getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish()
     private val driveModuleTargets =
@@ -39,6 +41,9 @@ object Telemetry {
         /* Telemeterize the swerve drive state */
         drivePose.set(state.Pose)
         driveSpeeds.set(state.Speeds)
+        fieldRelativeSpeeds.set(
+            ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+        )
         driveModuleStates.set(state.ModuleStates)
         driveModuleTargets.set(state.ModuleTargets)
         driveModulePositions.set(state.ModulePositions)
