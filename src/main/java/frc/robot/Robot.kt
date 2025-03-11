@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.pathplanner.lib.commands.PathfindingCommand
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
@@ -97,6 +98,7 @@ object Robot : LoggedRobot() {
         // it,
         // but the lowest safe limit is greater than this due to the top elevator supports
         Wrist.initializePosition()
+        PathfindingCommand.warmupCommand().schedule()
     }
 
     private val autoChooser =

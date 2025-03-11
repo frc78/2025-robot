@@ -12,6 +12,7 @@ import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.util.DriveFeedforwards
+import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
@@ -104,6 +105,13 @@ object Chassis :
         if (Utils.isSimulation()) {
             startSimThread()
         }
+
+        PathPlannerLogging.setLogTargetPoseCallback {
+            Logger.recordOutput("pathfind_to_pose_target", it)
+        }
+        PathPlannerLogging.setLogActivePathCallback {
+            Logger.recordOutput("pathfind_to_pose_path", *it.toTypedArray())
+        }
     }
 
     private var lastSimTime = Utils.getCurrentTimeSeconds()
@@ -175,7 +183,7 @@ object Chassis :
                     3.123.kilogramSquareMeters,
                     ModuleConfig(
                         2.inches,
-                        3.metersPerSecond,
+                        4.48.metersPerSecond,
                         1.2,
                         DCMotor.getKrakenX60Foc(1),
                         7.13,
