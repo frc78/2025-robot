@@ -406,12 +406,12 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(10.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 5.0)).apply {
-            setTolerance(0.035, 0.035)
+        ProfiledPIDController(5.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+            setTolerance(0.02, 0.01)
         }
     private val yController =
-        ProfiledPIDController(10.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 5.0)).apply {
-            setTolerance(0.035, 0.035)
+        ProfiledPIDController(5.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+            setTolerance(0.02, 0.01)
         }
 
     /** Drives to a pose such that the coral is at x=0 */
