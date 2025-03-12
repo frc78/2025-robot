@@ -4,6 +4,7 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.pathplanner.lib.commands.PathfindingCommand
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
@@ -65,8 +66,8 @@ object Robot : LoggedRobot() {
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kRev)
+        Logger.start()
         if (isReal()) {
-            Logger.start()
             // DataLog will automatically log all NT changes. AKit logs to NT, DataLog logs NT to
             // file
             DataLogManager.start()
@@ -97,6 +98,7 @@ object Robot : LoggedRobot() {
         // it,
         // but the lowest safe limit is greater than this due to the top elevator supports
         Wrist.initializePosition()
+        PathfindingCommand.warmupCommand().schedule()
     }
 
     private val autoChooser =
@@ -163,6 +165,8 @@ object Robot : LoggedRobot() {
         // Stop logging at the end of the match
         if (DriverStation.isFMSAttached()) {
             Logger.end()
+            DataLogManager.stop()
+            SignalLogger.stop()
         }
     }
 

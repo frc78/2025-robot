@@ -6,6 +6,7 @@ import edu.wpi.first.units.Units.Centimeters
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.FeetPerSecond
 import edu.wpi.first.units.Units.Inches
+import edu.wpi.first.units.Units.KilogramSquareMeters
 import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
 import edu.wpi.first.units.Units.MetersPerSecond
@@ -30,6 +31,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearAcceleration
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Mass
+import edu.wpi.first.units.measure.MomentOfInertia
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Velocity
 import edu.wpi.first.units.measure.Voltage
@@ -81,6 +83,8 @@ val Number.rotations: Angle
     get() = Rotations.of(this.toDouble())
 val Number.pounds: Mass
     get() = Pounds.of(this.toDouble())
+val Number.kilogramSquareMeters: MomentOfInertia
+    get() = KilogramSquareMeters.of(this.toDouble())
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
