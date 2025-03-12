@@ -14,7 +14,7 @@ import frc.robot.lib.inches
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     // pivot  elevator  wrist
     InFramePerimeter(45.degrees, 0.0.inches, 0.degrees),
-    Stow(40.degrees, 0.25.inches, 22.5.degrees), // TODO ballpark vals, check with driver practice
+    Stow(40.degrees, 0.25.inches, 22.5.degrees), // not currently used
     AlgaeStorage(60.degrees, 0.25.inches, 22.5.degrees),
     L1(40.degrees, 0.25.inches, 186.75.degrees),
     L2(88.degrees, 0.25.inches, 30.9.degrees),
@@ -31,7 +31,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
-    CoralStorage(0.degrees, 0.inches, 0.degrees),
+    CoralStorage(62.92.degrees, 0.25.inches, Wrist.lowerLimit), // same as coral station but with wrist over
 
     /*
     PRESETS STILL TO GET!! as of March 1 2025

@@ -27,17 +27,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
-import frc.robot.subsystems.Elevator
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Vision
-import frc.robot.subsystems.Wrist
+import frc.robot.lib.meters
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -93,6 +90,13 @@ object Robot : LoggedRobot() {
         RobotModeTriggers.disabled()
             .and(Trigger({ Pivot.angle > 45.degrees }))
             .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
+
+        // Move wrist over when leaving coral station area with a coral
+        Trigger {
+            FieldGeometry.distanceToClosestLine(
+                FieldGeometry.CORAL_STATIONS,
+                Chassis.state.Pose.translation).meters > 2.0.meters
+                    && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,

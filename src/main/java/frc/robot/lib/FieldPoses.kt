@@ -81,9 +81,10 @@ object FieldPoses {
     val closestLeftBranch: Pose2d
         get() {
             closestReef.let {
+                // reverse left/right branches for EF, GH, and IJ
                 val isFarReef =
-                    alliance == Blue && it == BLUE_REEF_POSES[3] ||
-                        alliance == Red && it == RED_REEF_POSES[3]
+                    alliance == Blue && (it == BLUE_REEF_POSES[3] || it == BLUE_REEF_POSES[2] || it == BLUE_REEF_POSES[4]) ||
+                        alliance == Red && (it == RED_REEF_POSES[3] || it == RED_REEF_POSES[2] || it == RED_REEF_POSES[4])
                 return if (isFarReef) {
                     it.transformBy(REEF_TO_BRANCH_RIGHT)
                 } else it.transformBy(REEF_TO_BRANCH_LEFT)
@@ -93,9 +94,10 @@ object FieldPoses {
     val closestRightBranch: Pose2d
         get() {
             closestReef.let {
+                // reverse left/right branches for EF, GH, and IJ
                 val isFarReef =
-                    alliance == Blue && it == BLUE_REEF_POSES[3] ||
-                        alliance == Red && it == RED_REEF_POSES[3]
+                    alliance == Blue && (it == BLUE_REEF_POSES[3] || it == BLUE_REEF_POSES[2] || it == BLUE_REEF_POSES[4]) ||
+                            alliance == Red && (it == RED_REEF_POSES[3] || it == RED_REEF_POSES[2] || it == RED_REEF_POSES[4])
                 return if (isFarReef) {
                     it.transformBy(REEF_TO_BRANCH_LEFT)
                 } else it.transformBy(REEF_TO_BRANCH_RIGHT)
