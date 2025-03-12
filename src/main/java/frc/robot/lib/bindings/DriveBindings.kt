@@ -72,8 +72,9 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
             .withName("Snap to closest substation")
             .also { SmartDashboard.putData("Snap to closest substation", it) }
     )
-    a().onTrue(SuperStructure.smartGoTo(RobotState.CoralStation)
-        .alongWith(Intake.intakeCoralThenHold()))
+    a().onTrue(
+        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+    )
 
     y().whileTrue(
         Chassis.driveToBarge(

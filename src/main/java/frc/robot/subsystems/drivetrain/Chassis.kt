@@ -475,9 +475,7 @@ object Chassis :
                             )
                             .withVelocityY(yController.setpoint.velocity + yOutput)
                     }
-                    .until {
-                        isAtPIDGoal
-                    }
+                    .until { isAtPIDGoal }
             )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
