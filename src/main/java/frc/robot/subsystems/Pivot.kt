@@ -4,6 +4,7 @@ import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.configs.FeedbackConfigs
 import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.Slot0Configs
+import com.ctre.phoenix6.configs.Slot1Configs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
@@ -12,6 +13,7 @@ import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.Degrees
@@ -60,6 +62,19 @@ object Pivot : SubsystemBase("pivot") {
 
     private val COMP_BOT_SLOT0_CONFIGS =
         Slot0Configs()
+            .withKP(100.0)
+            .withKI(0.0)
+            .withKD(0.29431)
+            .withKS(0.24723)
+            .withKV(29.598)
+            .withKA(0.42529)
+            .withKG(0.0082199)
+            .withGravityType(GravityTypeValue.Arm_Cosine)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+
+    // Used when going to coral station
+    private val COMP_BOT_SLOT1_CONFIGS =
+        Slot1Configs()
             .withKP(200.0)
             .withKI(0.0)
             .withKD(0.29431)
@@ -67,6 +82,8 @@ object Pivot : SubsystemBase("pivot") {
             .withKV(29.598)
             .withKA(0.42529)
             .withKG(0.0082199)
+            .withGravityType(GravityTypeValue.Arm_Cosine)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
 
     private val COMP_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
@@ -89,8 +106,7 @@ object Pivot : SubsystemBase("pivot") {
                         if (IS_COMP) COMP_BOT_FEEDBACK_CONFIGS else ALPHA_BOT_FEEDBACK_CONFIGS
                     // Set feedforward and feedback gains
                     Slot0 = if (IS_COMP) COMP_BOT_SLOT0_CONFIGS else ALPHA_BOT_SLOT0_CONFIGS
-                    Slot0.GravityType = GravityTypeValue.Arm_Cosine
-                    Slot0.StaticFeedforwardSign
+                    Slot1 = COMP_BOT_SLOT1_CONFIGS
                     MotionMagic.MotionMagicCruiseVelocity = .25
                     MotionMagic.MotionMagicAcceleration = .5
                     MotionMagic.MotionMagicJerk = 2.5
@@ -121,7 +137,10 @@ object Pivot : SubsystemBase("pivot") {
     fun goToRawUntil(setpoint: Angle, endCondition: () -> Boolean): Command =
         run {
                 leader.setControl(
-                    motionMagic.withPosition(setpoint).withLimitForwardMotion(Climber.isExtended)
+                    motionMagic
+                        .withPosition(setpoint)
+                        .withLimitForwardMotion(Climber.isExtended)
+                        .withSlot(if (Elevator.position < 10.inches) 1 else 0)
                 )
             }
             .until(endCondition)

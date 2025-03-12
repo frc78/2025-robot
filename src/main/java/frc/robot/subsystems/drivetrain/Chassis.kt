@@ -415,24 +415,28 @@ object Chassis :
         }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = pathfindToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
     private fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
             {
-                AutoBuilder.pathfindToPose(
-                    // Stay back 1 foot from the end point
-                    pose(), // .transformBy(Transform2d(.3.meters, 0.meters, Rotation2d.kZero)),
-                    PathConstraints(
-                        4.metersPerSecond,
-                        4.metersPerSecondPerSecond,
-                        1.rotationsPerSecond,
-                        10.rotationsPerSecondPerSecond,
-                        12.0.volts,
-                    ),
-                )
+                if (state.Pose.translation.getDistance(pose().translation) < 1.0) {
+                    driveToPose(pose)
+                } else {
+                    AutoBuilder.pathfindToPose(
+                        // Stay back 1 foot from the end point
+                        pose(), // .transformBy(Transform2d(.3.meters, 0.meters, Rotation2d.kZero)),
+                        PathConstraints(
+                            4.metersPerSecond,
+                            4.metersPerSecondPerSecond,
+                            1.rotationsPerSecond,
+                            10.rotationsPerSecondPerSecond,
+                            12.0.volts,
+                        ),
+                    )
+                }
             },
             setOf(this),
         )
@@ -523,7 +527,7 @@ object Chassis :
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
-    val driveToClosestReef by command { driveToPose { closestReef } }
+    val driveToClosestReef by command { pathfindToPose { closestReef } }
 
     val driveToLeftBranch by command {
         driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
