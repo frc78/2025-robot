@@ -43,25 +43,14 @@ object FieldPoses {
     private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
     private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
 
-    private val Pose2d.coralPosesFromTag
-        get() =
-            listOf(
-                this,
-                this.transformBy(CORAL_STATION_LEFT),
-                this.transformBy(CORAL_STATION_RIGHT),
-            )
-
     private val BLUE_CORAL_STATION_LOCATIONS =
-        intArrayOf(12, 13).flatMap {
-            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
-                it.transformBy(CORAL_TO_BOT_TRANSFORM)
-            }
+        intArrayOf(12, 13).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(CORAL_TO_BOT_TRANSFORM)
+
         }
     private val RED_CORAL_STATION_LOCATIONS =
-        intArrayOf(1, 2).flatMap {
-            Robot.gameField.getTagPose(it).get().toPose2d().coralPosesFromTag.map {
-                it.transformBy(CORAL_TO_BOT_TRANSFORM)
-            }
+        intArrayOf(1, 2).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(CORAL_TO_BOT_TRANSFORM)
         }
 
     private val reefPoses = BLUE_REEF_POSES + RED_REEF_POSES
@@ -114,6 +103,12 @@ object FieldPoses {
                 }
             return Chassis.state.Pose.nearest(allianceCoralStations)
         }
+
+    val closestLeftCoralStation
+        get() = closestCoralStation.transformBy(CORAL_STATION_LEFT)
+
+    val closestRightCoralStation
+        get() = closestCoralStation.transformBy(CORAL_STATION_RIGHT)
 
     enum class ReefFace {
         AB,

@@ -51,15 +51,17 @@ private fun CommandXboxController.configureDriveBasicLayout() {
 
 // Driving with snapping bindings for reef alignment
 private fun CommandXboxController.configureDriveSnappingLayout() {
-    leftBumper().and(rightBumper().negate()).whileTrue(Chassis.driveToLeftBranch)
-    rightBumper().and(leftBumper().negate()).whileTrue(Chassis.driveToRightBranch)
-    leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
+    leftBumper().and(rightBumper().negate()).and(a().negate()).whileTrue(Chassis.driveToLeftBranch)
+    rightBumper().and(leftBumper().negate()).and(a().negate()).whileTrue(Chassis.driveToRightBranch)
+    leftBumper().and(rightBumper()).and(a().negate()).whileTrue(Chassis.driveToClosestReef)
+    a().and(leftBumper()).and(rightBumper().negate()).whileTrue(Chassis.driveToClosestLeftCoralStation)
+    a().and(rightBumper()).and(leftBumper().negate()).whileTrue(Chassis.driveToClosestRightCoralStation)
+    a().and(rightBumper().negate()).and(leftBumper().negate()).whileTrue(Chassis.driveToClosestCenterCoralStation)
 
     x().whileTrue(
         Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }
     )
-
-    a().whileTrue(
+    /* a().whileTrue(
         Chassis.driveToClosestSubstation(
                 { hid.velocityY.metersPerSecond },
                 {
@@ -71,7 +73,8 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
             )
             .withName("Snap to closest substation")
             .also { SmartDashboard.putData("Snap to closest substation", it) }
-    )
+    ) */
+
     a().onTrue(
         SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
     )
