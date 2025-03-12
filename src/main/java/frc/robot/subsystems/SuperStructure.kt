@@ -32,14 +32,6 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
     CoralStorage(62.92.degrees, 0.25.inches, Wrist.lowerLimit), // same as coral station but with wrist over
-
-    /*
-    PRESETS STILL TO GET!! as of March 1 2025
-    - coral L1
-    - pre-climb
-    - climbed
-    - pre-match frame perimeter
-     */
 }
 
 object SuperStructure {
@@ -113,14 +105,11 @@ object SuperStructure {
                             )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        Wrist.goTo(state)
-                            .andThen(
-                                Pivot.goToRawUntil(state.pivotAngle) { Pivot.atPosition }
-                                    .alongWith(
-                                        Commands.waitUntil { Pivot.angle > 70.degrees }
-                                            .andThen(Elevator.goTo(state))
-                                    )
-                            )
+                        Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees }
+                            .andThen(Elevator.goToRawUntil(state.elevatorHeight) { Elevator.position > 20.inches })
+                            .andThen(Wrist.goTo(state))
+
+
                     // OLD and JERKY
                     //                        smartGoTo(state)
                     //                            .andThen(
