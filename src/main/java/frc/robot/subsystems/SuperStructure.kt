@@ -19,7 +19,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L1(60.degrees, 0.25.inches, 60.degrees),
     L2(88.degrees, 0.25.inches, 32.1.degrees),
     L3(90.6.degrees, 19.4.inches, 29.8.degrees),
-    L4(89.75.degrees, 48.inches, 26.degrees),
+    L4(91.degrees, 48.inches, 26.degrees),
     Net(82.degrees, 46.inches, 100.degrees),
     CoralStation(65.92.degrees, 0.25.inches, 165.9.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 161.2.degrees),
@@ -49,6 +49,9 @@ object SuperStructure {
     init {
         RobotState.entries.forEach { SmartDashboard.putData(smartGoTo(it)) }
     }
+
+    val atPosition
+        get() = Pivot.atPosition && Elevator.atPosition && Wrist.atPosition
 
     val goToSelectedLevel by command {
         DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))
