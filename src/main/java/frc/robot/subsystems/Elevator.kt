@@ -76,7 +76,7 @@ object Elevator : SubsystemBase("elevator") {
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
-    private val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
+    val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
     private val SETPOINT_THRESHOLD = 5.inches
 
     private val leader =

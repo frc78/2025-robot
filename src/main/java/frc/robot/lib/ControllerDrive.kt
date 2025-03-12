@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.RobotBase
 import edu.wpi.first.wpilibj.XboxController
 import frc.robot.lib.bindings.DISTANCE_SLOWING
 import frc.robot.lib.bindings.TRIGGER_ADJUST
+import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
@@ -49,10 +50,13 @@ val obstacleSlowdown
 /** Cumulates the enabled speed modifiers into one coefficient */
 val XboxController.speedModifiers
     get() =
+        // TODO refactor this to be at all readable, or at least some comments
         (if (TRIGGER_ADJUST) triggerAdjust else 1.0) *
             (if (DISTANCE_SLOWING && if (RobotBase.isReal()) !Intake.hasBranchCoral else true)
                 obstacleSlowdown
-            else 1.0)
+            else 1.0) *
+                // scale speed down with elevator height
+                (if (Elevator.position > 1.inches) ((Elevator.MAX_HEIGHT - Elevator.position)/Elevator.MAX_HEIGHT).baseUnitMagnitude() else 1.0)
 
 val XboxController.velocityX: LinearVelocity
     get() {
