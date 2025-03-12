@@ -59,7 +59,7 @@ val XboxController.speedModifiers
             // multiplier at max height
             (if (Elevator.position > 1.inches)
                 ((Elevator.MAX_HEIGHT - Elevator.position) / Elevator.MAX_HEIGHT)
-                    .baseUnitMagnitude() * 0.15
+                    .baseUnitMagnitude() * 0.3
             else 1.0)
 
 val XboxController.velocityX: LinearVelocity

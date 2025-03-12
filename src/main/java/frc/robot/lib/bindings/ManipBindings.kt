@@ -79,7 +79,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(Climber.extend)
         )
 
-    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.Stow)))
+    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
@@ -112,7 +112,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
 
-    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.Stow)))
+    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
