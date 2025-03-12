@@ -55,8 +55,8 @@ val XboxController.speedModifiers
             (if (DISTANCE_SLOWING && if (RobotBase.isReal()) !Intake.hasBranchCoral else true)
                 obstacleSlowdown
             else 1.0) *
-                // scale speed down with elevator height
-                (if (Elevator.position > 1.inches) ((Elevator.MAX_HEIGHT - Elevator.position)/Elevator.MAX_HEIGHT).baseUnitMagnitude() else 1.0)
+                // scale speed down with elevator height, full speed under 1 inch extension down to .15 multiplier at max height
+                (if (Elevator.position > 1.inches) ((Elevator.MAX_HEIGHT - Elevator.position)/Elevator.MAX_HEIGHT).baseUnitMagnitude() * 0.15 else 1.0)
 
 val XboxController.velocityX: LinearVelocity
     get() {
