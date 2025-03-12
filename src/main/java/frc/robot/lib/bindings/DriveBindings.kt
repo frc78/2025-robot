@@ -3,6 +3,7 @@ package frc.robot.lib.bindings
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
+import com.ctre.phoenix6.swerve.SwerveModule
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -42,7 +43,7 @@ fun CommandXboxController.configureDriverBindings() {
 }
 
 // Basic driving
-private fun CommandXboxController.configureDriveBasicLayout() {
+fun CommandXboxController.configureDriveBasicLayout() {
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
                 withVelocityX(hid.velocityX)
@@ -66,8 +67,20 @@ private fun CommandXboxController.configureDriveBasicLayout() {
             .withTimeout(0.5))
 }
 
-fun only(button: XboxController.Button) =
-    DriverStation.getStickButtons(0) xor 1 shl button.value == 0
+/**
+ * With torque current enabled, enabling the robot with the wheels freely spinning causes them to be
+ * oscillate rapidly. When we're on the cart, we enable 'Test Mode' on the driver station to enable
+ * open loop voltage for simple wheel testing
+ */
+fun CommandXboxController.configureCartDriving() {
+    Chassis.defaultCommand =
+        Chassis.fieldCentricDrive {
+            withVelocityX(hid.velocityX)
+                .withVelocityY(hid.velocityY)
+                .withRotationalRate(hid.velocityRot)
+                .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
+        }
+}
 
 // Driving with snapping bindings for reef alignment
 private fun CommandXboxController.configureDriveSnappingLayout() {

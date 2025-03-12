@@ -11,7 +11,6 @@ import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
@@ -29,19 +28,26 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.FieldGeometry
+import frc.robot.lib.bindings.configureCartDriving
+import frc.robot.lib.bindings.configureDriveBasicLayout
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
-import kotlin.time.Duration.Companion.seconds
 
 // Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
@@ -52,6 +58,8 @@ object Robot : LoggedRobot() {
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
     val alliance: DriverStation.Alliance
         get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+
+    val driverController = CommandXboxController(0)
 
     init {
         HAL.report(
@@ -84,8 +92,7 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-        CommandXboxController(0).configureDriverBindings()
-        CommandJoystick(5).configureManipTestBindings()
+        driverController.configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
 
         Pivot.coast()
@@ -180,6 +187,14 @@ object Robot : LoggedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
+        CommandJoystick(5).configureManipTestBindings()
+        // Enable open-loop driving on the cart
+        driverController.configureCartDriving()
+    }
+
+    override fun testExit() {
+        // Reset driving to normal
+        driverController.configureDriveBasicLayout()
     }
 
     override fun autonomousInit() {
