@@ -3,6 +3,7 @@ package frc.robot.subsystems
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
@@ -113,16 +114,14 @@ object SuperStructure {
                             )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        Wrist.goToRawUntil(120.degrees) { true }
-                            .alongWith(
-                                Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees }
-                            )
+                        Wrist.goTo(state)
                             .andThen(
-                                Elevator.goToRawUntil(state.elevatorHeight) {
-                                    Elevator.position > 8.inches
-                                }
+                                Pivot.goToRawUntil(state.pivotAngle) { Pivot.atPosition }
+                                    .alongWith(
+                                        Commands.waitUntil { Pivot.angle > 70.degrees }
+                                            .andThen(Elevator.goTo(state))
+                                    )
                             )
-                            .andThen(Wrist.goToRawUntil(state.wristAngle) { true })
                     // OLD and JERKY
                     //                        smartGoTo(state)
                     //                            .andThen(
