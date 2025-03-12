@@ -95,7 +95,7 @@ object Robot : LoggedRobot() {
         Trigger {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 2.0.meters
+                Chassis.state.Pose.translation).meters > 1.0.meters
                     && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
