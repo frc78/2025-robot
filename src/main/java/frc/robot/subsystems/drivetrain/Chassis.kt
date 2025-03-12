@@ -45,9 +45,11 @@ import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBranch
+import frc.robot.lib.FieldPoses.closestLeftCoralStation
 import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBranch
+import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.command
@@ -90,6 +92,8 @@ object Chassis :
         table.getStructTopic("closest_coral", Pose2d.struct).publish()
     private val closestProcessorPub =
         table.getStructTopic("closest_processor", Pose2d.struct).publish()
+    private val closestRightCoralStationPub = table.getStructTopic("closest_coral_station_right", Pose2d.struct).publish()
+    private val closestLeftCoralStationPub = table.getStructTopic("closest_coral_station_left", Pose2d.struct).publish()
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -372,6 +376,8 @@ object Chassis :
         closestBranchPub.set(closestBranch)
         closestCoralStationPub.set(closestCoralStation)
         closestProcessorPub.set(closestProcessor)
+        closestLeftCoralStationPub.set(closestLeftCoralStation)
+        closestRightCoralStationPub.set(closestRightCoralStation)
     }
 
     private val xController =
@@ -516,6 +522,14 @@ object Chassis :
     }
 
     val driveToProcessor by command { pathfindToPose { closestProcessor } }
+
+    val driveToClosestCenterCoralStation by command { pathfindToPose { closestCoralStation } }
+
+    val driveToClosestLeftCoralStation by command { pathfindToPose { closestLeftCoralStation } }
+
+    val driveToClosestRightCoralStation by command { pathfindToPose { closestRightCoralStation } }
+
+
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
