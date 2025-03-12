@@ -406,11 +406,11 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(5.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+        ProfiledPIDController(1.2, 0.0, 0.01, TrapezoidProfile.Constraints(3.0, 7.0)).apply {
             setTolerance(0.02, 0.01)
         }
     private val yController =
-        ProfiledPIDController(5.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+        ProfiledPIDController(1.2, 0.0, .01, TrapezoidProfile.Constraints(3.0, 7.0)).apply {
             setTolerance(0.02, 0.01)
         }
 
@@ -464,6 +464,8 @@ object Chassis :
 
                         val xOutput = xController.calculate(robot.x)
                         val yOutput = yController.calculate(robot.y)
+                        Logger.recordOutput("drive_to_pose_error_x", xController.positionError)
+                        Logger.recordOutput("drive_to_pose_error_y", yController.positionError)
                         Logger.recordOutput("DriveToPose xOutput", xOutput)
                         Logger.recordOutput("DriveToPose xsetpoint", xController.setpoint.velocity)
                         Logger.recordOutput("DriveToPose yOutput", yOutput)
