@@ -42,4 +42,20 @@ object Autos {
             Intake.scoreCoral,
         )
     }
+    val MiddletoNet by command {
+        val lineToGH = PathPlannerPath.fromPathFile("Starting to Reef")
+        val ghToCoral = PathPlannerPath.fromPathFile("GHToProcessor")
+        Commands.sequence(
+            AutoBuilder.followPath(lineToGH),
+            Chassis.driveToRightBranch,
+            SuperStructure.smartGoTo(RobotState.L4),
+            Intake.scoreCoral,
+            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake),
+            Intake.intakeAlgae,
+            SuperStructure.smartGoTo(RobotState.Net),
+            Chassis. \\ Find Processor command idk
+            Intake.
+
+        )
+    }
 }
