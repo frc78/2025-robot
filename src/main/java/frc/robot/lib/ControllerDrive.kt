@@ -11,7 +11,7 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
-private const val UP_ADJUST = 0.5
+private const val UP_ADJUST = 0.25
 private const val DOWN_ADJUST = 0.3 // changed from 0.4 at 1821 3/8
 private const val JOYSTICK_DEADBAND = 0.1
 private const val TRIGGER_DEADBAND = 0.05
