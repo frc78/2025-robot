@@ -11,6 +11,7 @@ import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
@@ -40,6 +41,7 @@ import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
+import kotlin.time.Duration.Companion.seconds
 
 // Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
@@ -95,8 +97,21 @@ object Robot : LoggedRobot() {
         Trigger {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 1.0.meters
+                Chassis.state.Pose.translation).meters > 0.5.meters
                     && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
+
+        // Rumble for short duration on game piece acquisition
+        Trigger { Intake.hasCoralByCurrent() }
+            .onTrue(Commands.startEnd(
+                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
+                .withTimeout(0.5))
+
+        Trigger { Intake.detectAlgaeByCurrent() }
+            .onTrue(Commands.startEnd(
+                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
+                .withTimeout(0.5))
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
