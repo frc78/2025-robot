@@ -97,7 +97,7 @@ object Robot : LoggedRobot() {
         Trigger {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 1.meters
+                Chassis.state.Pose.translation).meters > 1.5.meters
                     && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
         // Rumble for short duration on game piece acquisition
