@@ -21,7 +21,7 @@ import frc.robot.lib.meters
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
-object Intake : SubsystemBase("Intake") {
+object Intake : Subsystem {
     init {
         defaultCommand = Commands.idle(this).withName("Intake idle")
     }
@@ -72,7 +72,6 @@ object Intake : SubsystemBase("Intake") {
 
     init {
         leader.set(0.0)
-        SmartDashboard.putData(this)
     }
 
     /**

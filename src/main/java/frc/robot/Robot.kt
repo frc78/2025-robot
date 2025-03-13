@@ -100,18 +100,7 @@ object Robot : LoggedRobot() {
                 Chassis.state.Pose.translation).meters > 1.5.meters
                     && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
-        // Rumble for short duration on game piece acquisition
-        Trigger { Intake.hasCoralByCurrent() }
-            .onTrue(Commands.startEnd(
-                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
-                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
-                .withTimeout(0.5))
 
-        Trigger { Intake.detectAlgaeByCurrent() }
-            .onTrue(Commands.startEnd(
-                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
-                { CommandXboxController(0).setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
-                .withTimeout(0.5))
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
@@ -164,7 +153,6 @@ object Robot : LoggedRobot() {
         if (isReal()) {
             Vision.update()
         }
-        SmartDashboard.putBoolean("has coral", Intake.hasCoralByCurrent())
     }
 
     override fun simulationPeriodic() {

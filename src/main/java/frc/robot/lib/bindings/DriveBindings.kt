@@ -1,8 +1,10 @@
 package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.lib.velocityRot
@@ -48,6 +50,20 @@ private fun CommandXboxController.configureDriveBasicLayout() {
                     .withRotationalRate(hid.velocityRot)
             }
             .withName("Field centric xbox drive")
+    // Rumble for short duration on game piece acquisition
+    Trigger { Intake.hasCoralByCurrent() }
+        .onTrue(
+            Commands.startEnd(
+            { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+            { setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
+            .withTimeout(0.5))
+
+    Trigger { Intake.detectAlgaeByCurrent() }
+        .onTrue(
+            Commands.startEnd(
+            { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+            { setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
+            .withTimeout(0.5))
 }
 
 fun only(button: XboxController.Button) =
