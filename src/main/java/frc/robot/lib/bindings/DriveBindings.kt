@@ -1,12 +1,13 @@
 package frc.robot.lib.bindings
 
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.metersPerSecond
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
-import frc.robot.lib.wideVelocityX
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -49,41 +50,58 @@ private fun CommandXboxController.configureDriveBasicLayout() {
             .withName("Field centric xbox drive")
 }
 
+fun only(button: XboxController.Button) =
+    DriverStation.getStickButtons(0) xor 1 shl button.value == 0
+
 // Driving with snapping bindings for reef alignment
 private fun CommandXboxController.configureDriveSnappingLayout() {
-    leftBumper().and(rightBumper().negate()).and(a().negate()).whileTrue(Chassis.driveToLeftBranch)
-    rightBumper().and(leftBumper().negate()).and(a().negate()).whileTrue(Chassis.driveToRightBranch)
-    leftBumper().and(rightBumper()).and(a().negate()).whileTrue(Chassis.driveToClosestReef)
-    a().and(leftBumper()).and(rightBumper().negate()).whileTrue(Chassis.driveToClosestLeftCoralStation)
-    a().and(rightBumper()).and(leftBumper().negate()).whileTrue(Chassis.driveToClosestRightCoralStation)
-    a().and(rightBumper().negate()).and(leftBumper().negate()).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    Trigger {
+        DriverStation.getStickButtons(0) xor 1 shl XboxController.Button.kLeftBumper.value == 0
+    }
+    // only left bumper
+    leftBumper()
+        .and(rightBumper().negate())
+        .and(a().negate())
+        .and(y().negate())
+        .whileTrue(Chassis.driveToLeftBranch)
+    // only right bumper
+    rightBumper()
+        .and(leftBumper().negate())
+        .and(a().negate())
+        .and(y().negate())
+        .whileTrue(Chassis.driveToRightBranch)
+
+    // both left and right bumper
+    leftBumper()
+        .and(rightBumper())
+        .and(a().negate())
+        .and(y().negate())
+        .whileTrue(Chassis.driveToClosestReef)
+
+    // only a
+    a().and(rightBumper().negate())
+        .and(leftBumper().negate())
+        .whileTrue(Chassis.driveToClosestCenterCoralStation)
+    // a and left bumper
+    a().and(leftBumper())
+        .and(rightBumper().negate())
+        .whileTrue(Chassis.driveToClosestLeftCoralStation)
+    // a and right bumper
+    a().and(rightBumper())
+        .and(leftBumper().negate())
+        .whileTrue(Chassis.driveToClosestRightCoralStation)
 
     x().whileTrue(
         Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }
     )
-    /* a().whileTrue(
-        Chassis.driveToClosestSubstation(
-                { hid.velocityY.metersPerSecond },
-                {
-                    withVelocityX(hid.wideVelocityX)
-                        .withVelocityY(hid.velocityY)
-                        .withRotationalRate(hid.velocityRot)
-                },
-                0.45,
-            )
-            .withName("Snap to closest substation")
-            .also { SmartDashboard.putData("Snap to closest substation", it) }
-    ) */
-    y().whileTrue(
-        Chassis.driveToBarge(
-            { hid.velocityY.metersPerSecond },
-            {
-                withVelocityX(hid.wideVelocityX)
-                    .withVelocityY(hid.velocityY)
-                    .withRotationalRate(hid.velocityRot)
-            },
-        )
-    )
+
+    // only y
+    y().and(leftBumper().negate().and(rightBumper().negate())).whileTrue(Chassis.driveToBarge)
+    // y and left bumper
+    y().and(leftBumper()).and(rightBumper().negate()).whileTrue(Chassis.driveToBargeLeft)
+    // y and right bumper
+    y().and(rightBumper()).and(leftBumper().negate()).whileTrue(Chassis.driveToBargeRight)
+
     b().whileTrue(Chassis.driveToProcessor)
 }
 

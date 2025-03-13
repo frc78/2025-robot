@@ -46,7 +46,6 @@ object FieldPoses {
     private val BLUE_CORAL_STATION_LOCATIONS =
         intArrayOf(12, 13).map {
             Robot.gameField.getTagPose(it).get().toPose2d().transformBy(CORAL_TO_BOT_TRANSFORM)
-
         }
     private val RED_CORAL_STATION_LOCATIONS =
         intArrayOf(1, 2).map {
@@ -153,4 +152,36 @@ object FieldPoses {
 
     val closestProcessor: Pose2d
         get() = Chassis.state.Pose.nearest(PROCESSOR_POSES)
+
+    // Offset from the april tag coordinate to where the robot needs to be to score/align
+    private val BARGE_TO_BOT = Transform2d(0.5922.meters, 0.0.meters, Rotation2d.kZero)
+
+    private val BLUE_BARGE_POSES =
+        intArrayOf(4, 14).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(BARGE_TO_BOT)
+        }
+
+    private val RED_BARGE_POSES =
+        intArrayOf(5, 15).map {
+            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(BARGE_TO_BOT)
+        }
+
+    private val bargePoses
+        get() =
+            when (alliance) {
+                Blue -> BLUE_BARGE_POSES
+                Red -> RED_BARGE_POSES
+            }
+
+    private val BARGE_TO_BARGE_LEFT = Transform2d(0.meters, (-42.875).inches, Rotation2d.kZero)
+    private val BARGE_TO_BARGE_RIGHT = Transform2d(0.meters, 42.875.inches, Rotation2d.kZero)
+
+    val closestBarge
+        get() = Chassis.state.Pose.nearest(bargePoses)
+
+    val closestLeftBarge
+        get() = closestBarge.transformBy(BARGE_TO_BARGE_LEFT)
+
+    val closestRightBarge
+        get() = closestBarge.transformBy(BARGE_TO_BARGE_RIGHT)
 }

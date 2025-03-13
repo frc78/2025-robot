@@ -42,12 +42,15 @@ import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.Branch
 import frc.robot.lib.FieldGeometry
+import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
+import frc.robot.lib.FieldPoses.closestLeftBarge
 import frc.robot.lib.FieldPoses.closestLeftBranch
 import frc.robot.lib.FieldPoses.closestLeftCoralStation
 import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
+import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
@@ -92,8 +95,16 @@ object Chassis :
         table.getStructTopic("closest_coral", Pose2d.struct).publish()
     private val closestProcessorPub =
         table.getStructTopic("closest_processor", Pose2d.struct).publish()
-    private val closestRightCoralStationPub = table.getStructTopic("closest_coral_station_right", Pose2d.struct).publish()
-    private val closestLeftCoralStationPub = table.getStructTopic("closest_coral_station_left", Pose2d.struct).publish()
+    private val closestRightCoralStationPub =
+        table.getStructTopic("closest_coral_station_right", Pose2d.struct).publish()
+    private val closestLeftCoralStationPub =
+        table.getStructTopic("closest_coral_station_left", Pose2d.struct).publish()
+
+    private val closestBargePub = table.getStructTopic("closest_barge", Pose2d.struct).publish()
+    private val closestBargeLeftPub =
+        table.getStructTopic("closest_barge_left", Pose2d.struct).publish()
+    private val closestBargeRightPub =
+        table.getStructTopic("closest_barge_right", Pose2d.struct).publish()
 
     init {
         // This would normally be called by SubsystemBase, but since we cannot extend that class,
@@ -378,6 +389,10 @@ object Chassis :
         closestProcessorPub.set(closestProcessor)
         closestLeftCoralStationPub.set(closestLeftCoralStation)
         closestRightCoralStationPub.set(closestRightCoralStation)
+
+        closestBargePub.set(closestBarge)
+        closestBargeLeftPub.set(closestLeftBarge)
+        closestBargeRightPub.set(closestRightBarge)
     }
 
     private val xController =
@@ -529,7 +544,9 @@ object Chassis :
 
     val driveToClosestRightCoralStation by command { pathfindToPose { closestRightCoralStation } }
 
-
+    val driveToBarge by command { pathfindToPose { closestBarge } }
+    val driveToBargeLeft by command { pathfindToPose { closestLeftBarge } }
+    val driveToBargeRight by command { pathfindToPose { closestRightBarge } }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
