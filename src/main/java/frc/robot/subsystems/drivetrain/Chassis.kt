@@ -427,16 +427,16 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(3.0, 0.0, 0.00, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
-            setTolerance(0.02, 0.01)
+        ProfiledPIDController(.5, 0.0, 0.01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
+            setTolerance(0.05, 0.05)
         }
     private val yController =
-        ProfiledPIDController(3.0, 0.0, .0, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
-            setTolerance(0.02, 0.01)
+        ProfiledPIDController(.5, 0.0, .01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
+            setTolerance(0.05, 0.05)
         }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = pathfindToPose {
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
@@ -489,12 +489,6 @@ object Chassis :
 
                         val xOutput = xController.calculate(robot.x)
                         val yOutput = yController.calculate(robot.y)
-                        Logger.recordOutput("drive_to_pose_error_x", xController.positionError)
-                        Logger.recordOutput("drive_to_pose_error_y", yController.positionError)
-                        Logger.recordOutput("DriveToPose xOutput", xOutput)
-                        Logger.recordOutput("DriveToPose xsetpoint", xController.setpoint.velocity)
-                        Logger.recordOutput("DriveToPose yOutput", yOutput)
-                        Logger.recordOutput("DriveToPose ySetpoint", yController.setpoint.velocity)
                         FieldCentricFacingAngleAlignments.withVelocityX(
                                 xController.setpoint.velocity + xOutput
                             )
@@ -548,7 +542,7 @@ object Chassis :
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
-    val driveToClosestReef by command { pathfindToPose { closestReef } }
+    val driveToClosestReef by command { driveToPose { closestReef } }
 
     val driveToLeftBranch by command {
         driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
@@ -562,17 +556,17 @@ object Chassis :
         ConditionalCommand(driveToLeftBranch, driveToRightBranch) { SelectedBranch == Branch.LEFT }
     }
 
-    val driveToProcessor by command { pathfindToPose { closestProcessor } }
+    val driveToProcessor by command { driveToPose { closestProcessor } }
 
-    val driveToClosestCenterCoralStation by command { pathfindToPose { closestCoralStation } }
+    val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    val driveToClosestLeftCoralStation by command { pathfindToPose { closestLeftCoralStation } }
+    val driveToClosestLeftCoralStation by command { driveToPose { closestLeftCoralStation } }
 
-    val driveToClosestRightCoralStation by command { pathfindToPose { closestRightCoralStation } }
+    val driveToClosestRightCoralStation by command { driveToPose { closestRightCoralStation } }
 
-    val driveToBarge by command { pathfindToPose { closestBarge } }
-    val driveToBargeLeft by command { pathfindToPose { closestLeftBarge } }
-    val driveToBargeRight by command { pathfindToPose { closestRightBarge } }
+    val driveToBarge by command { driveToPose { closestBarge } }
+    val driveToBargeLeft by command { driveToPose { closestLeftBarge } }
+    val driveToBargeRight by command { driveToPose { closestRightBarge } }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle

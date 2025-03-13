@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -37,7 +38,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Wrist : SubsystemBase("wrist") {
+object Wrist : Subsystem {
     var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
     private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)
@@ -199,12 +200,6 @@ object Wrist : SubsystemBase("wrist") {
                 runOnce { SignalLogger.stop() },
             )
             .withName("Wrist SysId")
-
-    init {
-        //        SmartDashboard.putData(this)
-        SmartDashboard.putData(sysId)
-        //        SmartDashboard.putData("Zero wrist", resetPosition)
-    }
 
     private val simState by lazy { leader.simState }
     private val armSim by lazy {

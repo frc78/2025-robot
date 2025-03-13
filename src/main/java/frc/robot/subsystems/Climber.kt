@@ -52,8 +52,4 @@ object Climber : Subsystem {
             .withName("Extend Foot")
     }
 
-    init {
-        //        SmartDashboard.putData(retract)
-        //        SmartDashboard.putData(extend)
-    }
 }

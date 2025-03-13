@@ -11,8 +11,9 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.*
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Subsystem
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -156,16 +157,12 @@ object Intake : Subsystem {
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
-        PrintCommand("Intake coral then hold")
-            .alongWith(runOnce { leader.set(0.6) })
-            .andThen(Commands.waitUntil { hasCoralByCurrent() })
-            .andThen({ SmartDashboard.putBoolean("test", true) })
-            .finallyDo{_ -> leader.set(0.035) }.withName("Intake  Coral then hold")
+        startEnd({ leader.set(0.6) }, { leader.set(0.035) })
+            .until { hasCoralByCurrent() }
+            .withName("Intake coral then hold")
 
     fun intakeAlgaeThenHold(): Command =
-        PrintCommand("Intake algae then hold")
-            .alongWith(runOnce { leader.set(-1.0) })
-            .andThen(Commands.idle())
+        startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
             .until { detectAlgaeByCurrent() }
-            .finallyDo { _ -> leader.set(-0.1) }
+            .withName("Intake algae then hold")
 }

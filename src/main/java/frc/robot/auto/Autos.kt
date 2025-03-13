@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
-import frc.robot.lib.metersPerSecond
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -24,14 +23,7 @@ object Autos {
     private val goToCoralStationAndGetCoral by command {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
-            Intake.intakeCoralThenHold()
-                .deadlineFor(
-                    Chassis.driveToClosestSubstation(
-                        { 0.0 },
-                        { this.withVelocityX(0.05.metersPerSecond) },
-                        0.45,
-                    )
-                ),
+            Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
         )
     }
     @Suppress("SpreadOperator")
