@@ -426,15 +426,6 @@ object Chassis :
         closestBargeRightPub.set(closestRightBarge)
     }
 
-    private val xController =
-        ProfiledPIDController(.5, 0.0, 0.01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
-            setTolerance(0.05, 0.05)
-        }
-    private val yController =
-        ProfiledPIDController(.5, 0.0, .01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
-            setTolerance(0.05, 0.05)
-        }
-
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
@@ -462,23 +453,25 @@ object Chassis :
             setOf(this),
         )
 
+    private val poseController =
+        ProfiledPIDController(1.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+            goal = TrapezoidProfile.State(0.0, 0.0)
+        }
+
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-            val fieldRelative =
-                ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
-            xController.reset(state.Pose.translation.x, fieldRelative.vxMetersPerSecond)
-            yController.reset(state.Pose.translation.y, fieldRelative.vyMetersPerSecond)
             val target = pose()
+            val diff = target.minus(state.Pose)
+            val distance = diff.translation.norm
+            poseController.reset(distance, 0.0)
+
             Logger.recordOutput("DriveToPose target", target)
-            xController.goal = TrapezoidProfile.State(target.x, 0.0)
-            yController.goal = TrapezoidProfile.State(target.y, 0.0)
             FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
         })
 
     private val isAtPIDGoal: Boolean
         get() =
-            xController.atGoal() &&
-                yController.atGoal() &&
+            poseController.atGoal() &&
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
     private fun driveToPose(pose: () -> Pose2d): Command =
@@ -486,15 +479,19 @@ object Chassis :
             .andThen(
                 applyRequest {
                         val robot = Chassis.state.Pose
+                        val target = pose()
+                        val diff = robot.translation - target.translation
 
-                        val xOutput = xController.calculate(robot.x)
-                        val yOutput = yController.calculate(robot.y)
-                        FieldCentricFacingAngleAlignments.withVelocityX(
-                                xController.setpoint.velocity + xOutput
-                            )
-                            .withVelocityY(yController.setpoint.velocity + yOutput)
+                        val output = poseController.calculate(diff.norm)
+
+                        val angle = diff.angle
+                        val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
+                        val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
+
+                        FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
+                            .withVelocityY(ySpeed)
                     }
-                    .until { isAtPIDGoal }
+                    .until { poseController.atGoal() }
             )
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
@@ -510,20 +507,17 @@ object Chassis :
                         val robot = Chassis.state.Pose
                         val requestedDriveDelta = strafeOverride()
 
-                        xController.setGoal(
-                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond * .02
-                        )
-                        xController.calculate(robot.x)
+                        val target = pose()
+                        val diff = robot.translation - target.translation
 
-                        yController.setGoal(
-                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond * .02
-                        )
-                        val xOutput = xController.calculate(robot.x)
-                        val yOutput = yController.calculate(robot.y)
-                        FieldCentricFacingAngleAlignments.withVelocityX(
-                                xController.setpoint.velocity + xOutput
-                            )
-                            .withVelocityY(yController.setpoint.velocity + yOutput)
+                        val output = poseController.calculate(diff.norm)
+
+                        val angle = diff.angle
+                        val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
+                        val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
+
+                        FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
+                            .withVelocityY(ySpeed)
                             .withTargetDirection(
                                 FieldCentricFacingAngleAlignments.TargetDirection.plus(
                                     Rotation2d.fromRadians(
