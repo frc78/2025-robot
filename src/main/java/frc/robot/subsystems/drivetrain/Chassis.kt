@@ -450,7 +450,7 @@ object Chassis :
                         // Stay back 1 foot from the end point
                         pose(), // .transformBy(Transform2d(.3.meters, 0.meters, Rotation2d.kZero)),
                         PathConstraints(
-                            4.metersPerSecond,
+                            2.5.metersPerSecond,
                             4.metersPerSecondPerSecond,
                             1.rotationsPerSecond,
                             10.rotationsPerSecondPerSecond,

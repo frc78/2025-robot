@@ -9,8 +9,10 @@ import frc.robot.lib.bindings.DISTANCE_SLOWING
 import frc.robot.lib.bindings.TRIGGER_ADJUST
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
+import pabeles.concurrency.IntOperatorTask.Min
 
 private const val UP_ADJUST = 0.25
 private const val DOWN_ADJUST = 0.3 // changed from 0.4 at 1821 3/8
@@ -58,7 +60,8 @@ val XboxController.speedModifiers
             // scale speed down with elevator height, full speed under 1 inch extension down to .15
             // multiplier at max height
             (if (Elevator.position > 1.inches)
-                ((Elevator.MAX_HEIGHT - Elevator.position) / Elevator.MAX_HEIGHT)
+                ((Elevator.MAX_HEIGHT - RobotState.L4.elevatorHeight.baseUnitMagnitude()
+                    .coerceAtMost(Elevator.position.baseUnitMagnitude()).inches) / Elevator.MAX_HEIGHT)
                     .baseUnitMagnitude() * 0.3
             else 1.0)
 

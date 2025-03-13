@@ -11,10 +11,8 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.PrintCommand
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.*
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -23,7 +21,7 @@ import frc.robot.lib.meters
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
-object Intake : Subsystem {
+object Intake : SubsystemBase("Intake") {
     init {
         defaultCommand = Commands.idle(this).withName("Intake idle")
     }
@@ -50,7 +48,7 @@ object Intake : Subsystem {
         get() = canRangeOffsetEntry.getDouble(19.0).centimeters
 
     private val CORAL_CURRENT_THRESHOLD =
-        25.amps // Current spike threshold for detecting when we have a coral
+        15.amps // Current spike threshold for detecting when we have a coral
 
     private val ALGAE_CURRENT_THRESHOLD =
         (-25).amps // Current spike threshold for detecting when we have an algae
@@ -74,6 +72,7 @@ object Intake : Subsystem {
 
     init {
         leader.set(0.0)
+        SmartDashboard.putData(this)
     }
 
     /**
@@ -160,14 +159,14 @@ object Intake : Subsystem {
     fun intakeCoralThenHold(): Command =
         PrintCommand("Intake coral then hold")
             .alongWith(runOnce { leader.set(0.6) })
-            .andThen(Commands.idle())
-            .until { hasCoralByCurrent() }
-            .andThen({ leader.set(0.035) })
+            .andThen(Commands.waitUntil { hasCoralByCurrent() })
+            .andThen({ SmartDashboard.putBoolean("test", true) })
+            .finallyDo{_ -> leader.set(0.035) }.withName("Intake  Coral then hold")
 
     fun intakeAlgaeThenHold(): Command =
         PrintCommand("Intake algae then hold")
             .alongWith(runOnce { leader.set(-1.0) })
             .andThen(Commands.idle())
             .until { detectAlgaeByCurrent() }
-            .andThen({ leader.set(-0.8) })
+            .finallyDo { _ -> leader.set(-0.1) }
 }

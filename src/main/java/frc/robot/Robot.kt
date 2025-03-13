@@ -97,7 +97,7 @@ object Robot : LoggedRobot() {
         Trigger {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 0.5.meters
+                Chassis.state.Pose.translation).meters > 1.meters
                     && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
         // Rumble for short duration on game piece acquisition
@@ -164,6 +164,7 @@ object Robot : LoggedRobot() {
         if (isReal()) {
             Vision.update()
         }
+        SmartDashboard.putBoolean("has coral", Intake.hasCoralByCurrent())
     }
 
     override fun simulationPeriodic() {

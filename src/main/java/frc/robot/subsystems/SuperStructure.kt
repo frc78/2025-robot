@@ -79,7 +79,7 @@ object SuperStructure {
 
     // Safely retract from getting algae from reef by moving pivot down a bit first
     fun retractWithAlgae(): Command =
-        Pivot.goToRawUntil(RobotState.AlgaeStorage.pivotAngle) { Pivot.angle < 94.degrees }
+        Pivot.goToRawUntil(RobotState.AlgaeStorage.pivotAngle) { Pivot.angle < 90.degrees }
             .andThen(Elevator.goToRawUntil(RobotState.AlgaeStorage.elevatorHeight) { true })
             .alongWith(Wrist.goToRawUntil(RobotState.AlgaeStorage.wristAngle) { true })
 
