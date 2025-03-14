@@ -100,15 +100,18 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     // both left and right bumper
     leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
 
-    // only a
-    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
-    // a and left bumper
-    a().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToClosestLeftCoralStation)
-    // a and right bumper
-    a().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToClosestRightCoralStation)
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
-    )
+    a().whileTrue(Chassis.snapAngleToCoralStation { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) } )
+
+        // Removed per driver request 10:00am 3/14
+//    // only a
+//    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+//    // a and left bumper
+//    a().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToClosestLeftCoralStation)
+//    // a and right bumper
+//    a().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToClosestRightCoralStation)
+//    a().onTrue(
+//        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+//    )
 
     x().whileTrue(
         Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }

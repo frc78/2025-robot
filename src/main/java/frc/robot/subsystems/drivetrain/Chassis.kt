@@ -579,6 +579,17 @@ object Chassis :
         }
     }
 
+    fun snapAngleToCoralStation(
+        block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
+    ): Command {
+        return applyRequest {
+            FieldCentricFacingAngleDriver.withTargetDirection(
+                closestCoralStation.rotation.rotateByAlliance()
+            )
+                .block()
+        }
+    }
+
     fun fieldCentricDrive(
         block: SwerveRequest.FieldCentric.() -> SwerveRequest.FieldCentric
     ): Command {
