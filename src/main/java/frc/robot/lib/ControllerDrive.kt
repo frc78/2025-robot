@@ -13,13 +13,14 @@ import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 import pabeles.concurrency.IntOperatorTask.Min
+import kotlin.math.PI
 
 private const val UP_ADJUST = 0.25
 private const val DOWN_ADJUST = 0.3 // changed from 0.4 at 1821 3/8
 private const val JOYSTICK_DEADBAND = 0.1
 private const val TRIGGER_DEADBAND = 0.05
-private val maxTranslation = 3.0
-private val maxRotation = 1.0
+private val maxTranslation = 4.0
+private val maxRotation = 2 * PI
 
 /* Extension properties to access the drive velocities based on joystick input
  * This used to be a single method that returned a ChassisSpeeds object,

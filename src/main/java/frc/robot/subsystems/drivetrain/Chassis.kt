@@ -427,11 +427,11 @@ object Chassis :
     }
 
     private val xController =
-        ProfiledPIDController(.5, 0.0, 0.01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
+        ProfiledPIDController(.75, 0.0, 0.01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
             setTolerance(0.05, 0.05)
         }
     private val yController =
-        ProfiledPIDController(.5, 0.0, .01, TrapezoidProfile.Constraints(1.0, 5.0)).apply {
+        ProfiledPIDController(.75, 0.0, .01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
             setTolerance(0.05, 0.05)
         }
 
