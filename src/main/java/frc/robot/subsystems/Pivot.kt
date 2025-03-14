@@ -49,7 +49,7 @@ object Pivot : Subsystem {
     // how vertical the pivot needs to be for the elevator to extend
     private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
     // how horizontal the pivot needs to be for the
-    val EXTEND_FOOT_THRESHOLD = 20.degrees
+    val EXTEND_FOOT_THRESHOLD = 60.degrees
 
     private val ALPHA_BOT_SLOT0_CONFIGS =
         Slot0Configs()

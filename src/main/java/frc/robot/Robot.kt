@@ -106,7 +106,8 @@ object Robot : LoggedRobot() {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
                 Chassis.state.Pose.translation).meters > 1.5.meters
-                    && Intake.hasBranchCoral }
+                    && Intake.hasBranchCoral
+                    && !Intake.detectAlgaeByCurrent() }
             .onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
 

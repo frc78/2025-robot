@@ -49,7 +49,7 @@ object Autos {
                             FieldGeometry.CORAL_STATIONS,
                             Chassis.state.Pose.translation).meters > 1.5.meters
                                 && Intake.hasBranchCoral})
-                            .andThen({ Wrist.goTo(RobotState.CoralStorage) }))),
+                            .andThen(Wrist.goTo(RobotState.CoralStorage)))),
                         if (i == 0) goToLevelAndScore(RobotState.L4)
                         else goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
