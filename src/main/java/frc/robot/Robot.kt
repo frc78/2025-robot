@@ -101,11 +101,13 @@ object Robot : LoggedRobot() {
             .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
 
         // Move wrist over when leaving coral station area with a coral
-        Trigger {
+        // Running only in teleop to avoid interrupting auto
+        RobotModeTriggers.teleop().and {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
                 Chassis.state.Pose.translation).meters > 1.5.meters
-                    && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
+                    && Intake.hasBranchCoral }
+            .onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
 
 
