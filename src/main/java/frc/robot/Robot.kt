@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
@@ -105,10 +106,20 @@ object Robot : LoggedRobot() {
         RobotModeTriggers.teleop().and {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 1.5.meters
-                    && Intake.hasBranchCoral
-                    && !Intake.detectAlgaeByCurrent() }
-            .onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
+                Chassis.state.Pose.translation).meters > 1.5.meters }
+            .onTrue(ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                Commands.none())
+                { Intake.hasBranchCoral })
+
+        // OLD, got tripped up by L1 coral
+//        RobotModeTriggers.teleop().and {
+//            FieldGeometry.distanceToClosestLine(
+//                FieldGeometry.CORAL_STATIONS,
+//                Chassis.state.Pose.translation).meters > 1.5.meters
+//                    && Intake.hasBranchCoral
+//                    && !Intake.detectAlgaeByCurrent() }
+//            .onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
 
 
 
