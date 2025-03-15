@@ -162,7 +162,7 @@ private fun CommandXboxController.selectWithStick() {
 
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
-    trigger().whileTrue(Chassis.sysIdRoutine)
+    trigger().whileTrue(Chassis.measureWheelRotations)
     button(5).whileTrue(Pivot.moveUp)
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
