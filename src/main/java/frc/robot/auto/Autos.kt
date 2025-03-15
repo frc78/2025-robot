@@ -2,6 +2,7 @@ package frc.robot.auto
 
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.WaitCommand
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
@@ -28,6 +29,7 @@ object Autos {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
+            WaitCommand(0.1),
         )
     }
     @Suppress("SpreadOperator")
