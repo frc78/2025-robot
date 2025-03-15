@@ -2,6 +2,8 @@ package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.WaitCommand
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.Branch
@@ -79,7 +81,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(Climber.extend)
         )
 
-    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+    rightTrigger(0.55).onTrue(
+        Intake.outtakeCoralAndStartTimer()
+            .andThen(WaitUntilCommand{ Intake.stopCoralOuttakeCondition() })
+            .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
+            .andThen(Intake.stopRollers))
+
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(

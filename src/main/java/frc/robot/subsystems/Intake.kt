@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -152,9 +153,28 @@ object Intake : SubsystemBase ("Intake") {
         startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("outtakeAlgae")
     }
 
+    val stopRollers by command {
+        runOnce{ leader.set(0.0) }
+    }
+
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
     val scoreAlgae by command { outtakeAlgae.withTimeout(0.5.seconds) }
+
+    private var outtakeCoralStartTime = -1.0
+
+    fun outtakeCoralAndStartTimer(): Command {
+        outtakeCoralStartTime = Timer.getTimestamp()
+        return runOnce { leader.set(-0.5) }
+    }
+
+    fun stopCoralOuttakeCondition(): Boolean {
+        if (Timer.getTimestamp() - outtakeCoralStartTime > 0.2 && !CommandXboxController(1).rightTrigger(0.55).asBoolean) {
+            outtakeCoralStartTime = -0.1
+            return true
+        }
+        return false
+    }
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
