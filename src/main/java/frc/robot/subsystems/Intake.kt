@@ -7,6 +7,7 @@ import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
@@ -96,7 +97,7 @@ object Intake : SubsystemBase ("Intake") {
      */
     fun hasCoralByCurrent(): Boolean {
         // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && hasBranchCoral
+        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && coralDetectedDebounce.calculate(hasBranchCoral)
     }
 
     fun detectAlgaeByCurrent(): Boolean {
@@ -175,6 +176,8 @@ object Intake : SubsystemBase ("Intake") {
         }
         return false
     }
+
+    private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
