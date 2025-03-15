@@ -29,7 +29,6 @@ object Autos {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
-            WaitCommand(0.1),
         )
     }
     @Suppress("SpreadOperator")
