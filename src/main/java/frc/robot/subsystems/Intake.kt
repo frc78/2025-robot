@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -22,7 +23,7 @@ import frc.robot.lib.meters
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
-object Intake : Subsystem {
+object Intake : SubsystemBase ("Intake") {
     init {
         defaultCommand = Commands.idle(this).withName("Intake idle")
     }
