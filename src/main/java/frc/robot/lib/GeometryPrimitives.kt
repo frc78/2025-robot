@@ -6,6 +6,8 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.numbers.N2
 import frc.robot.lib.FieldGeometry.FIELD_X_LENGTH
 import frc.robot.lib.FieldGeometry.FIELD_Y_LENGTH
+import kotlin.math.abs
+import kotlin.math.hypot
 
 abstract class Primitive {
     /** Returns vector from the closest point of primitive to the input position */
@@ -16,6 +18,11 @@ abstract class Primitive {
 }
 
 class LineSegment(val p1: Translation2d, val p2: Translation2d) : Primitive() {
+    // Line equation: ax + by + c = 0
+    private val a = p2.y - p1.y
+    private val b: Double = p1.x - p2.x
+    private val c: Double = p1.y * (p2.x - p1.x) - (p2.y - p1.y) * p1.x
+
     override fun getVectorFromClosestPoint(position: Translation2d): Translation2d {
         // Source: Inigo Quilez https://iquilezles.org/articles/distfunctions2d/
         val positionToP1: Vector<N2> = position.toVector().minus(p1.toVector())
@@ -28,6 +35,10 @@ class LineSegment(val p1: Translation2d, val p2: Translation2d) : Primitive() {
 
     override fun getShortestDistance(position: Translation2d): Double {
         return getVectorFromClosestPoint(position).norm
+    }
+
+    fun perpendicularDistance(point: Translation2d): Double {
+        return abs(a * point.x + b * point.y + c) / hypot(a, b)
     }
 
     /** Unit vector pointing to left hand (looking from p1 to p2) perpendicular direction */

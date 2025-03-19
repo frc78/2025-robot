@@ -2,8 +2,6 @@ package frc.robot.auto
 
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.WaitCommand
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
@@ -44,13 +42,18 @@ object Autos {
                 .mapIndexed { i, branches ->
                     Commands.sequence(
                         Chassis.driveToPoseWithCoralOffset {
-                            Chassis.state.Pose.nearest(branches.map { it.pose })
-                        }.alongWith((WaitUntilCommand({
-                            FieldGeometry.distanceToClosestLine(
-                            FieldGeometry.CORAL_STATIONS,
-                            Chassis.state.Pose.translation).meters > 1.5.meters
-                                && Intake.hasBranchCoral})
-                            .andThen(Wrist.goTo(RobotState.CoralStorage)))),
+                                Chassis.state.Pose.nearest(branches.map { it.pose })
+                            }
+                            .alongWith(
+                                Commands.waitUntil {
+                                        FieldGeometry.distanceToClosestLine(
+                                                FieldGeometry.CORAL_STATIONS,
+                                                Chassis.state.Pose.translation,
+                                            )
+                                            .meters > 1.5.meters && Intake.hasBranchCoral
+                                    }
+                                    .andThen(Wrist.goTo(RobotState.CoralStorage))
+                            ),
                         if (i == 0) goToLevelAndScore(RobotState.L4)
                         else goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),

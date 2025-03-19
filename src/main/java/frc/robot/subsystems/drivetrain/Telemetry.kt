@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drivetrain
 
-import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -32,10 +31,6 @@ object Telemetry {
     private val driveOdometryFrequency =
         driveStateTable.getDoubleTopic("OdometryFrequency").publish()
 
-    private val m_poseArray = DoubleArray(3)
-    private val m_moduleStatesArray = DoubleArray(8)
-    private val m_moduleTargetsArray = DoubleArray(8)
-
     /** Accept the swerve drive state and telemeterize it to SmartDashboard and SignalLogger. */
     fun telemeterize(state: SwerveDriveState) {
         /* Telemeterize the swerve drive state */
@@ -49,18 +44,5 @@ object Telemetry {
         driveModulePositions.set(state.ModulePositions)
         driveTimestamp.set(state.Timestamp)
         driveOdometryFrequency.set(1.0 / state.OdometryPeriod)
-
-        /* Also write to log file */
-        for (i in 0..6 step 2) {
-            m_moduleStatesArray[i] = state.ModuleStates[i].angle.radians
-            m_moduleStatesArray[i + 1] = state.ModuleStates[i].speedMetersPerSecond
-            m_moduleTargetsArray[i] = state.ModuleTargets[i].angle.radians
-            m_moduleTargetsArray[i + 1] = state.ModuleTargets[i].speedMetersPerSecond
-        }
-
-        SignalLogger.writeDoubleArray("DriveState/Pose", m_poseArray)
-        SignalLogger.writeDoubleArray("DriveState/ModuleStates", m_moduleStatesArray)
-        SignalLogger.writeDoubleArray("DriveState/ModuleTargets", m_moduleTargetsArray)
-        SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds")
     }
 }

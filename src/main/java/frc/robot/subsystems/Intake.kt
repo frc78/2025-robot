@@ -14,9 +14,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -25,7 +23,7 @@ import frc.robot.lib.meters
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
-object Intake : SubsystemBase ("Intake") {
+object Intake : SubsystemBase("intake") {
     init {
         defaultCommand = Commands.idle(this).withName("Intake idle")
     }
@@ -97,7 +95,8 @@ object Intake : SubsystemBase ("Intake") {
      */
     fun hasCoralByCurrent(): Boolean {
         // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && coralDetectedDebounce.calculate(hasBranchCoral)
+        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) &&
+            coralDetectedDebounce.calculate(hasBranchCoral)
     }
 
     fun detectAlgaeByCurrent(): Boolean {
@@ -154,28 +153,9 @@ object Intake : SubsystemBase ("Intake") {
         startEnd({ leader.set(1.0) }, { leader.set(0.0) }).withName("outtakeAlgae")
     }
 
-    val stopRollers by command {
-        runOnce{ leader.set(0.0) }
-    }
-
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
     val scoreAlgae by command { outtakeAlgae.withTimeout(0.5.seconds) }
-
-    private var outtakeCoralStartTime = -1.0
-
-    fun outtakeCoralAndStartTimer(): Command {
-        outtakeCoralStartTime = Timer.getTimestamp()
-        return runOnce { leader.set(-0.5) }
-    }
-
-    fun stopCoralOuttakeCondition(): Boolean {
-        if (Timer.getTimestamp() - outtakeCoralStartTime > 0.2 && !CommandXboxController(1).rightTrigger(0.55).asBoolean) {
-            outtakeCoralStartTime = -0.1
-            return true
-        }
-        return false
-    }
 
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 

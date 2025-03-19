@@ -3,7 +3,6 @@ package frc.robot.subsystems
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
@@ -31,7 +30,11 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
-    CoralStorage(62.92.degrees, 0.25.inches, Wrist.lowerLimit), // same as coral station but with wrist over
+    CoralStorage(
+        62.92.degrees,
+        0.25.inches,
+        Wrist.lowerLimit,
+    ), // same as coral station but with wrist over
 }
 
 object SuperStructure {
@@ -106,9 +109,12 @@ object SuperStructure {
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
                         Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees }
-                            .andThen(Elevator.goToRawUntil(state.elevatorHeight) { Elevator.position > 20.inches })
+                            .andThen(
+                                Elevator.goToRawUntil(state.elevatorHeight) {
+                                    Elevator.position > 20.inches
+                                }
+                            )
                             .andThen(Wrist.goTo(state))
-
 
                     // OLD and JERKY
                     //                        smartGoTo(state)

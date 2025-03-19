@@ -2,8 +2,6 @@ package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.WaitCommand
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import frc.robot.lib.Branch
@@ -81,17 +79,23 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(Climber.extend)
         )
 
-    rightTrigger(0.55).onTrue(
-        Intake.outtakeCoralAndStartTimer()
-            .andThen(WaitUntilCommand{ Intake.stopCoralOuttakeCondition() })
-            .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
-            .andThen(Intake.stopRollers))
+    rightTrigger(0.55)
+        .onTrue(
+            Intake.outtakeCoral
+                .withDeadline(
+                    // Wait until 0.2 seconds have passed and the trigger is released
+                    Commands.waitSeconds(0.2)
+                        .alongWith(Commands.waitUntil { rightTriggerAxis < 0.55 })
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
+        )
 
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
-                .alongWith(Intake.intakeCoralThenHold()).withName("Intake coral from coral station")
+                .alongWith(Intake.intakeCoralThenHold())
+                .withName("Intake coral from coral station")
         )
 
     // Algae Stuff
@@ -119,7 +123,8 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
 
-    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+    leftTrigger(0.55)
+        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {

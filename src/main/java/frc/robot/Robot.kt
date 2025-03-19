@@ -22,15 +22,12 @@ import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.FieldGeometry
-import frc.robot.lib.bindings.configureCartDriving
-import frc.robot.lib.bindings.configureDriveBasicLayout
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
@@ -95,33 +92,31 @@ object Robot : LoggedRobot() {
 
         driverController.configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
+        CommandJoystick(5).configureManipTestBindings()
 
         Pivot.coast()
         RobotModeTriggers.disabled()
-            .and(Trigger({ Pivot.angle > 45.degrees }))
+            .and(Trigger { Pivot.angle > 45.degrees })
             .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
 
         // Move wrist over when leaving coral station area with a coral
         // Running only in teleop to avoid interrupting auto
-        RobotModeTriggers.teleop().and {
-            FieldGeometry.distanceToClosestLine(
-                FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 1.5.meters }
-            .onTrue(ConditionalCommand(
-                SuperStructure.smartGoTo(RobotState.CoralStorage),
-                Commands.none())
-                { Intake.hasBranchCoral })
-
-        // OLD, got tripped up by L1 coral
-//        RobotModeTriggers.teleop().and {
-//            FieldGeometry.distanceToClosestLine(
-//                FieldGeometry.CORAL_STATIONS,
-//                Chassis.state.Pose.translation).meters > 1.5.meters
-//                    && Intake.hasBranchCoral
-//                    && !Intake.detectAlgaeByCurrent() }
-//            .onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
-
-
+        RobotModeTriggers.teleop()
+            .and {
+                FieldGeometry.distanceToClosestLine(
+                        FieldGeometry.CORAL_STATIONS,
+                        Chassis.state.Pose.translation,
+                    )
+                    .meters > 1.5.meters
+            }
+            .onTrue(
+                Commands.either(
+                    SuperStructure.smartGoTo(RobotState.CoralStorage),
+                    Commands.none(),
+                ) {
+                    Intake.hasBranchCoral
+                }
+            )
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
@@ -159,10 +154,9 @@ object Robot : LoggedRobot() {
         // to the left when the elevator is at 90º
         wristMech =
             elevatorMech.append(
-                MechanismLigament2d("wrist", 20.0, 90.0, 6.0, Color8Bit(Color.kPurple))
+                MechanismLigament2d("wrist", 12.0, 90.0, 6.0, Color8Bit(Color.kPurple))
             )
         wristMech.append(MechanismLigament2d("coral", 6.25, 112.0, 6.0, Color8Bit(Color.kWhite)))
-        wristMech.append(MechanismLigament2d("algae", 16.0, -125.0, 6.0, Color8Bit(Color.kTeal)))
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
@@ -183,7 +177,7 @@ object Robot : LoggedRobot() {
         // Elevator.length is 0 when the elevator is retracted, but the elevator has a fixed length
         // of 30 inches
         elevatorMech.length = (30.inches + Elevator.position).inches
-        wristMech.angle = -Wrist.angle.degrees
+        wristMech.angle = 140 - Wrist.angle.degrees
     }
 
     override fun teleopInit() {
@@ -201,14 +195,6 @@ object Robot : LoggedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
-        CommandJoystick(5).configureManipTestBindings()
-        // Enable open-loop driving on the cart
-        driverController.configureCartDriving()
-    }
-
-    override fun testExit() {
-        // Reset driving to normal
-        driverController.configureDriveBasicLayout()
     }
 
     override fun autonomousInit() {

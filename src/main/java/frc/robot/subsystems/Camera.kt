@@ -67,7 +67,9 @@ class Camera(val name: String, val transform: Transform3d) {
         val avgDist = totalDistance / validTargets.size
 
         if (validTargets.size > 1) currentStds = multiTagStds
-        if ((validTargets.size == 1 && avgDist > 2) || (validTargets.size == 2 && avgDist > 5)) {
+        val outOfRange =
+            validTargets.size == 1 && avgDist > 2 || validTargets.size == 2 && avgDist > 5
+        if (outOfRange) {
             currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
             return
         }

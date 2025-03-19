@@ -44,7 +44,8 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.*
+import frc.robot.lib.Branch
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
@@ -57,6 +58,22 @@ import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
+import frc.robot.lib.amps
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilogramSquareMeters
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.metersPerSecondPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radians
+import frc.robot.lib.rotateByAlliance
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.rotationsPerSecondPerSecond
+import frc.robot.lib.seconds
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
@@ -110,6 +127,8 @@ object Chassis :
         PathPlannerLogging.setLogTargetPoseCallback {
             Logger.recordOutput("pathfind_to_pose_target", it)
         }
+
+        @Suppress("SpreadOperator")
         PathPlannerLogging.setLogActivePathCallback {
             Logger.recordOutput("pathfind_to_pose_path", *it.toTypedArray())
         }
@@ -677,7 +696,8 @@ object Chassis :
                 angularDisplacement.radians * this.moduleLocations[0].let { hypot(it.x, it.y) }
             val wheelRotations =
                 startPositions.mapIndexed { index, startPos ->
-                    (state.ModulePositions[index].distanceMeters - startPos) / (CompBotTunerConstants.kWheelRadius.meters * PI * 2)
+                    (state.ModulePositions[index].distanceMeters - startPos) /
+                        (CompBotTunerConstants.kWheelRadius.meters * PI * 2)
                 }
             val wheelRadii =
                 wheelRotations.map { linearDisplacement / (it * 2 * PI) }.toDoubleArray()

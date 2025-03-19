@@ -9,17 +9,16 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.sim.ChassisReference.Clockwise_Positive
+import com.ctre.phoenix6.sim.ChassisReference.CounterClockwise_Positive
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
-import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -38,7 +37,8 @@ import kotlin.math.PI
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Wrist : Subsystem {
+object Wrist : SubsystemBase("wrist") {
+
     var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
     private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)
@@ -201,30 +201,28 @@ object Wrist : Subsystem {
             )
             .withName("Wrist SysId")
 
-    private val simState by lazy { leader.simState }
+    private val simState by lazy { leader.simState.apply { Orientation = Clockwise_Positive } }
     private val armSim by lazy {
         SingleJointedArmSim(
-            DCMotor.getKrakenX60Foc(1),
-            ALPHA_GEAR_RATIO,
-            .07,
-            .3,
-            0.0,
-            PI,
-            false,
-            0.00,
+            /* gearbox = */ DCMotor.getKrakenX60Foc(1),
+            /* gearing = */ COMP_GEAR_RATIO,
+            /* jKgMetersSquared = */ 0.0611,
+            /* armLengthMeters = */ .3,
+            /* minAngleRads = */ 0.0,
+            /* maxAngleRads = */ PI,
+            /* simulateGravity = */ false,
+            /* startingAngleRads = */ 0.00,
         )
     }
 
     override fun simulationPeriodic() {
-        simState.setSupplyVoltage(RobotController.getBatteryVoltage())
         armSim.setInputVoltage(simState.motorVoltage)
         armSim.update(0.02)
-        simState.setRawRotorPosition(armSim.angleRads.radians * ALPHA_GEAR_RATIO)
-        simState.setRotorVelocity(armSim.velocityRadPerSec.radiansPerSecond * ALPHA_GEAR_RATIO)
+        simState.setRawRotorPosition(armSim.angleRads.radians * COMP_GEAR_RATIO)
+        simState.setRotorVelocity(armSim.velocityRadPerSec.radiansPerSecond * COMP_GEAR_RATIO)
     }
 
     override fun periodic() {
-        super.periodic()
         Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
     }
