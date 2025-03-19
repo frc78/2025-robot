@@ -75,6 +75,9 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     val notRightBumper = rightBumper().negate()
     val notA = a().negate()
     val notY = y().negate()
+
+    start().whileTrue(Chassis.straightLineTest).onFalse(Chassis.stop)
+
     // only left bumper
     leftBumper().and(notRightBumper).and(notA).and(notY).whileTrue(Chassis.driveToLeftBranch)
     // only right bumper
