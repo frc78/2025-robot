@@ -63,6 +63,9 @@ object Wrist : SubsystemBase("wrist") {
             MotorOutput =
                 if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
 
+            CurrentLimits.StatorCurrentLimit = 10.0
+            CurrentLimits.StatorCurrentLimitEnable = true
+
             SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                 .withReverseSoftLimitEnable(true)
                 .withForwardSoftLimitThreshold(upperLimit)
