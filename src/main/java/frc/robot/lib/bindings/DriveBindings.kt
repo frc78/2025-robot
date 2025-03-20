@@ -1,6 +1,5 @@
 package frc.robot.lib.bindings
 
-import com.ctre.phoenix6.swerve.SwerveModule
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands

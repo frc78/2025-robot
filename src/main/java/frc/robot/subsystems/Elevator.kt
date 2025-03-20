@@ -38,7 +38,6 @@ import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
-    private val voltage = VoltageOut(0.0)
     val IS_STOWED_THRESHOLD = 3.inches
     val MOVE_PIVOT_THRESHOLD = 40.inches
 
