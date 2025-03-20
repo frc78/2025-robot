@@ -195,6 +195,7 @@ object Robot : LoggedRobot() {
 
     override fun testInit() {
         CommandScheduler.getInstance().cancelAll()
+        driverController.start().whileTrue(Chassis.straightLineTest).onFalse(Chassis.stop)
     }
 
     override fun autonomousInit() {

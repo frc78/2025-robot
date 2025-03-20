@@ -1,6 +1,5 @@
 package frc.robot.lib.bindings
 
-import com.ctre.phoenix6.swerve.SwerveModule
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -75,8 +74,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     val notRightBumper = rightBumper().negate()
     val notA = a().negate()
     val notY = y().negate()
-
-    start().whileTrue(Chassis.straightLineTest).onFalse(Chassis.stop)
 
     // only left bumper
     leftBumper().and(notRightBumper).and(notA).and(notY).whileTrue(Chassis.driveToLeftBranch)

@@ -5,6 +5,7 @@ import com.ctre.phoenix6.Utils
 import com.ctre.phoenix6.swerve.SwerveModule
 import com.ctre.phoenix6.swerve.SwerveRequest
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModulePosition
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.PIDConstants
@@ -20,6 +21,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.system.plant.DCMotor
@@ -691,12 +693,20 @@ object Chassis :
     val straightLineTest by command {
         val dist = 5.meters
         resetPose(Pose2d())
+        state.ModulePositions = arrayOf(SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition())
         applyRequest {
-            ApplyRobotSpeeds().withSpeeds(ChassisSpeeds(0.1.metersPerSecond, 0.0.metersPerSecond, 0.0.radiansPerSecond))
-            }.until{state.Pose.translation.norm > dist.meters}.andThen(stop)
+                ApplyRobotSpeeds()
+                    .withSpeeds(
+                        ChassisSpeeds(
+                            0.25.metersPerSecond,
+                            0.0.metersPerSecond,
+                            0.0.radiansPerSecond,
+                        )
+                    )
+            }
+            .until { state.Pose.translation.norm >= dist.meters }
+            .andThen(stop)
     }
 
-    val stop by command {
-        applyRequest { ApplyRobotSpeeds().withSpeeds(ChassisSpeeds()) }
-    }
+    val stop by command { applyRequest { ApplyRobotSpeeds().withSpeeds(ChassisSpeeds()) } }
 }
