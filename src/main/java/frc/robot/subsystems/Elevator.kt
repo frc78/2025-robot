@@ -14,21 +14,16 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Commands.runOnce
-import edu.wpi.first.wpilibj2.command.Commands.startEnd
-import edu.wpi.first.wpilibj2.command.PrintCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
 import frc.robot.lib.command
-import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
 import frc.robot.lib.meters
@@ -39,8 +34,6 @@ import frc.robot.lib.toAngle
 import frc.robot.lib.toAngularVelocity
 import frc.robot.lib.toDistance
 import frc.robot.lib.volts
-import java.util.function.BooleanSupplier
-import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("elevator") {
@@ -79,7 +72,6 @@ object Elevator : SubsystemBase("elevator") {
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
     val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
-    private val SETPOINT_THRESHOLD = 5.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -115,58 +107,28 @@ object Elevator : SubsystemBase("elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
-    // Moves the elevator to <setpoint> and holds the command until <endCondition> is true
-    fun goToRawUntil(setpoint: Distance, endCondition: BooleanSupplier): Command =
-        runOnce { leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations())) }
-            .andThen(Commands.idle())
-            .until(endCondition)
+    var setpoint = 0.inches
+        set(value) {
+            field = value.coerceIn(0.inches, MAX_HEIGHT)
+        }
 
-    fun goTo(state: RobotState): Command =
-        PrintCommand("Elevator going to $state - ${state.elevatorHeight}")
-            .alongWith(
-                runOnce {
-                    leader.setControl(
-                        motionMagic.withPosition(state.elevatorHeight.toDrumRotations())
-                    )
-                }
-            )
+    init {
+        defaultCommand =
+            run { leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations())) }
+                .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+    }
+
+    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.elevatorHeight })
 
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
 
-    fun isAtSetpoint(target: Distance): Boolean {
-        return abs((position - target).inches) < SETPOINT_THRESHOLD.inches
-    }
-
     val atPosition: Boolean
-        get() =
-            (leader.position.value - motionMagic.positionMeasure).abs(Degrees) <
-                .5.inches.toDrumRotations().degrees
+        get() = (leader.position.value - setpoint.toDrumRotations()) < .5.inches.toDrumRotations()
 
-    fun goToAndWaitUntilStowed(state: RobotState): Command =
-        PrintCommand("Elevator stowing").alongWith(goTo(state)).andThen(Commands.idle()).until {
-            isStowed || state.elevatorHeight > IS_STOWED_THRESHOLD
-        }
+    val manualUp by command { Commands.run({ setpoint += 10.inches * 0.020 }) }
 
-    fun goToAndWaitUntilAtHeight(state: RobotState): Command =
-        PrintCommand("Elevator waiting until it gets to $state - ${state.elevatorHeight}")
-            .alongWith(goTo(state))
-            .andThen(Commands.idle())
-            .until { isAtSetpoint(state.elevatorHeight) }
-
-    val manualUp by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput(2.0.volts)) },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
-
-    val manualDown by command {
-        startEnd(
-            { leader.setControl(voltage.withOutput((-2.0).volts)) },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
+    val manualDown by command { Commands.run({ setpoint -= 10.inches * 0.020 }) }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }

@@ -34,7 +34,6 @@ import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
 object Pivot : SubsystemBase("pivot") {
@@ -42,12 +41,13 @@ object Pivot : SubsystemBase("pivot") {
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12) // 266.25
     private val cancoder = CANcoder(5, "*")
 
-    // how close pivot needs to be to its setpoint for goToAndWaitUntilVertical to terminate
-    private val SETPOINT_THRESHOLD = 4.degrees
     // how vertical the pivot needs to be for the elevator to extend
-    private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
+    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees
     // how horizontal the pivot needs to be for the
     val EXTEND_FOOT_THRESHOLD = 60.degrees
+
+    private val UPPER_LIMIT = 160.degrees
+    private val LOWER_LIMIT = 0.degrees
 
     private val ALPHA_BOT_SLOT0_CONFIGS =
         Slot0Configs()
@@ -59,9 +59,9 @@ object Pivot : SubsystemBase("pivot") {
             .withKA(0.49753)
             .withKG(0.22628)
 
-    private val COMP_BOT_SLOT0_CONFIGS =
+    private val COMP_BOT_ELEVATOR_DOWN_GAINS =
         Slot0Configs()
-            .withKP(50.0)
+            .withKP(200.0)
             .withKI(0.0)
             .withKD(0.29431)
             .withKS(0.24723)
@@ -72,9 +72,9 @@ object Pivot : SubsystemBase("pivot") {
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
 
     // Used when going to coral station
-    private val COMP_BOT_SLOT1_CONFIGS =
+    private val COMP_BOT_ELEVATOR_UP_GAINS =
         Slot1Configs()
-            .withKP(200.0)
+            .withKP(50.0)
             .withKI(0.0)
             .withKD(0.29431)
             .withKS(0.24723)
@@ -98,14 +98,14 @@ object Pivot : SubsystemBase("pivot") {
 
                     SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                         .withReverseSoftLimitEnable(true)
-                        .withForwardSoftLimitThreshold(160.degrees)
-                        .withReverseSoftLimitThreshold(0.degrees)
+                        .withForwardSoftLimitThreshold(UPPER_LIMIT)
+                        .withReverseSoftLimitThreshold(LOWER_LIMIT)
 
                     Feedback =
                         if (IS_COMP) COMP_BOT_FEEDBACK_CONFIGS else ALPHA_BOT_FEEDBACK_CONFIGS
                     // Set feedforward and feedback gains
-                    Slot0 = if (IS_COMP) COMP_BOT_SLOT0_CONFIGS else ALPHA_BOT_SLOT0_CONFIGS
-                    Slot1 = COMP_BOT_SLOT1_CONFIGS
+                    Slot0 = if (IS_COMP) COMP_BOT_ELEVATOR_DOWN_GAINS else ALPHA_BOT_SLOT0_CONFIGS
+                    Slot1 = COMP_BOT_ELEVATOR_UP_GAINS
                     MotionMagic.MotionMagicCruiseVelocity = .25
                     MotionMagic.MotionMagicAcceleration = .5
                     MotionMagic.MotionMagicJerk = 2.5
@@ -118,36 +118,34 @@ object Pivot : SubsystemBase("pivot") {
             configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
         }
 
+    private var setpoint = RobotState.Stow.pivotAngle
+        set(value) {
+            field = value.coerceIn(0.degrees, 160.degrees)
+        }
+
     private val motionMagic = MotionMagicVoltage(0.degrees)
 
     init {
         follower.setControl(Follower(9, true))
+
+        defaultCommand = run {
+            leader.setControl(
+                motionMagic
+                    .withPosition(setpoint)
+                    .withLimitForwardMotion(Climber.isExtended)
+                    .withSlot(if (Elevator.position < 10.inches) 0 else 1)
+            )
+        }
     }
 
     // Checks if the pivot is sufficiently vertical to extend the elevator
     val canExtendElevator: Boolean
         get() = angle > RAISE_ELEVATOR_THRESHOLD
 
-    fun isAtSetpoint(target: Angle): Boolean {
-        return abs((angle - target).degrees) < SETPOINT_THRESHOLD.degrees
-    }
-
-    // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
-    fun goToRawUntil(setpoint: Angle, endCondition: () -> Boolean): Command =
-        run {
-                leader.setControl(
-                    motionMagic
-                        .withPosition(setpoint)
-                        .withLimitForwardMotion(Climber.isExtended)
-                        .withSlot(if (Elevator.position < 10.inches) 1 else 0)
-                )
-            }
-            .until(endCondition)
-
     val atPosition
         get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
 
-    fun goTo(state: RobotState): Command = goToRawUntil(state.pivotAngle) { true }
+    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.pivotAngle })
 
     val angle: Angle
         get() = leader.position.value
@@ -172,23 +170,9 @@ object Pivot : SubsystemBase("pivot") {
     }
 
     private val voltageOut = VoltageOut(0.0)
-    val moveUp by command {
-        startEnd(
-            {
-                leader.setControl(
-                    voltageOut.withOutput(2.volts).withLimitForwardMotion(Climber.isExtended)
-                )
-            },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
+    val moveUp by command { Commands.run({ setpoint += 10.degrees * .020 }) }
 
-    val moveDown by command {
-        startEnd(
-            { leader.setControl(voltageOut.withOutput((-2).volts)) },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
+    val moveDown by command { Commands.run({ setpoint -= 10.degrees * 0.020 }) }
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(

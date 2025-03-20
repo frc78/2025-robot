@@ -34,8 +34,16 @@ object Climber : SubsystemBase("climber") {
             )
         }
 
+    private var setpoint = 0.rotations
+
     init {
-        defaultCommand = Commands.idle(this).withName("Climber idle")
+        defaultCommand = run {
+            leader.setControl(
+                positionVoltage
+                    .withPosition(setpoint)
+                    .withLimitForwardMotion(Pivot.angle > Pivot.EXTEND_FOOT_THRESHOLD)
+            )
+        }
         leader.set(0.0)
     }
 
@@ -43,12 +51,9 @@ object Climber : SubsystemBase("climber") {
         Logger.recordOutput("climber/position", leader.position.value)
     }
 
-    val retract by command {
-        runOnce { leader.setControl(positionVoltage.withPosition(0.0)) }.withName("Retract Foot")
-    }
+    val retract by command { Commands.runOnce({ setpoint = 0.rotations }).withName("Retract foot") }
 
     val extend by command {
-        runOnce { leader.setControl(positionVoltage.withPosition(extendedPosition)) }
-            .withName("Extend Foot")
+        Commands.runOnce({ setpoint = extendedPosition }).withName("Extend Foot")
     }
 }

@@ -8,6 +8,7 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -72,7 +73,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
             Wrist.goTo(RobotState.FullyClimbed)
                 .alongWith(Elevator.goTo(RobotState.FullyClimbed))
                 .alongWith(
-                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
+                    Pivot.goTo(RobotState.FullyClimbed).andWait {
                         Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
                     }
                 )
@@ -201,7 +202,7 @@ fun CommandJoystick.configureManipTestBindings() {
             Wrist.goTo(RobotState.FullyClimbed)
                 .alongWith(Elevator.goTo(RobotState.FullyClimbed))
                 .alongWith(
-                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
+                    Pivot.goTo(RobotState.FullyClimbed).andWait {
                         Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
                     }
                 )
@@ -210,6 +211,6 @@ fun CommandJoystick.configureManipTestBindings() {
 
     button(9).whileTrue(Climber.extend)
     button(10).whileTrue(Climber.retract)
-    button(11).whileTrue(Wrist.manualUp())
-    button(12).whileTrue(Wrist.manualDown())
+    button(11).whileTrue(Wrist.manualUp)
+    button(12).whileTrue(Wrist.manualDown)
 }

@@ -10,19 +10,14 @@ import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.sim.ChassisReference.Clockwise_Positive
-import com.ctre.phoenix6.sim.ChassisReference.CounterClockwise_Positive
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.PrintCommand
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
-import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.radians
@@ -33,8 +28,6 @@ import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import kotlin.math.PI
-import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("wrist") {
@@ -43,8 +36,6 @@ object Wrist : SubsystemBase("wrist") {
     private var upperLimit = 197.degrees
     private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)
     private const val COMP_GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 16.0)
-
-    private val SETPOINT_THRESHOLD = 3.degrees
 
     private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs()
@@ -82,6 +73,11 @@ object Wrist : SubsystemBase("wrist") {
             MotionMagic.MotionMagicJerk = 50.0
         }
 
+    var setpoint = lowerLimit
+        set(value) {
+            field = value.coerceIn(lowerLimit, upperLimit)
+        }
+
     val motionMagic =
         DynamicMotionMagicVoltage(
             0.degrees,
@@ -92,8 +88,29 @@ object Wrist : SubsystemBase("wrist") {
 
     private val leader = TalonFX(13, "*").apply { configurator.apply(standardConfig) }
 
+    private val shouldLimitReverseMotion: Boolean
+        get() {
+            return Pivot.angle < 20.degrees
+        }
+
+    init {
+        defaultCommand =
+            run {
+                    motionMagic
+                        .withPosition(setpoint)
+                        .withLimitReverseMotion(shouldLimitReverseMotion)
+                    if (Intake.detectAlgaeByCurrent()) {
+                        motionMagic.withVelocity(3.0).withAcceleration(6.0).withJerk(30.0)
+                    } else {
+                        motionMagic.withVelocity(10.0).withAcceleration(30.0).withJerk(100.0)
+                    }
+                    leader.setControl(motionMagic)
+                }
+                .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
+    }
+
     val atPosition
-        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
+        get() = (leader.position.value - setpoint) < 1.degrees
 
     val voltageOut = VoltageOut(0.0)
 
@@ -103,67 +120,14 @@ object Wrist : SubsystemBase("wrist") {
         }
     }
 
-    fun isAtSetpoint(target: Angle): Boolean {
-        return abs((angle - target).degrees) < SETPOINT_THRESHOLD.degrees
-    }
-
-    // Moves the wrist to <setpoint> and holds the command until <endCondition> is true
-    fun goToRawUntil(setpoint: Angle, endCondition: () -> Boolean): Command =
-        runOnce {
-                motionMagic.withPosition(setpoint)
-                if (Intake.detectAlgaeByCurrent()) {
-                    leader.setControl(
-                        motionMagic.withVelocity(3.0).withAcceleration(6.0).withJerk(30.0)
-                    )
-                } else {
-                    leader.setControl(
-                        motionMagic.withVelocity(10.0).withAcceleration(30.0).withJerk(100.0)
-                    )
-                }
-            }
-            .andThen(Commands.waitUntil(endCondition))
-
-    fun goTo(state: RobotState): Command = goToRawUntil(state.wristAngle) { true }
-
-    fun goToAndWaitUntilAtAngle(state: RobotState): Command =
-        PrintCommand("Wrist waiting until it gets to $state - ${state.wristAngle}")
-            .alongWith(goTo(state))
-            .andThen(Commands.idle())
-            .until { isAtSetpoint(state.wristAngle) }
+    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.wristAngle })
 
     val angle: Angle
         get() = leader.position.value
 
-    fun manualUp(): Command {
-        return startEnd(
-            { leader.setControl(voltageOut.withOutput(2.0.volts)) },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
+    val manualUp by command { Commands.run({ setpoint += 10.degrees * .020 }) }
 
-    fun manualDown(): Command {
-        return startEnd(
-            { leader.setControl(voltageOut.withOutput((-2.0).volts)) },
-            { leader.setControl(motionMagic.withPosition(leader.position.value)) },
-        )
-    }
-
-    @Suppress("UnusedPrivateProperty")
-    private val resetPosition by command { Commands.runOnce({ leader.setPosition(0.0) }) }
-
-    fun zeroRoutines(): Command {
-        return SequentialCommandGroup(
-            manualDown()
-                .until({ leader.torqueCurrent.value > 10.0.amps })
-                .andThen({
-                    leader.setPosition(0.0.degrees)
-                    lowerLimit = leader.position.value + 5.degrees
-                }),
-            manualUp()
-                .until({ leader.torqueCurrent.value > 10.0.amps })
-                .andThen({ upperLimit = leader.position.value - 5.degrees }),
-        )
-    }
+    val manualDown by command { Commands.run({ setpoint -= 10.degrees * .020 }) }
 
     private val sysIdRoutine =
         SysIdRoutine(
@@ -209,7 +173,7 @@ object Wrist : SubsystemBase("wrist") {
             /* jKgMetersSquared = */ 0.0611,
             /* armLengthMeters = */ .3,
             /* minAngleRads = */ 0.0,
-            /* maxAngleRads = */ PI,
+            /* maxAngleRads = */ upperLimit.radians,
             /* simulateGravity = */ false,
             /* startingAngleRads = */ 0.00,
         )
@@ -225,5 +189,6 @@ object Wrist : SubsystemBase("wrist") {
     override fun periodic() {
         Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
+        Logger.recordOutput("wrist/setpoint", setpoint.degrees)
     }
 }
