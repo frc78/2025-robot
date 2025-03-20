@@ -14,7 +14,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
-    DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
+    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
 
 val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
 val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
@@ -127,11 +127,23 @@ private fun CommandXboxController.configureDriveManualSequencingLayout() {
 
 // Driving with buttons for automatic scoring sequences
 private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+    val notA = a().negate()
+    val notY = y().negate()
+
     rightBumper()
+        .and(notLeftBumper)
+        .whileTrue(Chassis.driveToRightBranch.andThen(SuperStructure.scoreCoralOnSelectedBranch))
+    leftBumper()
+        .and(notRightBumper)
+        .whileTrue(Chassis.driveToLeftBranch.andThen(SuperStructure.scoreCoralOnSelectedBranch))
+    leftBumper()
+        .and(rightBumper())
+        .and { !Intake.hasBranchCoral }
         .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(SuperStructure.smartGoTo(RobotState.Stow))
+            Chassis.driveToClosestReef
+                .andThen(SuperStructure.retrieveAlgaeFromReef)
+                .andThen(SuperStructure.retractWithAlgae())
         )
 }
