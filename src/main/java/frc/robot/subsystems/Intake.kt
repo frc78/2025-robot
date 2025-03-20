@@ -7,13 +7,14 @@ import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
@@ -22,7 +23,7 @@ import frc.robot.lib.meters
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
-object Intake : Subsystem {
+object Intake : SubsystemBase("intake") {
     init {
         defaultCommand = Commands.idle(this).withName("Intake idle")
     }
@@ -94,7 +95,8 @@ object Intake : Subsystem {
      */
     fun hasCoralByCurrent(): Boolean {
         // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) && hasBranchCoral
+        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) &&
+            coralDetectedDebounce.calculate(hasBranchCoral)
     }
 
     fun detectAlgaeByCurrent(): Boolean {
@@ -154,6 +156,8 @@ object Intake : Subsystem {
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
     val scoreAlgae by command { outtakeAlgae.withTimeout(0.5.seconds) }
+
+    private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
