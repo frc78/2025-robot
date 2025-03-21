@@ -7,6 +7,8 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import frc.robot.Robot
+import frc.robot.lib.currentTimeToFPGA
+import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -22,7 +24,7 @@ class Camera(val name: String, val transform: Transform3d) {
     private val estimator =
         PhotonPoseEstimator(
             Robot.gameField,
-            PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+            PhotonPoseEstimator.PoseStrategy.CONSTRAINED_SOLVEPNP,
             transform,
         )
 
@@ -36,10 +38,11 @@ class Camera(val name: String, val transform: Transform3d) {
     private var lastEstimatedPose: EstimatedRobotPose? = null
 
     init {
-        estimator.setMultiTagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY)
+        estimator.setMultiTagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.PNP_DISTANCE_TRIG_SOLVE)
     }
 
     fun getEstimatedGlobalPose(): EstimatedRobotPose? {
+        estimator.addHeadingData(currentTimeToFPGA(Chassis.state.Timestamp), Chassis.state.Pose.rotation)
         var visionEst: EstimatedRobotPose? = null
         cam.allUnreadResults.forEach {
             visionEst = estimator.update(it).getOrNull()
