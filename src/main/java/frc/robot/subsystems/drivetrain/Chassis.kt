@@ -691,11 +691,10 @@ object Chassis :
     }
 
     val straightLineTest by command {
-        val dist = 5.meters
-        resetPose(Pose2d())
-        state.ModulePositions = arrayOf(SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition(), SwerveModulePosition())
+        runOnce{resetPose(Pose2d())}.andThen(
         applyRequest {
                 ApplyRobotSpeeds()
+                    .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
                     .withSpeeds(
                         ChassisSpeeds(
                             0.25.metersPerSecond,
@@ -704,9 +703,9 @@ object Chassis :
                         )
                     )
             }
-            .until { state.Pose.translation.norm >= dist.meters }
-            .andThen(stop)
+            .until { state.Pose.translation.norm >= 5 }
+            .andThen(stop))
     }
 
-    val stop by command { applyRequest { ApplyRobotSpeeds().withSpeeds(ChassisSpeeds()) } }
+    val stop by command { runOnce {setControl(ApplyRobotSpeeds().withSpeeds(ChassisSpeeds())) } }
 }
