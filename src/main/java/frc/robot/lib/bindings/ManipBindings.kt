@@ -65,6 +65,9 @@ private fun CommandXboxController.configureManipButtonLayout() {
     b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
     x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
     y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)) // TODO test all these!
+    //    b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
+    //    x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
+    //    y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
 
     start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
     back()

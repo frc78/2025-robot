@@ -134,10 +134,14 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 
     rightBumper()
         .and(notLeftBumper)
-        .whileTrue(Chassis.driveToRightBranch.andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        .whileTrue(
+            Chassis.driveToRightBranch
+        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
     leftBumper()
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToLeftBranch.andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        .whileTrue(
+            Chassis.driveToLeftBranch
+        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
     leftBumper()
         .and(rightBumper())
         .and { !Intake.hasBranchCoral }
@@ -146,4 +150,17 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
                 .andThen(SuperStructure.retrieveAlgaeFromReef)
                 .andThen(SuperStructure.retractWithAlgae())
         )
+
+    // only y
+    y().and(notLeftBumper)
+        .and(notRightBumper)
+        .whileTrue(Chassis.driveToBarge.andThen(SuperStructure.autoScoreAlgaeInNet))
+    // y and left bumper
+    y().and(leftBumper())
+        .and(notRightBumper)
+        .whileTrue(Chassis.driveToBargeLeft.andThen(SuperStructure.autoScoreAlgaeInNet))
+    // y and right bumper
+    y().and(rightBumper())
+        .and(notLeftBumper)
+        .whileTrue(Chassis.driveToBargeRight.andThen(SuperStructure.autoScoreAlgaeInNet))
 }

@@ -138,7 +138,7 @@ object Elevator : SubsystemBase("elevator") {
             35.132.pounds.kilograms,
             DRUM_RADIUS.meters,
             0.0.inches.meters,
-            53.inches.meters,
+            MAX_HEIGHT.meters,
             true,
             5.inches.meters,
         )

@@ -142,4 +142,12 @@ object SuperStructure {
     val retrieveAlgaeFromReef by command {
         goToCalculatedAlgaeHeight.withDeadline(Intake.intakeAlgaeThenHold())
     }
+
+    val autoScoreAlgaeInNet by command {
+        smartGoTo(RobotState.AlgaeNet)
+            .andWait { atPosition }
+            .andThen(Intake.scoreAlgae)
+            .andThen(smartGoTo(RobotState.ReadyToClimb))
+            .onlyIf { Intake.detectAlgaeByCurrent() }
+    }
 }
