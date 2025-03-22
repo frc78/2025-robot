@@ -1,5 +1,9 @@
 package frc.robot.lib
 
+import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.Vector
+import edu.wpi.first.math.kinematics.ChassisSpeeds
+import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.units.AngularAccelerationUnit
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Centimeters
@@ -130,3 +134,9 @@ fun LinearVelocity.toAngularVelocity(radius: Distance): AngularVelocity =
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
+
+fun ChassisSpeeds.toVector(): Vector<N2> =
+    VecBuilder.fill(
+        this.vxMetersPerSecond.metersPerSecond.metersPerSecond,
+        this.vyMetersPerSecond.metersPerSecond.metersPerSecond,
+    )

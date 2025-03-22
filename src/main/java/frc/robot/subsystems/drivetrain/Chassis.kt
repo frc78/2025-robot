@@ -44,8 +44,7 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.Branch
-import frc.robot.lib.FieldGeometry
+import frc.robot.lib.*
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
@@ -58,22 +57,6 @@ import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
-import frc.robot.lib.amps
-import frc.robot.lib.command
-import frc.robot.lib.inches
-import frc.robot.lib.kilogramSquareMeters
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.metersPerSecondPerSecond
-import frc.robot.lib.pounds
-import frc.robot.lib.radians
-import frc.robot.lib.rotateByAlliance
-import frc.robot.lib.rotationsPerSecond
-import frc.robot.lib.rotationsPerSecondPerSecond
-import frc.robot.lib.seconds
-import frc.robot.lib.volts
-import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
@@ -431,11 +414,11 @@ object Chassis :
         closestBargeRightPub.set(closestRightBarge)
     }
 
-    private val xController =
+    private val distanceController =
         ProfiledPIDController(0.9, 0.0, 0.01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
             setTolerance(0.02)
         }
-    private val yController =
+    private val headingController =
         ProfiledPIDController(0.9, 0.0, .01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
             setTolerance(0.02)
         }
@@ -469,27 +452,27 @@ object Chassis :
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-            val fieldRelative =
-                ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
-            xController.reset(state.Pose.translation.x, fieldRelative.vxMetersPerSecond)
-            yController.reset(state.Pose.translation.y, fieldRelative.vyMetersPerSecond)
-            val target = pose()
-            Logger.recordOutput("DriveToPose target", target)
-            xController.goal = TrapezoidProfile.State(target.x, 0.0)
-            yController.goal = TrapezoidProfile.State(target.y, 0.0)
-            FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+
         })
 
     private val isAtPIDGoal: Boolean
         get() =
-            xController.atGoal() &&
-                yController.atGoal() &&
+            distanceController.atGoal() &&
+                headingController.atGoal() &&
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
     private fun driveToPose(pose: () -> Pose2d): Command =
-        primeDriveToPose(pose)
-            .andThen(
                 applyRequest {
+                    val fieldRelative =
+                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                    val target = pose()
+                    val fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(Chassis.state.Speeds, Chassis.state.Pose.rotation)
+                    distanceController.reset(state.Pose.translation.getDistance(target.translation), fieldRelativeSpeeds.toVector().dot(target.translation.minus(state.Pose.translation).toVector()))
+                    headingController.reset(fieldRelativeSpeeds.toVector()., fieldRelative.vyMetersPerSecond)
+                    Logger.recordOutput("DriveToPose target", target)
+                    xController.goal = TrapezoidProfile.State(target.x, 0.0)
+                    yController.goal = TrapezoidProfile.State(target.y, 0.0)
+                    FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
                         val robot = Chassis.state.Pose
 
                         val xOutput = xController.calculate(robot.x)
@@ -501,49 +484,6 @@ object Chassis :
                     }
                     .until { isAtPIDGoal }
             )
-            // Stop movement
-            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
-
-    private fun driveToChangingPose(
-        pose: () -> Pose2d,
-        strafeOverride: () -> ChassisSpeeds,
-        endWhenGoal: Boolean,
-    ): Command =
-        primeDriveToPose(pose)
-            .andThen(
-                applyRequest {
-                        val robot = Chassis.state.Pose
-                        val requestedDriveDelta = strafeOverride()
-
-                        xController.setGoal(
-                            xController.goal.position + requestedDriveDelta.vxMetersPerSecond * .02
-                        )
-                        xController.calculate(robot.x)
-
-                        yController.setGoal(
-                            yController.goal.position + requestedDriveDelta.vyMetersPerSecond * .02
-                        )
-                        val xOutput = xController.calculate(robot.x)
-                        val yOutput = yController.calculate(robot.y)
-                        FieldCentricFacingAngleAlignments.withVelocityX(
-                                xController.setpoint.velocity + xOutput
-                            )
-                            .withVelocityY(yController.setpoint.velocity + yOutput)
-                            .withTargetDirection(
-                                FieldCentricFacingAngleAlignments.TargetDirection.plus(
-                                    Rotation2d.fromRadians(
-                                        requestedDriveDelta.omegaRadiansPerSecond
-                                    )
-                                )
-                            )
-                    }
-                    .raceWith(
-                        Commands.waitUntil { endWhenGoal && isAtPIDGoal }
-                            .andThen(Commands.waitSeconds(0.5))
-                            .andThen(Commands.waitUntil { endWhenGoal && isAtPIDGoal })
-                    )
-            )
-
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
