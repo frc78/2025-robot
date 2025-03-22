@@ -2,6 +2,7 @@ package frc.robot.lib
 
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.units.AngularAccelerationUnit
@@ -39,6 +40,7 @@ import edu.wpi.first.units.measure.MomentOfInertia
 import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Velocity
 import edu.wpi.first.units.measure.Voltage
+import kotlin.math.atan2
 
 /* Extension properties are ways of adding functionality to classes
  * we didn't create, without having to create a subclass.*/
@@ -140,3 +142,8 @@ fun ChassisSpeeds.toVector(): Vector<N2> =
         this.vxMetersPerSecond.metersPerSecond.metersPerSecond,
         this.vyMetersPerSecond.metersPerSecond.metersPerSecond,
     )
+
+fun Vector<N2>.angleTo(vec2: Vector<N2>): Angle =
+    (atan2(vec2[1], vec2[0]) - atan2(this[1], this[0])).radians
+
+fun Vector<N2>.toTranslation(): Translation2d = Translation2d(this[0], this[1])

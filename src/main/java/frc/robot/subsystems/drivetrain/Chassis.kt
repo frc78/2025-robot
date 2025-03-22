@@ -348,7 +348,7 @@ object Chassis :
         return run { setControl(requestSupplier()) }
     }
 
-    val zeroHeading: Command = Commands.runOnce({ resetRotation(Chassis.operatorForwardDirection) })
+    val zeroHeading: Command = Commands.runOnce({ resetRotation(operatorForwardDirection) })
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine specified by
@@ -415,13 +415,10 @@ object Chassis :
     }
 
     private val distanceController =
-        ProfiledPIDController(0.9, 0.0, 0.01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
-            setTolerance(0.02)
+        ProfiledPIDController(0.5, 0.0, 0.0, TrapezoidProfile.Constraints(4.0, 5.0)).apply {
+            setTolerance(0.01)
         }
-    private val headingController =
-        ProfiledPIDController(0.9, 0.0, .01, TrapezoidProfile.Constraints(2.0, 5.0)).apply {
-            setTolerance(0.02)
-        }
+    private val headingChange = 10
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
@@ -450,40 +447,62 @@ object Chassis :
             setOf(this),
         )
 
-    private fun primeDriveToPose(pose: () -> Pose2d): Command =
-        Commands.runOnce({
-
-        })
-
     private val isAtPIDGoal: Boolean
         get() =
             distanceController.atGoal() &&
-                headingController.atGoal() &&
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
-    private fun driveToPose(pose: () -> Pose2d): Command =
-                applyRequest {
-                    val fieldRelative =
-                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
-                    val target = pose()
-                    val fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(Chassis.state.Speeds, Chassis.state.Pose.rotation)
-                    distanceController.reset(state.Pose.translation.getDistance(target.translation), fieldRelativeSpeeds.toVector().dot(target.translation.minus(state.Pose.translation).toVector()))
-                    headingController.reset(fieldRelativeSpeeds.toVector()., fieldRelative.vyMetersPerSecond)
-                    Logger.recordOutput("DriveToPose target", target)
-                    xController.goal = TrapezoidProfile.State(target.x, 0.0)
-                    yController.goal = TrapezoidProfile.State(target.y, 0.0)
-                    FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
-                        val robot = Chassis.state.Pose
+    private val fieldRelativeSpeeds
+        get() = ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
 
-                        val xOutput = xController.calculate(robot.x)
-                        val yOutput = yController.calculate(robot.y)
-                        FieldCentricFacingAngleAlignments.withVelocityX(
-                                xController.setpoint.velocity + xOutput
-                            )
-                            .withVelocityY(yController.setpoint.velocity + yOutput)
-                    }
-                    .until { isAtPIDGoal }
+    private fun driveToPose(pose: () -> Pose2d): Command =
+        Commands.runOnce({
+                val target = pose().also { Logger.recordOutput("DriveToPose target", it) }
+                val displacement = state.Pose.translation.minus(target.translation).toVector()
+
+                distanceController.reset(
+                    displacement.norm(),
+                    fieldRelativeSpeeds.toVector().dot(displacement).div(displacement.norm()).also {
+                        Logger.recordOutput("DriveToPose init vel", it)
+                    },
+                )
+            })
+            .andThen(
+                applyRequest {
+                    val target = pose().also { Logger.recordOutput("DriveToPose target", it) }
+                    val fieldRelativeSpeeds =
+                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                    val displacement = state.Pose.translation.minus(target.translation).toVector()
+
+                    FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+
+                    val distanceOutput =
+                        distanceController.setpoint.velocity.also {
+                            Logger.recordOutput("DriveToPose setpointVel", it)
+                        } +
+                            distanceController
+                                .calculate(
+                                    displacement.norm().also {
+                                        Logger.recordOutput("DriveToPose distance", it)
+                                    },
+                                    0.0,
+                                )
+                                .also { Logger.recordOutput("DriveToPose distanceOutput", it) }
+
+                    // Instead of doing whatever this is that I came up with, just apply radial speed like before and gradually reduce tangential component to smooth heading change
+                    val heading = Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond).also {Logger.recordOutput("DriveToPose heading", it.plus(state.Pose.translation))}
+                    val newHeading = heading.rotateBy(Rotation2d.fromRadians(fieldRelativeSpeeds.toVector().angleTo(displacement.times(-1.0)).radians * headingChange * 0.02)).also { Logger.recordOutput("DriveToPose newHeading", it.plus(state.Pose.translation)) }
+
+//                  val speeds = newHeading.unaryMinus().toVector().unit().times(distanceOutput)
+                    val speeds = displacement.unit().times(distanceOutput)
+
+//                    FieldCentricFacingAngleAlignments.withVelocityX(speeds.x)
+//                        .withVelocityY(speeds.y)
+                    FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
+                        .withVelocityY(speeds[1])
+                }
             )
+            .until { isAtPIDGoal }
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
@@ -547,46 +566,31 @@ object Chassis :
         distanceToSubstation: Double,
     ): Command =
         // Our target distance from the line segment of the substation
-        driveToChangingPose(
-                {
-                    val position = Chassis.state.Pose.translation
-                    // Gets closest substation line segment
-                    val closestSubstation =
-                        FieldGeometry.getClosestLine(FieldGeometry.CORAL_STATIONS, position)
-                    // Gets the vector to the closest point on that line segment. SDF gives the
-                    // vector from the point to the robot, so it needs an unary minus and then added
-                    // to the robot position
-                    val closestSubstationPoint =
-                        closestSubstation
-                            .getVectorFromClosestPoint(position)
-                            .unaryMinus()
-                            .plus(position)
-                    // Calculates a translation that is going to offset the point on the line
-                    // segment to get the goal position
-                    val offsetTranslation =
-                        closestSubstation.getPerpendicularUnitVector().times(distanceToSubstation)
-                    // Translates the point on the line segment by the offset to get the goal
-                    // position
-                    Pose2d(
-                            closestSubstationPoint.plus(offsetTranslation),
-                            closestSubstation.getPerpendicularUnitVector().unaryMinus().angle,
-                        )
-                        .also { Logger.recordOutput("Drive to closest substation", it) }
-                },
-                {
-                    // Any way to be able to use the variables from above?
-                    val speedTranslation =
-                        FieldGeometry.getClosestLine(
-                                FieldGeometry.CORAL_STATIONS,
-                                state.Pose.translation,
-                            )
-                            .getParallelUnitVector() * strafeSpeedY()
-                    ChassisSpeeds(speedTranslation.x, speedTranslation.y, 0.0).also {
-                        Logger.recordOutput("Drive changing velocity", it)
-                    }
-                },
-                true,
-            )
+        driveToPose({
+                val position = state.Pose.translation
+                // Gets closest substation line segment
+                val closestSubstation =
+                    FieldGeometry.getClosestLine(FieldGeometry.CORAL_STATIONS, position)
+                // Gets the vector to the closest point on that line segment. SDF gives the
+                // vector from the point to the robot, so it needs an unary minus and then added
+                // to the robot position
+                val closestSubstationPoint =
+                    closestSubstation
+                        .getVectorFromClosestPoint(position)
+                        .unaryMinus()
+                        .plus(position)
+                // Calculates a translation that is going to offset the point on the line
+                // segment to get the goal position
+                val offsetTranslation =
+                    closestSubstation.getPerpendicularUnitVector().times(distanceToSubstation)
+                // Translates the point on the line segment by the offset to get the goal
+                // position
+                Pose2d(
+                        closestSubstationPoint.plus(offsetTranslation),
+                        closestSubstation.getPerpendicularUnitVector().unaryMinus().angle,
+                    )
+                    .also { Logger.recordOutput("Drive to closest substation", it) }
+            })
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
     fun driveToBarge(
@@ -594,36 +598,21 @@ object Chassis :
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
     ): Command =
         // Our target distance from the line segment of the substation
-        driveToChangingPose(
-                {
-                    val position = state.Pose.translation
-                    // Gets position of closes point on the alignment line
-                    val closestBargePoint =
-                        FieldGeometry.getClosestLine(FieldGeometry.BARGE_ALIGNMENT_LINES, position)
-                            .getVectorFromClosestPoint(position)
-                            .unaryMinus()
-                            .plus(position)
-                    Pose2d(
-                            closestBargePoint,
-                            if (position.x <= FieldGeometry.FIELD_X_LENGTH / 2) Rotation2d.k180deg
-                            else Rotation2d.kZero,
-                        )
-                        .also { Logger.recordOutput("Drive to barge", it) }
-                },
-                {
-                    // Any way to be able to use the variables from above?
-                    val speedTranslation =
-                        FieldGeometry.getClosestLine(
-                                FieldGeometry.BARGE_ALIGNMENT_LINES,
-                                Chassis.state.Pose.translation,
-                            )
-                            .getParallelUnitVector() * strafeSpeedY()
-                    ChassisSpeeds(speedTranslation.x, speedTranslation.y, 0.0).also {
-                        Logger.recordOutput("Drive ", it)
-                    }
-                },
-                true,
-            )
+        driveToPose({
+                val position = state.Pose.translation
+                // Gets position of closes point on the alignment line
+                val closestBargePoint =
+                    FieldGeometry.getClosestLine(FieldGeometry.BARGE_ALIGNMENT_LINES, position)
+                        .getVectorFromClosestPoint(position)
+                        .unaryMinus()
+                        .plus(position)
+                Pose2d(
+                        closestBargePoint,
+                        if (position.x <= FieldGeometry.FIELD_X_LENGTH / 2) Rotation2d.k180deg
+                        else Rotation2d.kZero,
+                    )
+                    .also { Logger.recordOutput("Drive to barge", it) }
+            })
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
     val measureWheelRotations by command {
