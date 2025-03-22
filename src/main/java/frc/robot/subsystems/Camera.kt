@@ -10,6 +10,7 @@ import edu.wpi.first.math.numbers.N3
 import frc.robot.Robot
 import frc.robot.lib.currentTimeToFPGA
 import frc.robot.subsystems.drivetrain.Chassis
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -18,7 +19,6 @@ import org.photonvision.PhotonPoseEstimator
 import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams
 import org.photonvision.PhotonPoseEstimator.PoseStrategy
 import org.photonvision.targeting.PhotonTrackedTarget
-import java.util.*
 
 class Camera(val name: String, val transform: Transform3d) {
     val cam = PhotonCamera(name)
@@ -26,11 +26,7 @@ class Camera(val name: String, val transform: Transform3d) {
         Transform2d(transform.translation.toTranslation2d(), transform.rotation.toRotation2d())
 
     private val estimator =
-        PhotonPoseEstimator(
-            Robot.gameField,
-            PoseStrategy.CONSTRAINED_SOLVEPNP,
-            transform,
-        )
+        PhotonPoseEstimator(Robot.gameField, PoseStrategy.CONSTRAINED_SOLVEPNP, transform)
 
     private val cPNPParams = ConstrainedSolvepnpParams(true, 0.5)
 
@@ -48,10 +44,16 @@ class Camera(val name: String, val transform: Transform3d) {
     }
 
     fun getEstimatedGlobalPose(): EstimatedRobotPose? {
-        estimator.addHeadingData(currentTimeToFPGA(Chassis.state.Timestamp), Chassis.state.Pose.rotation)
+        estimator.addHeadingData(
+            currentTimeToFPGA(Chassis.state.Timestamp),
+            Chassis.state.Pose.rotation,
+        )
         var visionEst: EstimatedRobotPose? = null
         cam.allUnreadResults.forEach {
-            visionEst = estimator.update(it, cam.cameraMatrix, cam.distCoeffs, Optional.of(cPNPParams)).getOrNull()
+            visionEst =
+                estimator
+                    .update(it, cam.cameraMatrix, cam.distCoeffs, Optional.of(cPNPParams))
+                    .getOrNull()
             updateStds(visionEst, it.getTargets())
         }
         lastEstimatedPose = visionEst
