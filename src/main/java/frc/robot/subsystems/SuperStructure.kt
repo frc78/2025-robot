@@ -108,10 +108,10 @@ object SuperStructure {
                             )
                             .andThen(Pivot.goTo(state))
                     RobotState.L4 ->
-                        Pivot.goToRawUntil(state.pivotAngle) { Pivot.angle > 70.degrees }
+                        Pivot.goToRawUntil(state.pivotAngle, slot = 0) { Pivot.angle > 70.degrees }
                             .andThen(
                                 Elevator.goToRawUntil(state.elevatorHeight) {
-                                    Elevator.position > 20.inches
+                                    Elevator.position > 0.inches
                                 }
                             )
                             .andThen(Wrist.goTo(state))

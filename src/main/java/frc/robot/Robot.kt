@@ -128,6 +128,7 @@ object Robot : LoggedRobot() {
     private val autoChooser =
         SendableChooser<Command>().apply {
             setDefaultOption("Four Coral", Autos.FourCoralAuto)
+            addOption("Beast Mode 😎", Autos.SideCoralFast)
             SmartDashboard.putData("Auto Mode", this)
         }
 

@@ -458,13 +458,14 @@ object Chassis :
             setOf(this),
         )
 
-    private val poseController =
-        ProfiledPIDController(1.0, 0.0, 0.0, TrapezoidProfile.Constraints(3.0, 10.0)).apply {
+    val poseController =
+        ProfiledPIDController(0.5, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.5)).apply {
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
+            distanceFromPoseGoal = -1.0 // reset distance to pose
             val target = pose()
             val diff = target.minus(state.Pose)
             val distance = diff.translation.norm
@@ -479,6 +480,8 @@ object Chassis :
             poseController.atGoal() &&
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
+    var distanceFromPoseGoal = -1.0
+
     private fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
             .andThen(
@@ -487,6 +490,7 @@ object Chassis :
                         val target = pose()
                         val diff = robot.translation - target.translation
 
+                        distanceFromPoseGoal = diff.norm
                         val output = poseController.calculate(diff.norm)
 
                         val angle = diff.angle

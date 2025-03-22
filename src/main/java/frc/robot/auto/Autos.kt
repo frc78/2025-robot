@@ -6,10 +6,7 @@ import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
 import frc.robot.lib.meters
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.RobotState
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 
 object Autos {
@@ -27,6 +24,45 @@ object Autos {
         Commands.sequence(
             SuperStructure.smartGoTo(RobotState.CoralStation),
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
+        )
+    }
+
+    val SideCoralFast by command {
+        Commands.sequence(
+            Intake.intakeCoralThenHold(),
+            *listOf(
+                    listOf(Branch.E, Branch.I),
+                    listOf(Branch.D, Branch.K),
+                    listOf(Branch.C, Branch.L),
+                    listOf(Branch.A, Branch.B),
+                )
+                .mapIndexed { i, branches ->
+                    Commands.sequence(
+                        Chassis.driveToPoseWithCoralOffset {
+                                Chassis.state.Pose.nearest(branches.map { it.pose })
+                            }
+                            .alongWith(
+                                Commands.sequence(
+                                    // flip wrist when away from coral station with coral
+                                    Commands.waitUntil {
+                                            FieldGeometry.distanceToClosestLine(
+                                                    FieldGeometry.CORAL_STATIONS,
+                                                    Chassis.state.Pose.translation,
+                                                )
+                                                .meters > 1.meters && Intake.hasBranchCoral
+                                        }
+                                        .andThen(Wrist.goTo(RobotState.CoralStorage)),
+                                    // move superstructure when close to reef
+                                    Commands.waitUntil {
+                                            Chassis.distanceFromPoseGoal >= 0.0 &&
+                                                Chassis.distanceFromPoseGoal < 1.5
+                                        }
+                                        .andThen(SuperStructure.goToScoreCoral(RobotState.L4)))),
+                        goToLevelAndScore(RobotState.L4),
+                        goToCoralStationAndGetCoral.withTimeout(5.0),
+                    )
+                }
+                .toTypedArray(),
         )
     }
     @Suppress("SpreadOperator")

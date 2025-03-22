@@ -133,19 +133,34 @@ object Pivot : SubsystemBase("pivot") {
     }
 
     // Moves the pivot to <setpoint> and holds the command until <endCondition> is true
-    fun goToRawUntil(setpoint: Angle, endCondition: () -> Boolean): Command =
+    fun goToRawUntil(setpoint: Angle, slot: Int = -1, endCondition: () -> Boolean): Command =
         run {
                 leader.setControl(
                     motionMagic
                         .withPosition(setpoint)
                         .withLimitForwardMotion(Climber.isExtended)
-                        .withSlot(if (Elevator.position < 10.inches) 1 else 0)
+                        .withSlot(
+                            if (slot == -1) {
+                                if (Elevator.position < 10.inches) 1 else 0
+                            } else {
+                                slot
+                            }
+                        )
                 )
             }
             .until(endCondition)
 
+    fun goToRawSlow(setpoint: Angle): Command = run {
+        leader.setControl(
+            motionMagic
+                .withPosition(setpoint)
+                .withLimitForwardMotion(Climber.isExtended)
+                .withSlot(0)
+        )
+    }
+
     val atPosition
-        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
+        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1.5
 
     fun goTo(state: RobotState): Command = goToRawUntil(state.pivotAngle) { true }
 

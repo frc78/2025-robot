@@ -1,11 +1,11 @@
 package frc.robot.lib.bindings
 
-import com.ctre.phoenix6.swerve.SwerveModule
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
+import frc.robot.auto.Autos
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
@@ -82,6 +82,9 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
 
     // both left and right bumper
     leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
+
+    start().onTrue(Autos.SideCoralFast)
+    back().onTrue(Autos.FourCoralAuto)
 
     a().whileTrue(
         Chassis.snapAngleToCoralStation {
