@@ -93,22 +93,6 @@ object Wrist : SubsystemBase("wrist") {
             return Pivot.angle < 20.degrees
         }
 
-    init {
-        defaultCommand =
-            run {
-                    motionMagic
-                        .withPosition(setpoint)
-                        .withLimitReverseMotion(shouldLimitReverseMotion)
-                    if (Intake.detectAlgaeByCurrent()) {
-                        motionMagic.withVelocity(3.0).withAcceleration(6.0).withJerk(30.0)
-                    } else {
-                        motionMagic.withVelocity(10.0).withAcceleration(30.0).withJerk(100.0)
-                    }
-                    leader.setControl(motionMagic)
-                }
-                .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
-    }
-
     val atPosition
         get() = (leader.position.value - setpoint) < 1.degrees
 
@@ -120,14 +104,14 @@ object Wrist : SubsystemBase("wrist") {
         }
     }
 
-    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.wristAngle })
+    fun goTo(state: RobotState): Command = runOnce { setpoint = state.wristAngle }
 
     val angle: Angle
         get() = leader.position.value
 
-    val manualUp by command { Commands.run({ setpoint += 10.degrees * .020 }) }
+    val manualUp by command { run { setpoint += 10.degrees * .020 } }
 
-    val manualDown by command { Commands.run({ setpoint -= 10.degrees * .020 }) }
+    val manualDown by command { run { setpoint -= 10.degrees * .020 } }
 
     private val sysIdRoutine =
         SysIdRoutine(
@@ -190,5 +174,14 @@ object Wrist : SubsystemBase("wrist") {
         Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
         Logger.recordOutput("wrist/setpoint", setpoint.degrees)
+
+        // Command the wrist to move to the setpoint
+        motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
+        if (Intake.detectAlgaeByCurrent()) {
+            motionMagic.withVelocity(3.0).withAcceleration(6.0).withJerk(30.0)
+        } else {
+            motionMagic.withVelocity(10.0).withAcceleration(30.0).withJerk(100.0)
+        }
+        leader.setControl(motionMagic)
     }
 }

@@ -15,7 +15,6 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
@@ -44,10 +43,10 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L4) }))
-    x().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L3) }))
-    b().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L2) }))
-    a().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L1) }))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
 }
 
 /** Use dpad to select branch and level */

@@ -16,11 +16,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
@@ -116,6 +114,7 @@ object Pivot : SubsystemBase("pivot") {
     private val follower =
         TalonFX(10, "*").apply {
             configurator.apply(MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake))
+            setControl(Follower(9, true))
         }
 
     private var setpoint = RobotState.Stow.pivotAngle
@@ -123,29 +122,16 @@ object Pivot : SubsystemBase("pivot") {
             field = value.coerceIn(0.degrees, 160.degrees)
         }
 
-    private val motionMagic = MotionMagicVoltage(0.degrees)
-
-    init {
-        follower.setControl(Follower(9, true))
-
-        defaultCommand = run {
-            leader.setControl(
-                motionMagic
-                    .withPosition(setpoint)
-                    .withLimitForwardMotion(Climber.isExtended)
-                    .withSlot(if (Elevator.position < 10.inches) 0 else 1)
-            )
-        }
-    }
+    private val motionMagic = MotionMagicVoltage(setpoint)
 
     // Checks if the pivot is sufficiently vertical to extend the elevator
     val canExtendElevator: Boolean
         get() = angle > RAISE_ELEVATOR_THRESHOLD
 
     val atPosition
-        get() = (leader.position.value - motionMagic.positionMeasure).abs(Degrees) < 1
+        get() = (leader.position.value - setpoint) < 1.degrees
 
-    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.pivotAngle })
+    fun goTo(state: RobotState) = runOnce { setpoint = state.pivotAngle }
 
     val angle: Angle
         get() = leader.position.value
@@ -170,9 +156,10 @@ object Pivot : SubsystemBase("pivot") {
     }
 
     private val voltageOut = VoltageOut(0.0)
-    val moveUp by command { Commands.run({ setpoint += 10.degrees * .020 }) }
+    val moveUp by command { run { setpoint += 10.degrees * .020 } }
 
-    val moveDown by command { Commands.run({ setpoint -= 10.degrees * 0.020 }) }
+    val moveDown by command { run { setpoint -= 10.degrees * 0.020 } }
+
     private val sysIdRoutine =
         SysIdRoutine(
             SysIdRoutine.Config(
@@ -219,8 +206,16 @@ object Pivot : SubsystemBase("pivot") {
             .withName("Pivot SysId")
 
     override fun periodic() {
+        Logger.recordOutput("pivot/setpoint", setpoint.degrees)
         Logger.recordOutput("pivot/angle_degrees", angle.degrees)
         Logger.recordOutput("pivot/at_position", atPosition)
+
+        leader.setControl(
+            motionMagic
+                .withPosition(setpoint)
+                .withLimitForwardMotion(Climber.isExtended)
+                .withSlot(if (Elevator.position < 10.inches) 0 else 1)
+        )
     }
 
     override fun simulationPeriodic() {

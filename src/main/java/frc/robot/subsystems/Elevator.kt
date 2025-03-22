@@ -111,12 +111,6 @@ object Elevator : SubsystemBase("elevator") {
             field = value.coerceIn(0.inches, MAX_HEIGHT)
         }
 
-    init {
-        defaultCommand =
-            run { leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations())) }
-                .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming)
-    }
-
     fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.elevatorHeight })
 
     val isStowed: Boolean
@@ -125,9 +119,9 @@ object Elevator : SubsystemBase("elevator") {
     val atPosition: Boolean
         get() = (leader.position.value - setpoint.toDrumRotations()) < .5.inches.toDrumRotations()
 
-    val manualUp by command { Commands.run({ setpoint += 10.inches * 0.020 }) }
+    val manualUp by command { run { setpoint += 10.inches * 0.020 } }
 
-    val manualDown by command { Commands.run({ setpoint -= 10.inches * 0.020 }) }
+    val manualDown by command { run { setpoint -= 10.inches * 0.020 } }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
@@ -203,6 +197,11 @@ object Elevator : SubsystemBase("elevator") {
         Logger.recordOutput("elevator/position", position.inches)
         Logger.recordOutput("elevator/stowed", isStowed)
         Logger.recordOutput("elevator/at_position", atPosition)
+        leader.setControl(
+            motionMagic
+                .withPosition(setpoint.toDrumRotations())
+                .withLimitForwardMotion(!Pivot.canExtendElevator)
+        )
     }
 
     override fun simulationPeriodic() {
