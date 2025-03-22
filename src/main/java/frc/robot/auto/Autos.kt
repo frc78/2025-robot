@@ -53,11 +53,10 @@ object Autos {
                                         }
                                         .andThen(Wrist.goTo(RobotState.CoralStorage)),
                                     // move superstructure when close to reef
-                                    Commands.waitUntil {
-                                            Chassis.distanceFromPoseGoal >= 0.0 &&
-                                                Chassis.distanceFromPoseGoal < 1.5
-                                        }
-                                        .andThen(SuperStructure.goToScoreCoral(RobotState.L4)))),
+                                    Commands.waitUntil { Chassis.distanceFromPoseGoal in 0.0..1.75 }
+                                        .andThen(SuperStructure.goToScoreCoral(RobotState.L4)),
+                                )
+                            ),
                         goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
