@@ -48,7 +48,7 @@ object FieldGeometry {
             }
 
     fun distanceToClosestLine(lineSegments: List<LineSegment>, position: Translation2d): Double {
-        return lineSegments.minOfOrNull { it.getShortestDistance(position) } ?: Double.MAX_VALUE
+        return lineSegments.minOfOrNull { it.perpendicularDistance(position) } ?: Double.MAX_VALUE
     }
 
     fun getClosestLine(lineSegments: List<LineSegment>, position: Translation2d): LineSegment {

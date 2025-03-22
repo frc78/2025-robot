@@ -5,12 +5,12 @@ import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.command
 import frc.robot.lib.rotations
 import org.littletonrobotics.junction.Logger
 
-object Climber : Subsystem {
+object Climber : SubsystemBase("climber") {
 
     private val rotationsPerInch = 12.0.rotations
     private const val EXTENDED_INCHES = 6.0
@@ -51,5 +51,4 @@ object Climber : Subsystem {
         runOnce { leader.setControl(positionVoltage.withPosition(extendedPosition)) }
             .withName("Extend Foot")
     }
-
 }

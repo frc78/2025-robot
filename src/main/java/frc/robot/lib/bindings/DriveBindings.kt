@@ -1,8 +1,7 @@
 package frc.robot.lib.bindings
 
-import edu.wpi.first.wpilibj.DriverStation
+import com.ctre.phoenix6.swerve.SwerveModule
 import edu.wpi.first.wpilibj.GenericHID
-import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -42,7 +41,7 @@ fun CommandXboxController.configureDriverBindings() {
 }
 
 // Basic driving
-private fun CommandXboxController.configureDriveBasicLayout() {
+fun CommandXboxController.configureDriveBasicLayout() {
     Chassis.defaultCommand =
         Chassis.fieldCentricDrive {
                 withVelocityX(hid.velocityX)
@@ -54,72 +53,67 @@ private fun CommandXboxController.configureDriveBasicLayout() {
     Trigger { Intake.hasCoralByCurrent() }
         .onTrue(
             Commands.startEnd(
-            { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
-            { setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
-            .withTimeout(0.5))
+                    { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+                    { setRumble(GenericHID.RumbleType.kBothRumble, 0.0) },
+                )
+                .withTimeout(0.5)
+        )
 
     Trigger { Intake.detectAlgaeByCurrent() }
         .onTrue(
             Commands.startEnd(
-            { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
-            { setRumble(GenericHID.RumbleType.kBothRumble, 0.0)})
-            .withTimeout(0.5))
+                    { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
+                    { setRumble(GenericHID.RumbleType.kBothRumble, 0.0) },
+                )
+                .withTimeout(0.5)
+        )
 }
-
-fun only(button: XboxController.Button) =
-    DriverStation.getStickButtons(0) xor 1 shl button.value == 0
 
 // Driving with snapping bindings for reef alignment
 private fun CommandXboxController.configureDriveSnappingLayout() {
-    Trigger {
-        DriverStation.getStickButtons(0) xor 1 shl XboxController.Button.kLeftBumper.value == 0
-    }
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+    val notA = a().negate()
+    val notY = y().negate()
     // only left bumper
-    leftBumper()
-        .and(rightBumper().negate())
-        .and(a().negate())
-        .and(y().negate())
-        .whileTrue(Chassis.driveToLeftBranch)
+    leftBumper().and(notRightBumper).and(notA).and(notY).whileTrue(Chassis.driveToLeftBranch)
     // only right bumper
-    rightBumper()
-        .and(leftBumper().negate())
-        .and(a().negate())
-        .and(y().negate())
-        .whileTrue(Chassis.driveToRightBranch)
+    rightBumper().and(notLeftBumper).and(notA).and(notY).whileTrue(Chassis.driveToRightBranch)
 
     // both left and right bumper
-    leftBumper()
-        .and(rightBumper())
-        .and(a().negate())
-        .and(y().negate())
-        .whileTrue(Chassis.driveToClosestReef)
+    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
 
-    // only a
-    a().and(rightBumper().negate())
-        .and(leftBumper().negate())
-        .whileTrue(Chassis.driveToClosestCenterCoralStation)
-    // a and left bumper
-    a().and(leftBumper())
-        .and(rightBumper().negate())
-        .whileTrue(Chassis.driveToClosestLeftCoralStation)
-    // a and right bumper
-    a().and(rightBumper())
-        .and(leftBumper().negate())
-        .whileTrue(Chassis.driveToClosestRightCoralStation)
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+    a().whileTrue(
+        Chassis.snapAngleToCoralStation {
+            withVelocityX(hid.velocityX).withVelocityY(hid.velocityY)
+        }
     )
+
+    // Removed per driver request 10:00am 3/14
+    //    // only a
+    //
+    // a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    //    // a and left bumper
+    //
+    // a().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToClosestLeftCoralStation)
+    //    // a and right bumper
+    //
+    // a().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToClosestRightCoralStation)
+    //    a().onTrue(
+    //
+    // SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+    //    )
 
     x().whileTrue(
         Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }
     )
 
     // only y
-    y().and(leftBumper().negate().and(rightBumper().negate())).whileTrue(Chassis.driveToBarge)
+    y().and(notLeftBumper).and(notRightBumper).whileTrue(Chassis.driveToBarge)
     // y and left bumper
-    y().and(leftBumper()).and(rightBumper().negate()).whileTrue(Chassis.driveToBargeLeft)
+    y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
     // y and right bumper
-    y().and(rightBumper()).and(leftBumper().negate()).whileTrue(Chassis.driveToBargeRight)
+    y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
 
     b().whileTrue(Chassis.driveToProcessor)
 }

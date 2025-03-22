@@ -63,9 +63,11 @@ import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.kilogramSquareMeters
+import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
 import frc.robot.lib.metersPerSecondPerSecond
 import frc.robot.lib.pounds
+import frc.robot.lib.radians
 import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.rotationsPerSecondPerSecond
@@ -76,6 +78,7 @@ import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
+import kotlin.math.hypot
 import org.littletonrobotics.junction.Logger
 
 private val drivetrainConstants =
@@ -124,6 +127,8 @@ object Chassis :
         PathPlannerLogging.setLogTargetPoseCallback {
             Logger.recordOutput("pathfind_to_pose_target", it)
         }
+
+        @Suppress("SpreadOperator")
         PathPlannerLogging.setLogActivePathCallback {
             Logger.recordOutput("pathfind_to_pose_path", *it.toTypedArray())
         }
@@ -573,6 +578,17 @@ object Chassis :
         }
     }
 
+    fun snapAngleToCoralStation(
+        block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
+    ): Command {
+        return applyRequest {
+            FieldCentricFacingAngleDriver.withTargetDirection(
+                    closestCoralStation.rotation.rotateByAlliance()
+                )
+                .block()
+        }
+    }
+
     fun fieldCentricDrive(
         block: SwerveRequest.FieldCentric.() -> SwerveRequest.FieldCentric
     ): Command {
@@ -663,4 +679,23 @@ object Chassis :
                 true,
             )
             .andThen(applyRequest { RobotRelative.withSpeeds() })
+
+    val measureWheelRotations by command {
+        val startYaw = pigeon2.yaw.value
+        val startPositions = state.ModulePositions.map { it.distanceMeters }
+        run {
+            setControl(RobotRelative.withRotationalRate(.25.rotationsPerSecond))
+            val angularDisplacement = pigeon2.yaw.value - startYaw
+            val linearDisplacement =
+                angularDisplacement.radians * this.moduleLocations[0].let { hypot(it.x, it.y) }
+            val wheelRotations =
+                startPositions.mapIndexed { index, startPos ->
+                    (state.ModulePositions[index].distanceMeters - startPos) /
+                        (CompBotTunerConstants.kWheelRadius.meters * PI * 2)
+                }
+            val wheelRadii =
+                wheelRotations.map { linearDisplacement / (it * 2 * PI) }.toDoubleArray()
+            Logger.recordOutput("module_radius", wheelRadii)
+        }
+    }
 }

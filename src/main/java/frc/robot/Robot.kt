@@ -11,7 +11,6 @@ import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
@@ -35,13 +34,18 @@ import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
-import kotlin.time.Duration.Companion.seconds
 
 // Might have to be manually set when testing on SkibJr
 val IS_TEST = "TEST" == System.getenv("frc_bot")
@@ -52,6 +56,8 @@ object Robot : LoggedRobot() {
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
     val alliance: DriverStation.Alliance
         get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+
+    val driverController = CommandXboxController(0)
 
     init {
         HAL.report(
@@ -84,23 +90,33 @@ object Robot : LoggedRobot() {
         Pivot
         Wrist
 
-        CommandXboxController(0).configureDriverBindings()
-        CommandJoystick(5).configureManipTestBindings()
+        driverController.configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
+        CommandJoystick(5).configureManipTestBindings()
 
         Pivot.coast()
         RobotModeTriggers.disabled()
-            .and(Trigger({ Pivot.angle > 45.degrees }))
+            .and(Trigger { Pivot.angle > 45.degrees })
             .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
 
         // Move wrist over when leaving coral station area with a coral
-        Trigger {
-            FieldGeometry.distanceToClosestLine(
-                FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters > 1.5.meters
-                    && Intake.hasBranchCoral}.onTrue(SuperStructure.smartGoTo(RobotState.CoralStorage))
-
-
+        // Running only in teleop to avoid interrupting auto
+        RobotModeTriggers.teleop()
+            .and {
+                FieldGeometry.distanceToClosestLine(
+                        FieldGeometry.CORAL_STATIONS,
+                        Chassis.state.Pose.translation,
+                    )
+                    .meters > 1.5.meters
+            }
+            .onTrue(
+                Commands.either(
+                    SuperStructure.smartGoTo(RobotState.CoralStorage),
+                    Commands.none(),
+                ) {
+                    Intake.hasBranchCoral
+                }
+            )
 
         // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
         // it,
@@ -138,10 +154,9 @@ object Robot : LoggedRobot() {
         // to the left when the elevator is at 90º
         wristMech =
             elevatorMech.append(
-                MechanismLigament2d("wrist", 20.0, 90.0, 6.0, Color8Bit(Color.kPurple))
+                MechanismLigament2d("wrist", 12.0, 90.0, 6.0, Color8Bit(Color.kPurple))
             )
         wristMech.append(MechanismLigament2d("coral", 6.25, 112.0, 6.0, Color8Bit(Color.kWhite)))
-        wristMech.append(MechanismLigament2d("algae", 16.0, -125.0, 6.0, Color8Bit(Color.kTeal)))
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
@@ -162,7 +177,7 @@ object Robot : LoggedRobot() {
         // Elevator.length is 0 when the elevator is retracted, but the elevator has a fixed length
         // of 30 inches
         elevatorMech.length = (30.inches + Elevator.position).inches
-        wristMech.angle = -Wrist.angle.degrees
+        wristMech.angle = 140 - Wrist.angle.degrees
     }
 
     override fun teleopInit() {

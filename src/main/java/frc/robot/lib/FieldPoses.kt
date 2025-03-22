@@ -54,6 +54,12 @@ object FieldPoses {
 
     private val reefPoses = BLUE_REEF_POSES + RED_REEF_POSES
 
+    private val allianceReefPoses
+        get() =
+            if (Robot.alliance == Alliance.Blue) {
+                BLUE_REEF_POSES
+            } else RED_REEF_POSES
+
     private val branchPoses
         get() =
             if (Robot.alliance == Alliance.Blue) {
@@ -66,14 +72,18 @@ object FieldPoses {
     val closestBranch: Pose2d
         get() = Chassis.state.Pose.nearest(branchPoses)
 
+    /** Returns true if the pose is on the far side of the reef from the alliance wall */
+    val Pose2d.isFarReef: Boolean
+        get() {
+            val myReefs = allianceReefPoses
+            return myReefs[2] == this || myReefs[3] == this || myReefs[4] == this
+        }
+
     val closestLeftBranch: Pose2d
         get() {
             closestReef.let {
                 // reverse left/right branches for EF, GH, and IJ
-                val isFarReef =
-                    alliance == Blue && (it == BLUE_REEF_POSES[3] || it == BLUE_REEF_POSES[2] || it == BLUE_REEF_POSES[4]) ||
-                        alliance == Red && (it == RED_REEF_POSES[3] || it == RED_REEF_POSES[2] || it == RED_REEF_POSES[4])
-                return if (isFarReef) {
+                return if (it.isFarReef) {
                     it.transformBy(REEF_TO_BRANCH_RIGHT)
                 } else it.transformBy(REEF_TO_BRANCH_LEFT)
             }
@@ -82,11 +92,7 @@ object FieldPoses {
     val closestRightBranch: Pose2d
         get() {
             closestReef.let {
-                // reverse left/right branches for EF, GH, and IJ
-                val isFarReef =
-                    alliance == Blue && (it == BLUE_REEF_POSES[3] || it == BLUE_REEF_POSES[2] || it == BLUE_REEF_POSES[4]) ||
-                            alliance == Red && (it == RED_REEF_POSES[3] || it == RED_REEF_POSES[2] || it == RED_REEF_POSES[4])
-                return if (isFarReef) {
+                return if (it.isFarReef) {
                     it.transformBy(REEF_TO_BRANCH_LEFT)
                 } else it.transformBy(REEF_TO_BRANCH_RIGHT)
             }
@@ -97,8 +103,8 @@ object FieldPoses {
             val alliance = DriverStation.getAlliance().getOrNull() ?: return Pose2d.kZero
             val allianceCoralStations =
                 when (alliance) {
-                    Alliance.Red -> RED_CORAL_STATION_LOCATIONS
-                    Alliance.Blue -> BLUE_CORAL_STATION_LOCATIONS
+                    Red -> RED_CORAL_STATION_LOCATIONS
+                    Blue -> BLUE_CORAL_STATION_LOCATIONS
                 }
             return Chassis.state.Pose.nearest(allianceCoralStations)
         }

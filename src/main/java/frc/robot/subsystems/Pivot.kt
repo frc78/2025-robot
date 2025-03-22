@@ -20,10 +20,8 @@ import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
@@ -39,7 +37,7 @@ import frc.robot.lib.voltsPerSecond
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Pivot : Subsystem {
+object Pivot : SubsystemBase("pivot") {
 
     private const val GEAR_RATIO = (5.0 * 5 * 64 * 60) / (30 * 12) // 266.25
     private val cancoder = CANcoder(5, "*")
@@ -49,7 +47,7 @@ object Pivot : Subsystem {
     // how vertical the pivot needs to be for the elevator to extend
     private val RAISE_ELEVATOR_THRESHOLD = 60.degrees
     // how horizontal the pivot needs to be for the
-    val EXTEND_FOOT_THRESHOLD = 20.degrees
+    val EXTEND_FOOT_THRESHOLD = 60.degrees
 
     private val ALPHA_BOT_SLOT0_CONFIGS =
         Slot0Configs()
@@ -63,7 +61,7 @@ object Pivot : Subsystem {
 
     private val COMP_BOT_SLOT0_CONFIGS =
         Slot0Configs()
-            .withKP(100.0)
+            .withKP(50.0)
             .withKI(0.0)
             .withKD(0.29431)
             .withKS(0.24723)

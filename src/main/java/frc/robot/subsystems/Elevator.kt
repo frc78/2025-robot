@@ -17,11 +17,14 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Commands.runOnce
+import edu.wpi.first.wpilibj2.command.Commands.startEnd
 import edu.wpi.first.wpilibj2.command.PrintCommand
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
 import frc.robot.lib.command
@@ -40,7 +43,7 @@ import java.util.function.BooleanSupplier
 import kotlin.math.abs
 import org.littletonrobotics.junction.Logger
 
-object Elevator : Subsystem {
+object Elevator : SubsystemBase("elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
     private val voltage = VoltageOut(0.0)
     val IS_STOWED_THRESHOLD = 3.inches
@@ -186,7 +189,7 @@ object Elevator : Subsystem {
         )
     }
     private val leaderSim by lazy {
-        leader.simState.apply { Orientation = ChassisReference.Clockwise_Positive }
+        leader.simState.apply { Orientation = ChassisReference.CounterClockwise_Positive }
     }
 
     private val voltageOut = VoltageOut(0.volts)
@@ -242,6 +245,7 @@ object Elevator : Subsystem {
     }
 
     override fun simulationPeriodic() {
+        elevatorSim.setInputVoltage(RobotController.getBatteryVoltage())
         val motorVoltage = leaderSim.motorVoltage
         elevatorSim.setInputVoltage(motorVoltage)
         elevatorSim.update(0.02)

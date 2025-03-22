@@ -79,12 +79,23 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(Climber.extend)
         )
 
-    rightTrigger(0.55).onTrue(Intake.scoreCoral.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+    rightTrigger(0.55)
+        .onTrue(
+            Intake.outtakeCoral
+                .withDeadline(
+                    // Wait until 0.2 seconds have passed and the trigger is released
+                    Commands.waitSeconds(0.2)
+                        .alongWith(Commands.waitUntil { rightTriggerAxis < 0.55 })
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
+        )
+
     // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
-                .alongWith(Intake.intakeCoralThenHold()).withName("Intake coral from coral station")
+                .alongWith(Intake.intakeCoralThenHold())
+                .withName("Intake coral from coral station")
         )
 
     // Algae Stuff
@@ -112,7 +123,8 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
 
-    leftTrigger(0.55).onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+    leftTrigger(0.55)
+        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {
@@ -162,7 +174,7 @@ private fun CommandXboxController.selectWithStick() {
 
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
-    trigger().whileTrue(Chassis.sysIdRoutine)
+    trigger().whileTrue(Chassis.measureWheelRotations)
     button(5).whileTrue(Pivot.moveUp)
     button(3).whileTrue(Pivot.moveDown)
     button(6).whileTrue(Elevator.manualUp)
