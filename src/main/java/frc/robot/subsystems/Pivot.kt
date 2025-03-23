@@ -40,7 +40,7 @@ object Pivot : SubsystemBase("pivot") {
     private val cancoder = CANcoder(5, "*")
 
     // how vertical the pivot needs to be for the elevator to extend
-    private val RAISE_ELEVATOR_THRESHOLD = 60.degrees // 70 in main
+    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees // 70 in main
     // how horizontal the pivot needs to be for the
     val EXTEND_FOOT_THRESHOLD = 60.degrees
 
@@ -67,7 +67,7 @@ object Pivot : SubsystemBase("pivot") {
             .withKA(0.42529)
             .withKG(0.0082199)
             .withGravityType(GravityTypeValue.Arm_Cosine)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     // Used when going to coral station
     private val COMP_BOT_ELEVATOR_UP_GAINS =
@@ -80,7 +80,7 @@ object Pivot : SubsystemBase("pivot") {
             .withKA(0.42529)
             .withKG(0.0082199)
             .withGravityType(GravityTypeValue.Arm_Cosine)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     private val COMP_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)

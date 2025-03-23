@@ -459,7 +459,7 @@ object Chassis :
         )
 
     val poseController =
-        ProfiledPIDController(0.5, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.5)).apply {
+        ProfiledPIDController(0.5, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.3)).apply {
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 

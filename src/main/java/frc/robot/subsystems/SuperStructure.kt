@@ -16,9 +16,9 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     Stow(40.degrees, 0.25.inches, 22.5.degrees), // not currently used
     AlgaeStorage(60.degrees, 0.25.inches, 22.5.degrees),
     L1(40.degrees, 0.25.inches, 186.75.degrees),
-    L2(88.degrees, 0.25.inches, 30.9.degrees),
-    L3(90.6.degrees, 16.4.inches, 33.5.degrees),
-    L4(91.degrees, 45.8.inches, 29.25.degrees),
+    L2(93.5.degrees, 0.25.inches, 34.5.degrees),
+    L3(92.6.degrees, 17.25.inches, 33.5.degrees),
+    L4(92.5.degrees, 46.inches, 29.25.degrees),
     CoralStation(62.92.degrees, 0.25.inches, 176.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
     Processor(23.degrees, 0.25.inches, 113.625.degrees),

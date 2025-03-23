@@ -6,10 +6,7 @@ import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
 import frc.robot.lib.meters
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.RobotState
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 
 object Autos {
@@ -19,7 +16,10 @@ object Autos {
             SuperStructure.goToScoreCoral(level),
             Commands.waitUntil { SuperStructure.atPosition }.withTimeout(3.0),
             Intake.scoreCoral,
-            SuperStructure.smartGoTo(RobotState.CoralStation),
+//            SuperStructure.smartGoTo(RobotState.CoralStation), // this delays, want to be faster
+            Wrist.goTo(RobotState.CoralStation),
+            Elevator.goTo(RobotState.CoralStation),
+            Pivot.goTo(RobotState.CoralStation)
         )
     }
 
@@ -34,6 +34,8 @@ object Autos {
     val SideCoralFast by command {
         Commands.sequence(
             Intake.intakeCoralThenHold(),
+            Wrist.goTo(RobotState.CoralStorage),
+            Pivot.goTo(RobotState.L4),
             *listOf(
                     listOf(Branch.E, Branch.I),
                     listOf(Branch.D, Branch.K),
@@ -47,17 +49,18 @@ object Autos {
                             }
                             .alongWith(
                                 Commands.sequence(
-                                    // flip wrist when away from coral station with coral
+                                    // flip wrist and move pivot when away from coral station with coral
                                     Commands.waitUntil {
                                             FieldGeometry.distanceToClosestLine(
                                                     FieldGeometry.CORAL_STATIONS,
                                                     Chassis.state.Pose.translation,
                                                 )
-                                                .meters > 1.meters && Intake.hasBranchCoral
+                                                .meters > 1.meters// && Intake.hasBranchCoral
                                         }
-                                        .andThen(Wrist.goTo(RobotState.CoralStorage)),
+                                        .andThen(Wrist.goTo(RobotState.CoralStorage))
+                                        .andThen(Pivot.goTo(RobotState.L4)),
                                     // move superstructure when close to reef
-                                    Commands.waitUntil { Chassis.distanceFromPoseGoal in 0.0..1.75 }
+                                    Commands.waitUntil { Chassis.distanceFromPoseGoal in 0.0..1.50 }
                                         .andThen(SuperStructure.goToScoreCoral(RobotState.L4)),
                                 )
                             ),
