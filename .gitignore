@@ -266,3 +266,4 @@ gradle-app.setting
 /ctre_sim
 /bin
 /.kotlin/sessions
+/logs
