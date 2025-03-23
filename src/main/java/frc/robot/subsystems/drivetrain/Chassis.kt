@@ -429,7 +429,7 @@ object Chassis :
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
-    private fun pathfindToPose(pose: () -> Pose2d) =
+    fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
             {
                 if (state.Pose.translation.getDistance(pose().translation) < 1.0) {
@@ -440,7 +440,7 @@ object Chassis :
                         pose(), // .transformBy(Transform2d(.3.meters, 0.meters, Rotation2d.kZero)),
                         PathConstraints(
                             2.5.metersPerSecond,
-                            8.metersPerSecondPerSecond,
+                            4.metersPerSecondPerSecond,
                             1.rotationsPerSecond,
                             10.rotationsPerSecondPerSecond,
                             12.0.volts,
@@ -479,7 +479,7 @@ object Chassis :
 
     fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
-    private fun driveToPose(pose: () -> Pose2d): Command =
+    fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {

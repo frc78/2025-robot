@@ -129,6 +129,7 @@ object Robot : LoggedRobot() {
         SendableChooser<Command>().apply {
             setDefaultOption("Four Coral", Autos.FourCoralAuto)
             addOption("Beast Mode 😎", Autos.SideCoralFast)
+            addOption("Center Algae", Autos.CenterAlgaeAuto)
             SmartDashboard.putData("Auto Mode", this)
         }
 

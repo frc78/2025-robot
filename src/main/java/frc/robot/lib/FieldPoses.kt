@@ -137,7 +137,7 @@ object FieldPoses {
         KL;
 
         val pose
-            get() = reefPoses[ordinal]
+            get() = allianceReefPoses[ordinal]
 
         val leftBranch
             get() = branchPoses[ordinal * 2]

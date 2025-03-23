@@ -3,6 +3,7 @@ package frc.robot.auto
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import frc.robot.lib.FieldGeometry
+import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
 import frc.robot.lib.meters
@@ -107,10 +108,42 @@ object Autos {
                             ),
                         if (i == 0) goToLevelAndScore(RobotState.L4)
                         else goToLevelAndScore(RobotState.L4),
+                        SuperStructure.smartGoTo(RobotState.CoralStation),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
                 .toTypedArray(),
         )
     }
+
+    val CenterAlgaeAuto by command {
+        Commands.sequence(
+            // Drive to right branch, but it's on the far side of the reef so it's swapped
+            Chassis.driveToPoseWithCoralOffset { Branch.H.pose },
+            // Score L4
+            goToLevelAndScore(RobotState.L4),
+            getAlgaeAndScore(FieldPoses.ReefFace.GH),
+            getAlgaeAndScore(FieldPoses.ReefFace.IJ),
+            // Pathfind to EF since it's around the reef
+            Chassis.pathfindToPose { FieldPoses.ReefFace.EF.pose },
+            SuperStructure.retrieveAlgaeFromReef,
+            Chassis.pathfindToPose { FieldPoses.closestRightBarge }
+                .andThen(SuperStructure.autoScoreAlgaeInNet),
+        )
+    }
+
+    private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
+        Chassis.driveToPose { face.pose }
+            .andThen(
+                // Get algae
+                SuperStructure.retrieveAlgaeFromReef
+            )
+            .andThen(
+                // Drive to barge
+                Chassis.driveToBargeRight
+            )
+            .andThen(
+                // Score in net
+                SuperStructure.autoScoreAlgaeInNet
+            )
 }
