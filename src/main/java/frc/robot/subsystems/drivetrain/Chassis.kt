@@ -51,12 +51,10 @@ import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBarge
 import frc.robot.lib.FieldPoses.closestLeftBranch
-import frc.robot.lib.FieldPoses.closestLeftCoralStation
 import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
-import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
@@ -423,8 +421,6 @@ object Chassis :
         closestBranchPub.set(closestBranch)
         closestCoralStationPub.set(closestCoralStation)
         closestProcessorPub.set(closestProcessor)
-        closestLeftCoralStationPub.set(closestLeftCoralStation)
-        closestRightCoralStationPub.set(closestRightCoralStation)
 
         closestBargePub.set(closestBarge)
         closestBargeLeftPub.set(closestLeftBarge)
@@ -563,10 +559,6 @@ object Chassis :
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    val driveToClosestLeftCoralStation by command { driveToPose { closestLeftCoralStation } }
-
-    val driveToClosestRightCoralStation by command { driveToPose { closestRightCoralStation } }
-
     val driveToBarge by command { driveToPose { closestBarge } }
     val driveToBargeLeft by command { driveToPose { closestLeftBarge } }
     val driveToBargeRight by command { driveToPose { closestRightBarge } }
@@ -598,6 +590,9 @@ object Chassis :
     ): Command {
         return applyRequest { FieldCentric.block() }
     }
+
+    fun robotCentricDrive(block: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric) =
+        applyRequest { RobotRelative.block() }.finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     fun driveToClosestSubstation(
         strafeSpeedY: () -> Double,

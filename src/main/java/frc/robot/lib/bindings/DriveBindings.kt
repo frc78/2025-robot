@@ -15,7 +15,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
-    DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
+    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
 
 val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
 val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
@@ -115,7 +115,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
 
-    b().whileTrue(Chassis.driveToProcessor)
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {
@@ -128,11 +127,43 @@ private fun CommandXboxController.configureDriveManualSequencingLayout() {
 
 // Driving with buttons for automatic scoring sequences
 private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+    val notA = a().negate()
+    val notY = y().negate()
+
+    b().whileTrue(Chassis.driveToProcessor)
+
     rightBumper()
+        .and(notLeftBumper)
         .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(SuperStructure.smartGoTo(RobotState.Stow))
+            Chassis.driveToRightBranch
+        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+    leftBumper()
+        .and(notRightBumper)
+        .whileTrue(
+            Chassis.driveToLeftBranch
+        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+    leftBumper()
+        .and(rightBumper())
+        .and { !Intake.hasBranchCoral }
+        .whileTrue(
+            Chassis.driveToClosestReef.andThen(SuperStructure.retrieveAlgaeFromReef).finallyDo { _
+                ->
+                SuperStructure.retractWithAlgae()
+            }
         )
+
+    // only y
+    y().and(notLeftBumper)
+        .and(notRightBumper)
+        .whileTrue(Chassis.driveToBarge.andThen(SuperStructure.autoScoreAlgaeInNet))
+    // y and left bumper
+    y().and(leftBumper())
+        .and(notRightBumper)
+        .whileTrue(Chassis.driveToBargeLeft.andThen(SuperStructure.autoScoreAlgaeInNet))
+    // y and right bumper
+    y().and(rightBumper())
+        .and(notLeftBumper)
+        .whileTrue(Chassis.driveToBargeRight.andThen(SuperStructure.autoScoreAlgaeInNet))
 }

@@ -143,6 +143,7 @@ object Intake : SubsystemBase("intake") {
         Logger.recordOutput("intake/coral_location", coralLocation)
         Logger.recordOutput("intake/supply_current", supplyCurrent)
         Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
+        Logger.recordOutput("intake/has_algae", detectAlgaeByCurrent())
     }
 
     val outtakeCoral by command {

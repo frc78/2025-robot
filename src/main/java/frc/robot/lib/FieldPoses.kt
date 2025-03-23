@@ -40,6 +40,19 @@ object FieldPoses {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
         }
 
+    private val HIGH_ALGAE_REEF_POSES =
+        listOf(
+            BLUE_REEF_POSES[0],
+            BLUE_REEF_POSES[2],
+            BLUE_REEF_POSES[4],
+            RED_REEF_POSES[0],
+            RED_REEF_POSES[2],
+            RED_REEF_POSES[4],
+        )
+
+    val closestAlgaeIsHigh
+        get() = closestReef in HIGH_ALGAE_REEF_POSES
+
     private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
     private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
 

@@ -5,6 +5,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.DeferredCommand
+import frc.robot.lib.FieldPoses
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.andWait
 import frc.robot.lib.command
@@ -113,4 +114,40 @@ object SuperStructure {
             .alongWith(Pivot.goTo(state).andWait { Pivot.canExtendElevator })
             .andThen(Elevator.goTo(state))
             .withName("Go to $state pivot first")
+
+    val scoreCoralOnSelectedBranch by command {
+        Commands.defer(
+            {
+                goToScoreCoral(SelectedLevel.state)
+                    .andWait { atPosition }
+                    .andThen(Intake.scoreCoral)
+                    .andThen(smartGoTo(RobotState.CoralStation))
+            },
+            setOf(Pivot, Elevator, Wrist, Intake),
+        )
+    }
+
+    val goToCalculatedAlgaeHeight by command {
+        Commands.defer(
+            {
+                smartGoTo(
+                    if (FieldPoses.closestAlgaeIsHigh) RobotState.HighAlgaeIntake
+                    else RobotState.LowAlgaeIntake
+                )
+            },
+            setOf(Pivot, Elevator, Wrist),
+        )
+    }
+
+    val retrieveAlgaeFromReef by command {
+        goToCalculatedAlgaeHeight.withDeadline(Intake.intakeAlgaeThenHold())
+    }
+
+    val autoScoreAlgaeInNet by command {
+        smartGoTo(RobotState.AlgaeNet)
+            .andWait { atPosition }
+            .andThen(Intake.scoreAlgae)
+            .andThen(smartGoTo(RobotState.ReadyToClimb))
+            .onlyIf { Intake.detectAlgaeByCurrent() }
+    }
 }
