@@ -56,6 +56,7 @@ import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
 import frc.robot.lib.command
@@ -72,7 +73,8 @@ import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import frc.robot.subsystems.Intake
+import frc.robot.subsystems.*
+import frc.robot.subsystems.SuperStructure.goToScoreCoral
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -549,6 +551,22 @@ object Chassis :
 
     val driveToRightBranch by command {
         driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
+    }
+
+    val driveToLeftBranchAndMoveSuperStucture by command {
+        driveToLeftBranch
+            .alongWith(
+                Commands.sequence(
+                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
+                    Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
+    }
+
+    val driveToRightBranchAndMoveSuperStucture by command {
+        driveToRightBranch
+            .alongWith(
+                Commands.sequence(
+                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
+                    Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
     }
 
     val driveToSelectedBranch by command {

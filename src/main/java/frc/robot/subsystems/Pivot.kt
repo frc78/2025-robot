@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
@@ -129,7 +130,7 @@ object Pivot : SubsystemBase("pivot") {
         get() = angle > RAISE_ELEVATOR_THRESHOLD
 
     val atPosition
-        get() = (leader.position.value - setpoint) < 1.5.degrees
+        get() = (angle - setpoint).abs(Degrees) < 1.5
 
     fun goTo(state: RobotState) = runOnce { setpoint = state.pivotAngle }
 

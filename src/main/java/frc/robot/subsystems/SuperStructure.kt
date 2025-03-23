@@ -116,14 +116,20 @@ object SuperStructure {
             .withName("Go to $state pivot first")
 
     val scoreCoralOnSelectedBranch by command {
-        Commands.defer(
-            {
-                goToScoreCoral(SelectedLevel.state)
-                    .andWait { atPosition }
-                    .andThen(Intake.scoreCoral)
-                    .andThen(smartGoTo(RobotState.CoralStation))
-            },
-            setOf(Pivot, Elevator, Wrist, Intake),
+//        Commands.defer(
+//            {
+//                goToScoreCoral(SelectedLevel.state)
+//                    .andWait { atPosition }
+//                    .andThen(Intake.scoreCoral)
+//                    .andThen(smartGoTo(RobotState.CoralStation))
+//            },
+//            setOf(Pivot, Elevator, Wrist, Intake),
+//        )
+        Commands.sequence(
+            Commands.defer({goToScoreCoral(SelectedLevel.state)}, setOf(Pivot, Elevator, Wrist)),
+            Commands.waitUntil { atPosition },
+            Intake.scoreCoral,
+            smartGoTo(RobotState.CoralStation)
         )
     }
 
@@ -141,6 +147,7 @@ object SuperStructure {
 
     val retrieveAlgaeFromReef by command {
         goToCalculatedAlgaeHeight.withDeadline(Intake.intakeAlgaeThenHold())
+            .andThen(retractWithAlgae())
     }
 
     val autoScoreAlgaeInNet by command {

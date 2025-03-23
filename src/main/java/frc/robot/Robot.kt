@@ -107,7 +107,7 @@ object Robot : LoggedRobot() {
                         FieldGeometry.CORAL_STATIONS,
                         Chassis.state.Pose.translation,
                     )
-                    .meters > 1.5.meters
+                    .meters > 1.meters
             }
             .onTrue(
                 Commands.either(

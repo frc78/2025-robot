@@ -137,22 +137,25 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     rightBumper()
         .and(notLeftBumper)
         .whileTrue(
-            Chassis.driveToRightBranch
-        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            Chassis.driveToRightBranchAndMoveSuperStucture
+            .andThen(SuperStructure.scoreCoralOnSelectedBranch))
     leftBumper()
         .and(notRightBumper)
         .whileTrue(
-            Chassis.driveToLeftBranch
-        ) // .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            Chassis.driveToLeftBranchAndMoveSuperStucture
+            .andThen(SuperStructure.scoreCoralOnSelectedBranch))
     leftBumper()
         .and(rightBumper())
         .and { !Intake.hasBranchCoral }
         .whileTrue(
-            Chassis.driveToClosestReef.andThen(SuperStructure.retrieveAlgaeFromReef).finallyDo { _
-                ->
-                SuperStructure.retractWithAlgae()
-            }
+            Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef)
+//                .finallyDo { _ -> SuperStructure.retractWithAlgae() }
         )
+
+    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    a().onTrue(
+        SuperStructure.smartGoTo(RobotState.CoralStation)
+        .alongWith(Intake.intakeCoralThenHold()))
 
     // only y
     y().and(notLeftBumper)

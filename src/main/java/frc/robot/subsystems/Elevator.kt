@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Inches
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.RobotController
@@ -117,7 +118,7 @@ object Elevator : SubsystemBase("elevator") {
         get() = position < IS_STOWED_THRESHOLD
 
     val atPosition: Boolean
-        get() = (leader.position.value - setpoint.toDrumRotations()) < .5.inches.toDrumRotations()
+        get() = (position - setpoint).abs(Inches) < .5
 
     val manualUp by command { run { setpoint += 10.inches * 0.020 } }
 

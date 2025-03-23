@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.sim.ChassisReference.Clockwise_Positive
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Command
@@ -60,17 +61,17 @@ object Wrist : SubsystemBase("wrist") {
                 .withReverseSoftLimitThreshold(lowerLimit)
 
             Slot0.withKP(162.105) // 62.105
-                .withKI(1.0)
+                .withKI(0.0)
                 .withKD(19.613)
-                .withKS(0.0)
-                .withKV(0.0)
-                .withKA(0.0)
+                .withKS(0.21336)
+                .withKV(10.335)
+                .withKA(0.090409)
                 .withKG(0.0)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
 
-            MotionMagic.MotionMagicCruiseVelocity = 10.0
-            MotionMagic.MotionMagicAcceleration = 30.0
-            MotionMagic.MotionMagicJerk = 50.0
+            MotionMagic.MotionMagicCruiseVelocity = 1.0
+            MotionMagic.MotionMagicAcceleration = 100.0
+//            MotionMagic.MotionMagicJerk = 50.0
         }
 
     var setpoint = lowerLimit
@@ -94,7 +95,7 @@ object Wrist : SubsystemBase("wrist") {
         }
 
     val atPosition
-        get() = (leader.position.value - setpoint) < 1.degrees
+        get() = (angle - setpoint).abs(Degrees) < 1
 
     val voltageOut = VoltageOut(0.0)
 
