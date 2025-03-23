@@ -455,10 +455,12 @@ object Chassis :
     private val fieldRelativeSpeeds
         get() = ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
 
+    var driveTarget = Pose2d()
+
     private fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-                val target = pose().also { Logger.recordOutput("DriveToPose target", it) }
-                val displacement = state.Pose.translation.minus(target.translation).toVector()
+                driveTarget = pose().also { Logger.recordOutput("DriveToPose target", it) }
+                val displacement = state.Pose.translation.minus(driveTarget.translation).toVector()
 
                 distanceController.reset(
                     displacement.norm(),
@@ -469,12 +471,12 @@ object Chassis :
             })
             .andThen(
                 applyRequest {
-                    val target = pose().also { Logger.recordOutput("DriveToPose target", it) }
                     val fieldRelativeSpeeds =
                         ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
-                    val displacement = state.Pose.translation.minus(target.translation).toVector()
+                    val displacement =
+                        state.Pose.translation.minus(driveTarget.translation).toVector()
 
-                    FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+                    FieldCentricFacingAngleAlignments.withTargetDirection(driveTarget.rotation)
 
                     val distanceOutput =
                         distanceController.setpoint.velocity.also {
@@ -489,15 +491,26 @@ object Chassis :
                                 )
                                 .also { Logger.recordOutput("DriveToPose distanceOutput", it) }
 
-                    // Instead of doing whatever this is that I came up with, just apply radial speed like before and gradually reduce tangential component to smooth heading change
-                    val heading = Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond).also {Logger.recordOutput("DriveToPose heading", it.plus(state.Pose.translation))}
-                    val newHeading = heading.rotateBy(Rotation2d.fromRadians(fieldRelativeSpeeds.toVector().angleTo(displacement.times(-1.0)).radians * headingChange * 0.02)).also { Logger.recordOutput("DriveToPose newHeading", it.plus(state.Pose.translation)) }
+                    val heading =
+                        fieldRelativeSpeeds.toVector().also {
+                            Logger.recordOutput(
+                                "DriveToPose heading",
+                                it.toTranslation().plus(state.Pose.translation),
+                            )
+                        }
+                    val tangentialVel =
+                        heading
+                            .projection(displacement.times(-1.0).getPerpendicularVector().unit())
+                            .also {
+                                Logger.recordOutput(
+                                    "DriveToPose tangentialVel",
+                                    it.toTranslation().plus(state.Pose.translation),
+                                )
+                            }
 
-//                  val speeds = newHeading.unaryMinus().toVector().unit().times(distanceOutput)
-                    val speeds = displacement.unit().times(distanceOutput)
+                    val speeds =
+                        displacement.unit().times(distanceOutput).plus(tangentialVel.times(0.8))
 
-//                    FieldCentricFacingAngleAlignments.withVelocityX(speeds.x)
-//                        .withVelocityY(speeds.y)
                     FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
                         .withVelocityY(speeds[1])
                 }

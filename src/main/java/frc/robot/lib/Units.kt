@@ -147,3 +147,8 @@ fun Vector<N2>.angleTo(vec2: Vector<N2>): Angle =
     (atan2(vec2[1], vec2[0]) - atan2(this[1], this[0])).radians
 
 fun Vector<N2>.toTranslation(): Translation2d = Translation2d(this[0], this[1])
+
+/** Vector pointing in the right hand (looking from p1 to p2) perpendicular direction */
+fun Vector<N2>.getPerpendicularVector(): Vector<N2> {
+    return VecBuilder.fill(this[1], -this[0])
+}
