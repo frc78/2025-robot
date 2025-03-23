@@ -6,7 +6,10 @@ import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
 import frc.robot.lib.meters
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 
 object Autos {
@@ -27,6 +30,7 @@ object Autos {
         )
     }
 
+    @Suppress("SpreadOperator")
     val SideCoralFast by command {
         Commands.sequence(
             Intake.intakeCoralThenHold(),
