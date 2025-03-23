@@ -130,3 +130,5 @@ fun LinearVelocity.toAngularVelocity(radius: Distance): AngularVelocity =
 
 fun AngularVelocity.toLinearVelocity(radius: Distance): LinearVelocity =
     MetersPerSecond.of(radiansPerSecond * radius.meters)
+
+fun Double.squared(): Double = this * this
