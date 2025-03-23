@@ -40,7 +40,7 @@ object SuperStructure {
         get() = Pivot.atPosition && Elevator.atPosition && Wrist.atPosition
 
     val goToSelectedLevel by command {
-        DeferredCommand({ smartGoTo(SelectedLevel.state) }, emptySet())
+        DeferredCommand({ smartGoTo(SelectedLevel.state) }, setOf(Elevator, Pivot, Wrist))
     }
 
     // Command factory to go to a specific robot state
@@ -69,8 +69,7 @@ object SuperStructure {
                         goToMoveElevatorAndPivotTogether(state)
                     }
                 },
-                // Do not require the subsystems
-                emptySet(),
+                setOf(Elevator, Pivot, Wrist),
             )
             .withName("Smart Go To ${state.name}")
 
