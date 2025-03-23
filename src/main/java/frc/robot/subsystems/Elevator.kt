@@ -197,11 +197,7 @@ object Elevator : SubsystemBase("elevator") {
         Logger.recordOutput("elevator/position", position.inches)
         Logger.recordOutput("elevator/stowed", isStowed)
         Logger.recordOutput("elevator/at_position", atPosition)
-        leader.setControl(
-            motionMagic
-                .withPosition(setpoint.toDrumRotations())
-                .withLimitForwardMotion(!Pivot.canExtendElevator)
-        )
+        leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations()))
     }
 
     override fun simulationPeriodic() {
