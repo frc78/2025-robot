@@ -114,7 +114,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
 
-    b().whileTrue(Chassis.driveToProcessor)
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {
@@ -132,6 +131,8 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notA = a().negate()
     val notY = y().negate()
 
+    b().whileTrue(Chassis.driveToProcessor)
+
     rightBumper()
         .and(notLeftBumper)
         .whileTrue(
@@ -146,9 +147,10 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
         .and(rightBumper())
         .and { !Intake.hasBranchCoral }
         .whileTrue(
-            Chassis.driveToClosestReef
-                .andThen(SuperStructure.retrieveAlgaeFromReef)
-                .andThen(SuperStructure.retractWithAlgae())
+            Chassis.driveToClosestReef.andThen(SuperStructure.retrieveAlgaeFromReef).finallyDo { _
+                ->
+                SuperStructure.retractWithAlgae()
+            }
         )
 
     // only y
