@@ -83,9 +83,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     // both left and right bumper
     leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
 
-    start().onTrue(Autos.SideCoralFast)
-    back().onTrue(Autos.FourCoralAuto)
-
     a().whileTrue(
         Chassis.snapAngleToCoralStation {
             withVelocityX(hid.velocityX).withVelocityY(hid.velocityY)
