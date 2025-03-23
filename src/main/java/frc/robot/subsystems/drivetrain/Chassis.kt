@@ -14,8 +14,10 @@ import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.util.DriveFeedforwards
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
@@ -58,6 +60,7 @@ import frc.robot.lib.FieldPoses.closestRightBranch
 import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.subsystems.Intake
+import org.littletonrobotics.junction.AutoLog
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -459,14 +462,12 @@ object Chassis :
 
     private fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-                driveTarget = pose().also { Logger.recordOutput("DriveToPose target", it) }
+                driveTarget = pose().log("driveToPose target")
                 val displacement = state.Pose.translation.minus(driveTarget.translation).toVector()
 
                 distanceController.reset(
                     displacement.norm(),
-                    fieldRelativeSpeeds.toVector().dot(displacement).div(displacement.norm()).also {
-                        Logger.recordOutput("DriveToPose init vel", it)
-                    },
+                    fieldRelativeSpeeds.toVector().dot(displacement).div(displacement.norm())
                 )
             })
             .andThen(
@@ -479,37 +480,32 @@ object Chassis :
                     FieldCentricFacingAngleAlignments.withTargetDirection(driveTarget.rotation)
 
                     val distanceOutput =
-                        distanceController.setpoint.velocity.also {
-                            Logger.recordOutput("DriveToPose setpointVel", it)
-                        } +
+                        distanceController.setpoint.velocity +
                             distanceController
                                 .calculate(
-                                    displacement.norm().also {
-                                        Logger.recordOutput("DriveToPose distance", it)
-                                    },
+                                    displacement.norm().log("driveToPose distance"),
                                     0.0,
                                 )
-                                .also { Logger.recordOutput("DriveToPose distanceOutput", it) }
+                                .log("driveToPose distanceOutput")
 
                     val heading =
-                        fieldRelativeSpeeds.toVector().also {
-                            Logger.recordOutput(
-                                "DriveToPose heading",
-                                it.toTranslation().plus(state.Pose.translation),
+                        fieldRelativeSpeeds.toVector()
+                            .logChassisOffset(
+                                "driveToPose heading"
                             )
-                        }
                     val tangentialVel =
                         heading
                             .projection(displacement.times(-1.0).getPerpendicularVector().unit())
-                            .also {
-                                Logger.recordOutput(
-                                    "DriveToPose tangentialVel",
-                                    it.toTranslation().plus(state.Pose.translation),
-                                )
-                            }
+                            .logChassisOffset("driveToPose tangentialVel")
 
                     val speeds =
-                        displacement.unit().times(distanceOutput).plus(tangentialVel.times(0.8))
+                        displacement
+                            .unit()
+                            .times(distanceOutput)
+                            .plus(
+                                if (tangentialVel.norm() >= 0.3) tangentialVel.times(0.8)
+                                else VecBuilder.fill(0.0, 0.0)
+                            )
 
                     FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
                         .withVelocityY(speeds[1])
@@ -518,6 +514,9 @@ object Chassis :
             .until { isAtPIDGoal }
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
+
+    val predictedPose: Pose2d
+        get() = Pose2d(state.Pose.translation.plus(fieldRelativeSpeeds.toVector().toTranslation().times(0.5)), state.Pose.rotation).log("Predicted Pose")
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
@@ -602,7 +601,7 @@ object Chassis :
                         closestSubstationPoint.plus(offsetTranslation),
                         closestSubstation.getPerpendicularUnitVector().unaryMinus().angle,
                     )
-                    .also { Logger.recordOutput("Drive to closest substation", it) }
+                    .log("Drive to substation")
             })
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
@@ -624,7 +623,7 @@ object Chassis :
                         if (position.x <= FieldGeometry.FIELD_X_LENGTH / 2) Rotation2d.k180deg
                         else Rotation2d.kZero,
                     )
-                    .also { Logger.recordOutput("Drive to barge", it) }
+                    .log("Drive to barge")
             })
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
