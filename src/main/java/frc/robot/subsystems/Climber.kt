@@ -4,7 +4,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.command
 import frc.robot.lib.rotations
@@ -36,24 +35,16 @@ object Climber : SubsystemBase("climber") {
 
     private var setpoint = 0.rotations
 
-    init {
-        defaultCommand = run {
-            leader.setControl(
-                positionVoltage
-                    .withPosition(setpoint)
-                    .withLimitForwardMotion(Pivot.angle > Pivot.EXTEND_FOOT_THRESHOLD)
-            )
-        }
-        leader.set(0.0)
-    }
-
     override fun periodic() {
         Logger.recordOutput("climber/position", leader.position.value)
+        leader.setControl(
+            positionVoltage
+                .withPosition(setpoint)
+                .withLimitForwardMotion(Pivot.angle > Pivot.EXTEND_FOOT_THRESHOLD)
+        )
     }
 
-    val retract by command { Commands.runOnce({ setpoint = 0.rotations }).withName("Retract foot") }
+    val retract by command { runOnce { setpoint = 0.rotations }.withName("Retract foot") }
 
-    val extend by command {
-        Commands.runOnce({ setpoint = extendedPosition }).withName("Extend Foot")
-    }
+    val extend by command { runOnce { setpoint = extendedPosition }.withName("Extend Foot") }
 }
