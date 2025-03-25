@@ -113,7 +113,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {
