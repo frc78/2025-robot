@@ -3,6 +3,7 @@ package frc.robot.lib.bindings
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
@@ -136,20 +137,39 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 
     rightBumper()
         .and(notLeftBumper)
+        .and { Intake.hasBranchCoral }
         .whileTrue(
             Chassis.driveToRightBranchAndMoveSuperStucture
             .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        .onFalse(
+            ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.CoralStation))
+                { Intake.hasBranchCoral }
+        )
+
     leftBumper()
         .and(notRightBumper)
+        .and { Intake.hasBranchCoral }
         .whileTrue(
             Chassis.driveToLeftBranchAndMoveSuperStucture
             .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        .onFalse(
+            ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.CoralStation))
+            { Intake.hasBranchCoral }
+        )
+
     leftBumper()
         .and(rightBumper())
         .and { !Intake.hasBranchCoral }
         .whileTrue(
             Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef)
 //                .finallyDo { _ -> SuperStructure.retractWithAlgae() }
+        )
+        .onFalse(
+            SuperStructure.retractWithAlgae()
         )
 
     a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
@@ -160,13 +180,19 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     // only y
     y().and(notLeftBumper)
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToBarge.andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(Chassis.driveToBargeAndMoveSuperStructure(Chassis.driveToBarge).andThen(SuperStructure.autoScoreAlgaeInNet))
     // y and left bumper
     y().and(leftBumper())
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToBargeLeft.andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(Chassis.driveToBargeAndMoveSuperStructure(Chassis.driveToBargeLeft).andThen(SuperStructure.autoScoreAlgaeInNet))
     // y and right bumper
     y().and(rightBumper())
         .and(notLeftBumper)
-        .whileTrue(Chassis.driveToBargeRight.andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(Chassis.driveToBargeAndMoveSuperStructure(Chassis.driveToBargeRight).andThen(SuperStructure.autoScoreAlgaeInNet))
+    // y released, retract to algae storage with algae or CoralStation without
+    y().onFalse(
+        ConditionalCommand(
+            SuperStructure.smartGoTo(RobotState.AlgaeStorage),
+            SuperStructure.smartGoTo(RobotState.CoralStation))
+        { Intake.detectAlgaeByCurrent() })
 }
