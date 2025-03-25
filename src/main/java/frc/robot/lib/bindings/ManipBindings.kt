@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
@@ -178,41 +179,8 @@ private fun CommandXboxController.selectWithStick() {
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
     trigger().whileTrue(Chassis.measureWheelRotations)
-    button(5).whileTrue(Pivot.moveUp)
-    button(3).whileTrue(Pivot.moveDown)
-    button(6).whileTrue(Elevator.manualUp)
-    button(4).whileTrue(Elevator.manualDown)
-
-    // Pivot control tuning
-    //    button(7).onTrue(Pivot.goToRawUntil(10.degrees){true})
-    //    button(8).onTrue(Pivot.goToRawUntil(66.degrees){true}) // coral station angle
-    //    button(9).onTrue(Pivot.goToRawUntil(90.degrees){true})
-
-    // Elevator control tuning
-    //    button(10).onTrue(Elevator.goToRawUntil(0.25.inches){true})
-    //    button(11).onTrue(Elevator.goToRawUntil(20.inches){true}) // l3 height
-    //    button(12).onTrue(Elevator.goToRawUntil(50.inches){true}) // l4 height
-
-    // Wrist control tuning
-    //    button(10).onTrue(Wrist.goToRawUntil(13.degrees){true})
-    //    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
-    //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
-
-    button(7).onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    button(8)
-        .onTrue(
-            Wrist.goTo(RobotState.FullyClimbed)
-                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
-                .alongWith(
-                    Pivot.goTo(RobotState.FullyClimbed).andWait {
-                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
-                    }
-                )
-                .andThen(Climber.extend)
-        )
-
-    button(9).whileTrue(Climber.extend)
-    button(10).whileTrue(Climber.retract)
-    button(11).whileTrue(Wrist.manualUp)
-    button(12).whileTrue(Wrist.manualDown)
+    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }
