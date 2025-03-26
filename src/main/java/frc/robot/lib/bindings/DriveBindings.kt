@@ -131,6 +131,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
     val hasCoral = { Intake.hasBranchCoral }
+    val hasNoCoral = { !Intake.hasBranchCoral }
     val notA = a().negate()
     val notY = y().negate()
 
@@ -164,7 +165,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 
     leftBumper()
         .and(rightBumper())
-        .and(hasCoral).negate()
+        .and(hasNoCoral)
         .whileTrue(
             Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef)
 //                .finallyDo { _ -> SuperStructure.retractWithAlgae() }
@@ -173,8 +174,6 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
             SuperStructure.retractWithAlgae()
         )
 
-
-     a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
         // a and left bumper
 
 //     a().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToClosestLeftCoralStation)
@@ -189,21 +188,28 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     // only y
     y().and(notLeftBumper)
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToBarge
-            .alongWith(Chassis.moveSuperStructureWhenClose)
+        .whileTrue(Chassis.driveToCenterBargeAndMoveSuperStucture
             .andThen(SuperStructure.autoScoreAlgaeInNet))
+//        .whileTrue(Chassis.driveToBarge
+//            .alongWith(Chassis.moveSuperStructureWhenClose)
+//            .andThen(SuperStructure.autoScoreAlgaeInNet))
     // y and left bumper
     y().and(leftBumper())
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToBargeLeft
-            .alongWith(Chassis.moveSuperStructureWhenClose)
+        .whileTrue(Chassis.driveToLeftBargeAndMoveSuperStucture
             .andThen(SuperStructure.autoScoreAlgaeInNet))
+//        .whileTrue(Chassis.driveToBargeLeft
+//            .alongWith(Chassis.moveSuperStructureWhenClose)
+//            .andThen(SuperStructure.autoScoreAlgaeInNet))
     // y and right bumper
     y().and(rightBumper())
         .and(notLeftBumper)
-        .whileTrue(Chassis.driveToBargeRight
-            .alongWith(Chassis.moveSuperStructureWhenClose)
+        .whileTrue(Chassis.driveToRightBargeAndMoveSuperStucture
             .andThen(SuperStructure.autoScoreAlgaeInNet))
+
+//            Chassis.driveToBargeRight
+//            .alongWith(Chassis.moveSuperStructureWhenClose)
+//            .andThen(SuperStructure.autoScoreAlgaeInNet))
     // y released, retract to algae storage with algae or CoralStation without
     y().onFalse(
         ConditionalCommand(

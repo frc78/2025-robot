@@ -111,7 +111,8 @@ object Robot : LoggedRobot() {
             }
             .onTrue(
                 Commands.either(
-                    SuperStructure.smartGoTo(RobotState.CoralStorage),
+//                    SuperStructure.smartGoTo(RobotState.CoralStorage).asProxy(),
+                    Wrist.goTo(RobotState.CoralStation).asProxy(),
                     Commands.none(),
                 ) {
                     Intake.hasBranchCoral
