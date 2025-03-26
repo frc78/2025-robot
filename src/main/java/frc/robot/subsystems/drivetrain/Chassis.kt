@@ -30,12 +30,10 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
@@ -45,7 +43,6 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
-import frc.robot.lib.Branch
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
@@ -56,8 +53,6 @@ import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
-import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
 import frc.robot.lib.command
@@ -74,8 +69,7 @@ import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import frc.robot.subsystems.*
-import frc.robot.subsystems.SuperStructure.goToScoreCoral
+import frc.robot.subsystems.Intake
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -457,21 +451,22 @@ object Chassis :
             setOf(this),
         )
 
-    val poseController =
+    private val poseController =
         ProfiledPIDController(0.5, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.3)).apply {
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
-            distanceFromPoseGoal = -1.0 // reset distance to pose
             val target = pose()
             val diff = target.minus(state.Pose)
             val distance = diff.translation.norm
+            distanceFromPoseGoal = distance
             poseController.reset(distance, 0.0)
 
             Logger.recordOutput("DriveToPose target", target)
             FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+            hasPoseTarget = true
         })
 
     private val isAtPIDGoal: Boolean
@@ -479,7 +474,10 @@ object Chassis :
             poseController.atGoal() &&
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
-    var distanceFromPoseGoal = -1.0
+    private var distanceFromPoseGoal = 0.0
+    private var hasPoseTarget = false
+
+    fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
     private fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
@@ -502,7 +500,10 @@ object Chassis :
                     .until { poseController.atGoal() }
             )
             // Stop movement
-            .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
+            .finallyDo { _ ->
+                setControl(ApplyRobotSpeeds())
+                hasPoseTarget = false
+            }
 
     private fun driveToChangingPose(
         pose: () -> Pose2d,
@@ -552,56 +553,6 @@ object Chassis :
 
     val driveToRightBranch by command {
         driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
-    }
-
-    val driveToLeftBranchAndMoveSuperStucture by command {
-        driveToLeftBranch
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
-    }
-
-    val driveToRightBranchAndMoveSuperStucture by command {
-        driveToRightBranch
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
-    }
-
-    val driveToCenterBargeAndMoveSuperStucture by command {
-        driveToBarge
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    SuperStructure.smartGoTo(RobotState.AlgaeNet)))
-    }
-
-    val driveToRightBargeAndMoveSuperStucture by command {
-        driveToBargeRight
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    SuperStructure.smartGoTo(RobotState.AlgaeNet)))
-    }
-
-    val driveToLeftBargeAndMoveSuperStucture by command {
-        driveToBargeLeft
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    SuperStructure.smartGoTo(RobotState.AlgaeNet)))
-    }
-
-    val moveSuperStructureWhenClose by command {
-            Commands.sequence(
-                Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                Commands.defer({ SuperStructure.smartGoTo(RobotState.AlgaeNet) }, setOf(Pivot, Elevator, Wrist)))
-    }
-
-    val driveToSelectedBranch by command {
-        ConditionalCommand(driveToLeftBranch, driveToRightBranch) { SelectedBranch == Branch.LEFT }
     }
 
     val driveToProcessor by command { driveToPose { closestProcessor } }

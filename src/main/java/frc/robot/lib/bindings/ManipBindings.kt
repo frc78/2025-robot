@@ -9,14 +9,10 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
-import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
@@ -63,25 +59,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     // Coral Stuff
     a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
-//    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
-//    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
-//    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
     b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
     x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
     y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
 
     start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    back()
-        .onTrue(
-            Wrist.goTo(RobotState.FullyClimbed)
-                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
-                .alongWith(
-                    Pivot.goTo(RobotState.FullyClimbed).andWait {
-                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
-                    }
-                )
-                .andThen(Climber.extend)
-        )
+    back().onTrue(SuperStructure.smartGoTo(RobotState.FullyClimbed).alongWith(Climber.extend))
 
     rightTrigger(0.55)
         .onTrue(
@@ -94,7 +77,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
         )
 
-    // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)

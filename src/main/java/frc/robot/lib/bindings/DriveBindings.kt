@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.auto.Autos
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
@@ -115,7 +114,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {
@@ -130,90 +128,97 @@ private fun CommandXboxController.configureDriveManualSequencingLayout() {
 private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
-    val hasCoral = { Intake.hasBranchCoral }
-    val hasNoCoral = { !Intake.hasBranchCoral }
-    val notA = a().negate()
-    val notY = y().negate()
 
     b().whileTrue(Chassis.driveToProcessor)
+    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    a().onTrue(
+        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+    )
+    configureReefAlignments()
+    configureBargeAlignments()
+}
 
+private fun CommandXboxController.configureReefAlignments() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+    val hasCoral = Trigger { Intake.hasBranchCoral }
+    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
     rightBumper()
         .and(notLeftBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToRightBranchAndMoveSuperStucture
-            .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            Chassis.driveToRightBranch
+                .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation))
-                { Intake.hasBranchCoral }
+                SuperStructure.smartGoTo(RobotState.CoralStation),
+            ) {
+                Intake.hasBranchCoral
+            }
         )
 
     leftBumper()
         .and(notRightBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToLeftBranchAndMoveSuperStucture
-            .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            Chassis.driveToLeftBranch
+                .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation))
-            { Intake.hasBranchCoral }
+                SuperStructure.smartGoTo(RobotState.CoralStation),
+            ) {
+                Intake.hasBranchCoral
+            }
         )
 
     leftBumper()
         .and(rightBumper())
         .and(hasNoCoral)
-        .whileTrue(
-            Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef)
-//                .finallyDo { _ -> SuperStructure.retractWithAlgae() }
-        )
-        .onFalse(
-            SuperStructure.retractWithAlgae()
-        )
+        .whileTrue(Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef))
+        .onFalse(SuperStructure.retractWithAlgae())
+}
 
-        // a and left bumper
-
-//     a().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToClosestLeftCoralStation)
-//        // a and right bumper
-//
-//     a().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToClosestRightCoralStation)
-    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation)
-        .alongWith(Intake.intakeCoralThenHold()))
+private fun CommandXboxController.configureBargeAlignments() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
 
     // only y
     y().and(notLeftBumper)
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToCenterBargeAndMoveSuperStucture
-            .andThen(SuperStructure.autoScoreAlgaeInNet))
-//        .whileTrue(Chassis.driveToBarge
-//            .alongWith(Chassis.moveSuperStructureWhenClose)
-//            .andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(
+            Chassis.driveToBarge
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
     // y and left bumper
     y().and(leftBumper())
         .and(notRightBumper)
-        .whileTrue(Chassis.driveToLeftBargeAndMoveSuperStucture
-            .andThen(SuperStructure.autoScoreAlgaeInNet))
-//        .whileTrue(Chassis.driveToBargeLeft
-//            .alongWith(Chassis.moveSuperStructureWhenClose)
-//            .andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(
+            Chassis.driveToBargeLeft
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
     // y and right bumper
     y().and(rightBumper())
         .and(notLeftBumper)
-        .whileTrue(Chassis.driveToRightBargeAndMoveSuperStucture
-            .andThen(SuperStructure.autoScoreAlgaeInNet))
-
-//            Chassis.driveToBargeRight
-//            .alongWith(Chassis.moveSuperStructureWhenClose)
-//            .andThen(SuperStructure.autoScoreAlgaeInNet))
+        .whileTrue(
+            Chassis.driveToBargeRight
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
     // y released, retract to algae storage with algae or CoralStation without
     y().onFalse(
         ConditionalCommand(
             SuperStructure.smartGoTo(RobotState.AlgaeStorage),
-            SuperStructure.smartGoTo(RobotState.CoralStation))
-        { Intake.detectAlgaeByCurrent() })
+            SuperStructure.smartGoTo(RobotState.CoralStation),
+        ) {
+            Intake.detectAlgaeByCurrent()
+        }
+    )
 }

@@ -19,7 +19,18 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
-import frc.robot.lib.*
+import frc.robot.lib.FieldGeometry
+import frc.robot.lib.command
+import frc.robot.lib.degrees
+import frc.robot.lib.meters
+import frc.robot.lib.radians
+import frc.robot.lib.radiansPerSecond
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.rotationsPerSecondCubed
+import frc.robot.lib.rotationsPerSecondPerSecond
+import frc.robot.lib.seconds
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
@@ -63,15 +74,15 @@ object Wrist : SubsystemBase("wrist") {
 
             MotionMagic.MotionMagicCruiseVelocity = 1.0
             MotionMagic.MotionMagicAcceleration = 100.0
-//            MotionMagic.MotionMagicJerk = 50.0
+            //            MotionMagic.MotionMagicJerk = 50.0
         }
 
-    var setpoint = lowerLimit
+    private var setpoint = lowerLimit
         set(value) {
             field = value.coerceIn(lowerLimit, upperLimit)
         }
 
-    val motionMagic =
+    private val motionMagic =
         DynamicMotionMagicVoltage(
             0.degrees,
             10.rotationsPerSecond,
@@ -89,7 +100,7 @@ object Wrist : SubsystemBase("wrist") {
     val atPosition
         get() = (angle - setpoint).abs(Degrees) < 1
 
-    val voltageOut = VoltageOut(0.0)
+    private val voltageOut = VoltageOut(0.0)
 
     fun initializePosition() {
         if (leader.position.value < lowerLimit) {
@@ -97,13 +108,19 @@ object Wrist : SubsystemBase("wrist") {
         }
     }
 
+    fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.wristAngle })
+
     fun goTo(state: RobotState): Command = runOnce {
         // do not move wrist if within 0.9 meters of a coral station
-        // TODO change to limit forward motion
-        if (FieldGeometry.distanceToClosestLine(
-                FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation,
-            ).meters > 0.9.meters) setpoint = state.wristAngle
+        // TODO change to limit reverse motion
+        if (
+            FieldGeometry.distanceToClosestLine(
+                    FieldGeometry.CORAL_STATIONS,
+                    Chassis.state.Pose.translation,
+                )
+                .meters > 0.9.meters
+        )
+            setpoint = state.wristAngle
     }
 
     val angle: Angle

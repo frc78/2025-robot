@@ -8,25 +8,26 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
+import frc.robot.lib.kilogramSquareMeters
 import frc.robot.lib.meters
+import frc.robot.lib.poundSquareInches
 import frc.robot.lib.seconds
 import org.littletonrobotics.junction.Logger
 
 object Intake : SubsystemBase("intake") {
-    init {
-        defaultCommand = Commands.idle(this).withName("Intake idle")
-    }
 
     private val canRange: CANrange =
         CANrange(0, "*").apply {
@@ -170,4 +171,23 @@ object Intake : SubsystemBase("intake") {
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
             .until { detectAlgaeByCurrent() }
             .withName("Intake algae then hold")
+
+    private val sim =
+        FlywheelSim(
+            LinearSystemId.createFlywheelSystem(
+                DCMotor.getKrakenX60Foc(1),
+                8.28.poundSquareInches.kilogramSquareMeters,
+                36.0 / 12.0,
+            ),
+            DCMotor.getKrakenX60Foc(1),
+            0.0,
+        )
+
+    private val simState by lazy { leader.simState }
+
+    override fun simulationPeriodic() {
+        sim.inputVoltage = simState.motorVoltage
+        sim.update(0.02)
+        simState.setRotorVelocity(sim.angularVelocity)
+    }
 }
