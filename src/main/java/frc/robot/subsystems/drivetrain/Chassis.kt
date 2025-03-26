@@ -569,12 +569,10 @@ object Chassis :
                     Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
     }
 
-    fun driveToBargeAndMoveSuperStructure(driveCmd: Command): Command {
-        return driveCmd
-            .alongWith(
-                Commands.sequence(
-                    Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
-                    Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist))))
+    val moveSuperStructureWhenClose by command {
+            Commands.sequence(
+                Commands.waitUntil { distanceFromPoseGoal in 0.0..1.25 },
+                Commands.defer({ goToScoreCoral(SelectedLevel.state) }, setOf(Pivot, Elevator, Wrist)))
     }
 
     val driveToSelectedBranch by command {
