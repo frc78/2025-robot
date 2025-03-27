@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.sim.ChassisReference.Clockwise_Positive
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Command
@@ -18,8 +19,10 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.command
 import frc.robot.lib.degrees
+import frc.robot.lib.meters
 import frc.robot.lib.radians
 import frc.robot.lib.radiansPerSecond
 import frc.robot.lib.rotationsPerSecond
@@ -28,6 +31,7 @@ import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
+import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
 object Wrist : SubsystemBase("wrist") {
@@ -60,25 +64,25 @@ object Wrist : SubsystemBase("wrist") {
                 .withReverseSoftLimitThreshold(lowerLimit)
 
             Slot0.withKP(162.105) // 62.105
-                .withKI(1.0)
+                .withKI(0.0)
                 .withKD(19.613)
-                .withKS(0.0)
-                .withKV(0.0)
-                .withKA(0.0)
+                .withKS(0.21336)
+                .withKV(10.335)
+                .withKA(0.090409)
                 .withKG(0.0)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
 
-            MotionMagic.MotionMagicCruiseVelocity = 10.0
-            MotionMagic.MotionMagicAcceleration = 30.0
-            MotionMagic.MotionMagicJerk = 50.0
+            MotionMagic.MotionMagicCruiseVelocity = 1.0
+            MotionMagic.MotionMagicAcceleration = 100.0
+            //            MotionMagic.MotionMagicJerk = 50.0
         }
 
-    var setpoint = lowerLimit
+    private var setpoint = lowerLimit
         set(value) {
             field = value.coerceIn(lowerLimit, upperLimit)
         }
 
-    val motionMagic =
+    private val motionMagic =
         DynamicMotionMagicVoltage(
             0.degrees,
             10.rotationsPerSecond,
@@ -94,9 +98,9 @@ object Wrist : SubsystemBase("wrist") {
         }
 
     val atPosition
-        get() = (leader.position.value - setpoint) < 1.degrees
+        get() = (angle - setpoint).abs(Degrees) < 1
 
-    val voltageOut = VoltageOut(0.0)
+    private val voltageOut = VoltageOut(0.0)
 
     fun initializePosition() {
         if (leader.position.value < lowerLimit) {
@@ -104,7 +108,20 @@ object Wrist : SubsystemBase("wrist") {
         }
     }
 
-    fun goTo(state: RobotState): Command = runOnce { setpoint = state.wristAngle }
+    fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.wristAngle })
+
+    fun goTo(state: RobotState): Command = runOnce {
+        // do not move wrist if within 0.9 meters of a coral station
+        // TODO change to limit reverse motion
+        if (
+            FieldGeometry.distanceToClosestLine(
+                    FieldGeometry.CORAL_STATIONS,
+                    Chassis.state.Pose.translation,
+                )
+                .meters > 0.9.meters
+        )
+            setpoint = state.wristAngle
+    }
 
     val angle: Angle
         get() = leader.position.value

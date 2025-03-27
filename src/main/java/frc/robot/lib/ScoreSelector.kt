@@ -24,7 +24,7 @@ enum class Level(val state: RobotState) {
 }
 
 object ScoreSelector {
-    var SelectedLevel: Level = Level.L2
+    var SelectedLevel: Level = Level.L4
         set(value) {
             field = value
             Logger.recordOutput("selectedLevel", value.name)

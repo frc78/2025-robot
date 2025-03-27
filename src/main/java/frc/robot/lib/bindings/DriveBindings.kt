@@ -3,6 +3,7 @@ package frc.robot.lib.bindings
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.lib.velocityRot
@@ -14,7 +15,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
 private val DRIVE_LAYOUT =
-    DriveLayout.SNAPPING.also { SmartDashboard.putString("drive_layout", it.name) }
+    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
 
 val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
 val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
@@ -113,8 +114,6 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-
-    b().whileTrue(Chassis.driveToProcessor)
 }
 
 private fun CommandXboxController.configureDriveManualSequencingLayout() {
@@ -127,11 +126,99 @@ private fun CommandXboxController.configureDriveManualSequencingLayout() {
 
 // Driving with buttons for automatic scoring sequences
 private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+
+    b().whileTrue(Chassis.driveToProcessor)
+    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    a().onTrue(
+        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+    )
+    configureReefAlignments()
+    configureBargeAlignments()
+}
+
+private fun CommandXboxController.configureReefAlignments() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+    val hasCoral = Trigger { Intake.hasBranchCoral }
+    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
     rightBumper()
+        .and(notLeftBumper)
+        .and(hasCoral)
         .whileTrue(
-            Chassis.driveToSelectedBranch
-                .andThen(SuperStructure.goToSelectedLevel)
-                .andThen(Intake.scoreCoral)
-                .andThen(SuperStructure.smartGoTo(RobotState.Stow))
+            Chassis.driveToRightBranch
+                .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
         )
+        .onFalse(
+            ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.CoralStation),
+            ) {
+                Intake.hasBranchCoral
+            }
+        )
+
+    leftBumper()
+        .and(notRightBumper)
+        .and(hasCoral)
+        .whileTrue(
+            Chassis.driveToLeftBranch
+                .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+        )
+        .onFalse(
+            ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.CoralStation),
+            ) {
+                Intake.hasBranchCoral
+            }
+        )
+
+    leftBumper()
+        .and(rightBumper())
+        .and(hasNoCoral)
+        .whileTrue(Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef))
+        .onFalse(SuperStructure.retractWithAlgae())
+}
+
+private fun CommandXboxController.configureBargeAlignments() {
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+
+    // only y
+    y().and(notLeftBumper)
+        .and(notRightBumper)
+        .whileTrue(
+            Chassis.driveToBarge
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
+    // y and left bumper
+    y().and(leftBumper())
+        .and(notRightBumper)
+        .whileTrue(
+            Chassis.driveToBargeLeft
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
+    // y and right bumper
+    y().and(rightBumper())
+        .and(notLeftBumper)
+        .whileTrue(
+            Chassis.driveToBargeRight
+                .alongWith(SuperStructure.goToNetWhileAligning)
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
+    // y released, retract to algae storage with algae or CoralStation without
+    y().onFalse(
+        ConditionalCommand(
+            SuperStructure.smartGoTo(RobotState.AlgaeStorage),
+            SuperStructure.smartGoTo(RobotState.CoralStation),
+        ) {
+            Intake.detectAlgaeByCurrent()
+        }
+    )
 }

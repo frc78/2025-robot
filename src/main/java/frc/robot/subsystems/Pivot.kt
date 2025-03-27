@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
 import com.ctre.phoenix6.sim.ChassisReference
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
@@ -40,7 +41,7 @@ object Pivot : SubsystemBase("pivot") {
     private val cancoder = CANcoder(5, "*")
 
     // how vertical the pivot needs to be for the elevator to extend
-    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees
+    private val RAISE_ELEVATOR_THRESHOLD = 70.degrees // 70 in main
     // how horizontal the pivot needs to be for the
     val EXTEND_FOOT_THRESHOLD = 60.degrees
 
@@ -67,7 +68,7 @@ object Pivot : SubsystemBase("pivot") {
             .withKA(0.42529)
             .withKG(0.0082199)
             .withGravityType(GravityTypeValue.Arm_Cosine)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     // Used when going to coral station
     private val COMP_BOT_ELEVATOR_UP_GAINS =
@@ -80,7 +81,7 @@ object Pivot : SubsystemBase("pivot") {
             .withKA(0.42529)
             .withKG(0.0082199)
             .withGravityType(GravityTypeValue.Arm_Cosine)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     private val COMP_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
@@ -129,7 +130,7 @@ object Pivot : SubsystemBase("pivot") {
         get() = angle > RAISE_ELEVATOR_THRESHOLD
 
     val atPosition
-        get() = (leader.position.value - setpoint) < 1.degrees
+        get() = (angle - setpoint).abs(Degrees) < 1.5
 
     fun goTo(state: RobotState) = runOnce { setpoint = state.pivotAngle }
 
