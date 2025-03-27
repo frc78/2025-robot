@@ -108,7 +108,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     rightBumper().and(notLeftBumper).and(notA).and(notY).whileTrue(Chassis.driveToRightBranch)
 
     // both left and right bumper
-    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
+    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestAlgae)
 
     a().whileTrue(
         Chassis.snapAngleToCoralStation {
@@ -209,7 +209,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(rightBumper())
         .and(hasNoCoral)
         .whileTrue(
-            Chassis.driveToClosestReef
+            Chassis.driveToClosestAlgae
                 .alongWith(
                     Commands.sequence(
                         Commands.waitUntil { Chassis.isWithinGoal(1.5) },

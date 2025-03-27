@@ -79,7 +79,7 @@ private fun CommandXboxController.configureManipDpadLayout() {
 private fun CommandXboxController.configureManipButtonLayout() {
 
     // Coral Stuff
-    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    a().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L1 }))
     b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
     x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
     y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
