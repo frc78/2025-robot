@@ -147,6 +147,14 @@ object Intake : SubsystemBase("intake") {
         Logger.recordOutput("intake/has_algae", detectAlgaeByCurrent())
     }
 
+    val manualIntake by command {
+        startEnd({ leader.set(1.0) }, { leader.set(0.0) })
+    }
+
+    val manualOuttake by command {
+        startEnd({ leader.set(-1.0) }, { leader.set(0.0) })
+    }
+
     val outtakeCoral by command {
         startEnd({ leader.set(-0.5) }, { leader.set(0.0) }).withName("outtakeCoral")
     }

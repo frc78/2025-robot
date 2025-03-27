@@ -9,10 +9,7 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.Climber
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.RobotState
-import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
@@ -161,8 +158,21 @@ private fun CommandXboxController.selectWithStick() {
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
     trigger().whileTrue(Chassis.measureWheelRotations)
-    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
-    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+
+    // SuperStructure manual control
+    button(5).whileTrue(Pivot.moveUp)
+    button(3).whileTrue(Pivot.moveDown)
+    button(6).whileTrue(Elevator.manualUp)
+    button(4).whileTrue(Elevator.manualDown)
+    button(12).whileTrue(Wrist.manualUp)
+    button(11).whileTrue(Wrist.manualDown)
+
+    // Intake
+    button(10).whileTrue(Intake.manualIntake)
+    button(9).whileTrue(Intake.manualOuttake)
+
+//    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+//    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+//    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+//    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }
