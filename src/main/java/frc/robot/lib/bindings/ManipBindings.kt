@@ -20,7 +20,7 @@ import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
+    ManipulatorLayout.MANUAL.also { Logger.recordMetadata("manip_layout", it.name) }
 
 enum class ManipulatorLayout {
     MANUAL,
@@ -42,10 +42,10 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
-    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
-    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
-    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    a().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L1 }))
+    b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
+    x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
+    y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
 }
 
 /** Use dpad to select branch and level */

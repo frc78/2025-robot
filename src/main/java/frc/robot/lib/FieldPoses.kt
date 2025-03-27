@@ -16,14 +16,11 @@ import kotlin.jvm.optionals.getOrNull
 object FieldPoses {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(12.94 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (12.94 / 2).inches, Rotation2d.kZero)
-    private val REEF_TO_BOT_TRANSFORM = Transform2d(0.72.meters, 0.meters, Rotation2d.kZero)
     private val CORAL_TO_BOT_TRANSFORM = Transform2d(.515.meters, 0.meters, Rotation2d.k180deg)
 
     // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
-        intArrayOf(18, 17, 22, 21, 20, 19).map {
-            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
-        }
+        intArrayOf(18, 17, 22, 21, 20, 19).map { Robot.gameField.getTagPose(it).get().toPose2d() }
     private val BLUE_BRANCH_POSES =
         BLUE_REEF_POSES.flatMap {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
@@ -31,9 +28,7 @@ object FieldPoses {
 
     // Tag IDs are in order of ReefFaces
     private val RED_REEF_POSES =
-        intArrayOf(7, 8, 9, 10, 11, 6).map {
-            Robot.gameField.getTagPose(it).get().toPose2d().transformBy(REEF_TO_BOT_TRANSFORM)
-        }
+        intArrayOf(7, 8, 9, 10, 11, 6).map { Robot.gameField.getTagPose(it).get().toPose2d() }
 
     private val RED_BRANCH_POSES =
         RED_REEF_POSES.flatMap {

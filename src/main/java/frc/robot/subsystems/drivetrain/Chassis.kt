@@ -53,6 +53,11 @@ import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
+import frc.robot.lib.Level.L1
+import frc.robot.lib.Level.L2
+import frc.robot.lib.Level.L3
+import frc.robot.lib.Level.L4
+import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
 import frc.robot.lib.command
@@ -426,7 +431,10 @@ object Chassis :
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
-        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+        pose().let {
+            it.transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+                .transformBy(bestReefToBotTransform(it))
+        }
     }
 
     private fun pathfindToPose(pose: () -> Pose2d) =
@@ -547,7 +555,33 @@ object Chassis :
 
     val driveToClosestReef by command { driveToPose { closestReef } }
 
+    private val REEF_TO_ROBOT_FRONT_TRANSFORM = Transform2d(.50.meters, 0.0.meters, Rotation2d.kPi)
+    private val REEF_TO_ROBOT_BACK_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
+
+    /**
+     * Returns a transform from the reef/branch to the robot depending on which level we're scoring
+     * on and where the closest rotation point is. L1 and L2 can only score off the front, but L3
+     * and L4 are free to score off the front or back
+     */
+    private fun bestReefToBotTransform(target: Pose2d): Transform2d {
+        return when (SelectedLevel) {
+            L1 -> REEF_TO_ROBOT_FRONT_TRANSFORM
+            L2,
+            L3,
+            L4 -> {
+
+                //                // Find rotation difference between robot and target
+                //                if ((target - state.Pose).rotation.rotations in -0.25..0.25)
+                REEF_TO_ROBOT_BACK_TRANSFORM
+                //                else REEF_TO_ROBOT_FRONT_TRANSFORM
+            }
+        }
+    }
+
     val driveToLeftBranch by command {
+        // closestLeftBranch is the position of the left branch
+        // Add branch to robot transform to get the robot position
+        // branch to robot transform depends on SelectedLevel and current robot rotation
         driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
 
