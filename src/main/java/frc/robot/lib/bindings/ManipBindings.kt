@@ -4,18 +4,17 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.subsystems.Wrist
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Climber
+import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
@@ -177,8 +176,8 @@ fun CommandJoystick.configureManipTestBindings() {
     button(10).whileTrue(Intake.manualIntake)
     button(9).whileTrue(Intake.manualOuttake)
 
-//    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-//    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-//    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
-//    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+    //    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+    //    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+    //    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+    //    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }
