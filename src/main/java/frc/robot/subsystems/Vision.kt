@@ -71,7 +71,7 @@ object Vision {
                     Transform3d(
                         11.830.inches,
                         (-11.491).inches,
-                        6.610.inches,
+                        8.503.inches,
                         Rotation3d(0.degrees, (-14).degrees, 28.597.degrees),
                     ),
                 )
@@ -81,7 +81,7 @@ object Vision {
                     Transform3d(
                         (-11.857).inches,
                         (11.483).inches,
-                        6.610.inches,
+                        8.503.inches,
                         Rotation3d(0.degrees, (-14).degrees, 200.degrees),
                     ),
                 )
@@ -91,7 +91,7 @@ object Vision {
                     Transform3d(
                         (-11.857).inches,
                         (-11.483).inches,
-                        6.610.inches,
+                        8.503.inches,
                         Rotation3d(0.degrees, (-14).degrees, (-200).degrees),
                     ),
                 )
