@@ -98,10 +98,10 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         /**
          * Sets the proportional coefficient of the PID controller gain.
          *
-         * @param Kp The proportional coefficient. Must be &gt;= 0.
+         * @param kP The proportional coefficient. Must be &gt;= 0.
          */
-        set(Kp) {
-            controller.p = Kp
+        set(kP) {
+            controller.p = kP
         }
 
     var i: Double
@@ -114,10 +114,10 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         /**
          * Sets the integral coefficient of the PID controller gain.
          *
-         * @param Ki The integral coefficient. Must be &gt;= 0.
+         * @param kI The integral coefficient. Must be &gt;= 0.
          */
-        set(Ki) {
-            controller.i = Ki
+        set(kI) {
+            controller.i = kI
         }
 
     var d: Double
@@ -130,10 +130,10 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         /**
          * Sets the differential coefficient of the PID controller gain.
          *
-         * @param Kd The differential coefficient. Must be &gt;= 0.
+         * @param kD The differential coefficient. Must be &gt;= 0.
          */
-        set(Kd) {
-            controller.d = Kd
+        set(kD) {
+            controller.d = kD
         }
 
     var iZone: Double
