@@ -31,12 +31,12 @@ class Camera(val name: String, val transform: Transform3d) {
     private val cPNPParams = ConstrainedSolvepnpParams(true, 0.5)
 
     // TODO guessed values, should tune one day
-    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(2.0, 2.0, 1.0)
-    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.1, 0.1, 0.1)
+    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.1, 0.1, 1.0)
+    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.01, 0.01, 0.1)
+    private val outOfRangeStds =
+        VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
 
     var currentStds: Matrix<N3, N1> = singleTagStds
-
-    private var lastEstimatedPose: EstimatedRobotPose? = null
 
     init {
         OpenCvLoader.forceStaticLoad()
@@ -56,7 +56,6 @@ class Camera(val name: String, val transform: Transform3d) {
                     .getOrNull()
             updateStds(visionEst, it.getTargets())
         }
-        lastEstimatedPose = visionEst
         return visionEst // TODO does this work? It's what the example said
     }
 
@@ -81,10 +80,10 @@ class Camera(val name: String, val transform: Transform3d) {
         val outOfRange =
             validTargets.size == 1 && avgDist > 2 || validTargets.size == 2 && avgDist > 5
         if (outOfRange) {
-            currentStds = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
+            currentStds = outOfRangeStds
             return
         }
         // We need to improve standard deviation calculations
-        currentStds.times(1 + (avgDist.pow(2) / 15))
+        currentStds.times(1 + (avgDist.pow(2) / 100))
     }
 }

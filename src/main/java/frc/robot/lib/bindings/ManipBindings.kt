@@ -4,17 +4,18 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.SuperStructure.goToMoveElevatorAndPivotTogether
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.absoluteValue
@@ -43,10 +44,10 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L4) }))
-    x().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L3) }))
-    b().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L2) }))
-    a().onTrue(Commands.runOnce({ goToMoveElevatorAndPivotTogether(RobotState.L1) }))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
 }
 
 /** Use dpad to select branch and level */
@@ -72,7 +73,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
             Wrist.goTo(RobotState.FullyClimbed)
                 .alongWith(Elevator.goTo(RobotState.FullyClimbed))
                 .alongWith(
-                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
+                    Pivot.goTo(RobotState.FullyClimbed).andWait {
                         Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
                     }
                 )
@@ -175,41 +176,8 @@ private fun CommandXboxController.selectWithStick() {
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
     trigger().whileTrue(Chassis.measureWheelRotations)
-    button(5).whileTrue(Pivot.moveUp)
-    button(3).whileTrue(Pivot.moveDown)
-    button(6).whileTrue(Elevator.manualUp)
-    button(4).whileTrue(Elevator.manualDown)
-
-    // Pivot control tuning
-    //    button(7).onTrue(Pivot.goToRawUntil(10.degrees){true})
-    //    button(8).onTrue(Pivot.goToRawUntil(66.degrees){true}) // coral station angle
-    //    button(9).onTrue(Pivot.goToRawUntil(90.degrees){true})
-
-    // Elevator control tuning
-    //    button(10).onTrue(Elevator.goToRawUntil(0.25.inches){true})
-    //    button(11).onTrue(Elevator.goToRawUntil(20.inches){true}) // l3 height
-    //    button(12).onTrue(Elevator.goToRawUntil(50.inches){true}) // l4 height
-
-    // Wrist control tuning
-    //    button(10).onTrue(Wrist.goToRawUntil(13.degrees){true})
-    //    button(11).onTrue(Wrist.goToRawUntil(120.degrees){true}) // l3 height
-    //    button(12).onTrue(Wrist.goToRawUntil(165.degrees){true}) // l4 height
-
-    button(7).onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    button(8)
-        .onTrue(
-            Wrist.goTo(RobotState.FullyClimbed)
-                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
-                .alongWith(
-                    Pivot.goToRawUntil(RobotState.FullyClimbed.pivotAngle) {
-                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
-                    }
-                )
-                .andThen(Climber.extend)
-        )
-
-    button(9).whileTrue(Climber.extend)
-    button(10).whileTrue(Climber.retract)
-    button(11).whileTrue(Wrist.manualUp())
-    button(12).whileTrue(Wrist.manualDown())
+    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }
