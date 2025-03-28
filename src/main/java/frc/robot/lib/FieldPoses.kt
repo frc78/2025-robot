@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.DriverStation.Alliance.Blue
 import edu.wpi.first.wpilibj.DriverStation.Alliance.Red
 import frc.robot.Robot
@@ -16,11 +15,16 @@ import kotlin.jvm.optionals.getOrNull
 object FieldPoses {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(12.94 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (12.94 / 2).inches, Rotation2d.kZero)
+    val REEF_TO_ROBOT_FRONT_TRANSFORM = Transform2d(.50.meters, 0.0.meters, Rotation2d.kPi)
+    val REEF_TO_ROBOT_BACK_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
+    val ALGAE_TO_ROBOT_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
     private val CORAL_TO_BOT_TRANSFORM = Transform2d(.515.meters, 0.meters, Rotation2d.k180deg)
 
-    // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
         intArrayOf(18, 17, 22, 21, 20, 19).map { Robot.gameField.getTagPose(it).get().toPose2d() }
+
+    private val BLUE_ALGAE_POSES = BLUE_REEF_POSES.map { it.transformBy(ALGAE_TO_ROBOT_TRANSFORM) }
+
     private val BLUE_BRANCH_POSES =
         BLUE_REEF_POSES.flatMap {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
@@ -30,6 +34,8 @@ object FieldPoses {
     private val RED_REEF_POSES =
         intArrayOf(7, 8, 9, 10, 11, 6).map { Robot.gameField.getTagPose(it).get().toPose2d() }
 
+    private val RED_ALGAE_POSES = RED_REEF_POSES.map { it.transformBy(ALGAE_TO_ROBOT_TRANSFORM) }
+
     private val RED_BRANCH_POSES =
         RED_REEF_POSES.flatMap {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
@@ -37,13 +43,18 @@ object FieldPoses {
 
     private val HIGH_ALGAE_REEF_POSES =
         listOf(
-            BLUE_REEF_POSES[0],
-            BLUE_REEF_POSES[2],
-            BLUE_REEF_POSES[4],
-            RED_REEF_POSES[0],
-            RED_REEF_POSES[2],
-            RED_REEF_POSES[4],
+            BLUE_ALGAE_POSES[0],
+            BLUE_ALGAE_POSES[2],
+            BLUE_ALGAE_POSES[4],
+            RED_ALGAE_POSES[0],
+            RED_ALGAE_POSES[2],
+            RED_ALGAE_POSES[4],
         )
+
+    private val algaePoses = BLUE_ALGAE_POSES + RED_ALGAE_POSES
+
+    val closestAlgae
+        get() = Chassis.state.Pose.nearest(algaePoses)
 
     val closestAlgaeIsHigh
         get() = closestReef in HIGH_ALGAE_REEF_POSES
@@ -64,21 +75,18 @@ object FieldPoses {
 
     private val allianceReefPoses
         get() =
-            if (Robot.alliance == Alliance.Blue) {
+            if (alliance == Blue) {
                 BLUE_REEF_POSES
             } else RED_REEF_POSES
 
     private val branchPoses
         get() =
-            if (Robot.alliance == Alliance.Blue) {
+            if (alliance == Blue) {
                 BLUE_BRANCH_POSES
             } else RED_BRANCH_POSES
 
     val closestReef: Pose2d
         get() = Chassis.state.Pose.nearest(reefPoses)
-
-    val closestBranch: Pose2d
-        get() = Chassis.state.Pose.nearest(branchPoses)
 
     /** Returns true if the pose is on the far side of the reef from the alliance wall */
     val Pose2d.isFarReef: Boolean
@@ -130,9 +138,6 @@ object FieldPoses {
         GH,
         IJ,
         KL;
-
-        val pose
-            get() = reefPoses[ordinal]
 
         val leftBranch
             get() = branchPoses[ordinal * 2]

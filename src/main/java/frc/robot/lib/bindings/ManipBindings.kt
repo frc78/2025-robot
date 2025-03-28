@@ -20,7 +20,7 @@ import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.MANUAL.also { Logger.recordMetadata("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 enum class ManipulatorLayout {
     MANUAL,
@@ -60,7 +60,7 @@ private fun CommandXboxController.configureManipDpadLayout() {
 private fun CommandXboxController.configureManipButtonLayout() {
 
     // Coral Stuff
-    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    a().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L1 }))
     b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
     x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
     y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
