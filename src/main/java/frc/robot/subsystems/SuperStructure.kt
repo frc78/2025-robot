@@ -15,11 +15,11 @@ import frc.robot.subsystems.drivetrain.Chassis
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
-    Stow(40.degrees, 0.25.inches, 22.5.degrees), // not currently used
+    Stow(40.degrees, 0.25.inches, 22.5.degrees),
     AlgaeStorage(60.degrees, 0.25.inches, 22.5.degrees),
     L1(40.degrees, 0.25.inches, 186.75.degrees),
-    L2(93.5.degrees, 0.25.inches, 34.5.degrees),
-    L3(92.6.degrees, 17.25.inches, 33.5.degrees),
+    L2(93.5.degrees, 0.25.inches, 37.degrees),
+    L3(92.6.degrees, 17.25.inches, 36.degrees),
     L4(92.5.degrees, 46.inches, 29.25.degrees),
     CoralStation(62.92.degrees, 0.25.inches, 176.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),

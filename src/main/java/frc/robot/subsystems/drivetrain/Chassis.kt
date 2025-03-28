@@ -425,9 +425,9 @@ object Chassis :
     }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d, low_accel: Boolean = false) = driveToPose( {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-    }
+    }, low_accel)
 
     private fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
@@ -452,7 +452,7 @@ object Chassis :
         )
 
     private val poseController =
-        ProfiledPIDController(0.5, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.3)).apply {
+        ProfiledPIDController(0.4, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.5)).apply {
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
@@ -479,7 +479,7 @@ object Chassis :
 
     fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
-    private fun driveToPose(pose: () -> Pose2d): Command =
+    private fun driveToPose(pose: () -> Pose2d, low_accel: Boolean = false): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
@@ -488,7 +488,9 @@ object Chassis :
                         val diff = robot.translation - target.translation
 
                         distanceFromPoseGoal = diff.norm
-                        val output = poseController.calculate(diff.norm)
+                        val output = poseController.calculate(diff.norm, poseController.goal,
+                            if (low_accel) TrapezoidProfile.Constraints(4.0, 1.6)
+                            else TrapezoidProfile.Constraints(4.0, 2.3))
 
                         val angle = diff.angle
                         val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
@@ -545,23 +547,44 @@ object Chassis :
             // Stop movement
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
-    val driveToClosestReef by command { driveToPose { closestReef } }
+    val driveToClosestReef by command { driveToPose({ closestReef }) }
 
     val driveToLeftBranch by command {
-        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
+        driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
+        driveToPoseWithCoralOffset({ closestRightBranch }).withName("Drive to branch left")
     }
 
-    val driveToProcessor by command { driveToPose { closestProcessor } }
+    val driveToLeftBranchSlow by command {
+        driveToPoseWithCoralOffset({ closestLeftBranch }, true).withName("Drive to branch left slow")
+    }
 
-    val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
+    val driveToRightBranchSlow by command {
+        driveToPoseWithCoralOffset({ closestRightBranch }, true).withName("Drive to branch right slow")
+    }
 
-    val driveToBarge by command { driveToPose { closestBarge } }
-    val driveToBargeLeft by command { driveToPose { closestLeftBarge } }
-    val driveToBargeRight by command { driveToPose { closestRightBarge } }
+    // Drive to left/right branches spaced slightly backwards
+    // Do this and wait for SuperStructure to be in position before going all the way in
+
+    private val spaceBack: Transform2d = Transform2d(0.25.meters, 0.meters, Rotation2d.kZero)
+
+    val driveToLeftBranchFar by command {
+            driveToPoseWithCoralOffset({ closestLeftBranch.transformBy(spaceBack) })
+    }
+
+    val driveToRightBranchFar by command {
+        driveToPoseWithCoralOffset({ closestRightBranch.transformBy(spaceBack) })
+    }
+
+    val driveToProcessor by command { driveToPose({ closestProcessor }) }
+
+    val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation })}
+
+    val driveToBarge by command { driveToPose({ closestBarge })}
+    val driveToBargeLeft by command { driveToPose({ closestLeftBarge })}
+    val driveToBargeRight by command { driveToPose({ closestRightBarge })}
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle

@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
+import frc.robot.lib.ScoreSelector
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
@@ -143,13 +144,22 @@ private fun CommandXboxController.configureReefAlignments() {
     val notRightBumper = rightBumper().negate()
     val hasCoral = Trigger { Intake.hasBranchCoral }
     val hasNoCoral = Trigger { !Intake.hasBranchCoral }
+
     rightBumper()
         .and(notLeftBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToRightBranch
-                .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+            ConditionalCommand(
+                Chassis.driveToRightBranchFar.withDeadline(
+                    Commands.sequence(
+                        SuperStructure.goToScoreCoralWhenClose,
+                        Commands.waitUntil { SuperStructure.atPosition }))
+                    .andThen(Chassis.driveToRightBranchSlow)
+                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+                Chassis.driveToRightBranch
+                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
         )
         .onFalse(
             ConditionalCommand(
@@ -164,9 +174,17 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(notRightBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToLeftBranch
-                .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+            ConditionalCommand(
+                Chassis.driveToLeftBranchFar.withDeadline(
+                    Commands.sequence(
+                        SuperStructure.goToScoreCoralWhenClose,
+                        Commands.waitUntil { SuperStructure.atPosition }))
+                    .andThen(Chassis.driveToLeftBranchSlow)
+                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+                Chassis.driveToLeftBranch
+                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
         )
         .onFalse(
             ConditionalCommand(
@@ -180,7 +198,10 @@ private fun CommandXboxController.configureReefAlignments() {
     leftBumper()
         .and(rightBumper())
         .and(hasNoCoral)
-        .whileTrue(Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef))
+        .whileTrue(Chassis.driveToClosestReef.alongWith(
+            Commands.sequence(
+                Commands.waitUntil { Chassis.isWithinGoal(1.25) },
+                SuperStructure.retrieveAlgaeFromReef)))
         .onFalse(SuperStructure.retractWithAlgae())
 }
 
