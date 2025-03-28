@@ -418,10 +418,9 @@ object Chassis :
     }
 
     private val distanceController =
-        ProfiledPIDController(0.5, 0.0, 0.0, TrapezoidProfile.Constraints(4.0, 5.0)).apply {
+        ProfiledPIDController(1.5, 0.0, 0.25, TrapezoidProfile.Constraints(4.0, 6.0)).apply {
             setTolerance(0.01)
         }
-    private val headingChange = 10
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
@@ -503,9 +502,12 @@ object Chassis :
                             .unit()
                             .times(distanceOutput)
                             .plus(
-                                if (tangentialVel.norm() >= 0.3) tangentialVel.times(0.8)
+                                if (tangentialVel.norm() >= 0.3) tangentialVel.times(0.7)
                                 else VecBuilder.fill(0.0, 0.0)
                             )
+
+                    Logger.recordOutput("driveToPose position error", distanceController.positionError)
+                    Logger.recordOutput("driveToPose velocity error", distanceController.velocityError)
 
                     FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
                         .withVelocityY(speeds[1])
