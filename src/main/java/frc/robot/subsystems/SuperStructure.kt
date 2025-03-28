@@ -115,7 +115,7 @@ object SuperStructure {
     }
 
     val goToScoreCoralWhenClose by command {
-        Commands.sequence(Commands.waitUntil { Chassis.isWithinGoal(1.25) }, goToSelectedLevel)
+        Commands.sequence(Commands.waitUntil { Chassis.isWithinGoal(1.5) }, goToSelectedLevel)
     }
 
     private fun goToMoveElevatorFirst(state: RobotState): Command =

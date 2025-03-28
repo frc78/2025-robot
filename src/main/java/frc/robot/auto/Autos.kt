@@ -50,9 +50,9 @@ object Autos {
                 )
                 .map { branches ->
                     Commands.sequence(
-                        Chassis.driveToPoseWithCoralOffset {
+                        Chassis.driveToPoseWithCoralOffset({
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
-                            }
+                            })
                             .alongWith(
                                 Commands.sequence(
                                     // flip wrist and move pivot when away from coral station with
@@ -92,9 +92,9 @@ object Autos {
                 )
                 .mapIndexed { i, branches ->
                     Commands.sequence(
-                        Chassis.driveToPoseWithCoralOffset {
+                        Chassis.driveToPoseWithCoralOffset({
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
-                            }
+                            })
                             .alongWith(
                                 Commands.waitUntil {
                                         FieldGeometry.distanceToClosestLine(
