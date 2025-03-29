@@ -14,6 +14,7 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.SuperStructure.retractWithAlgae
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 
@@ -120,31 +121,65 @@ object Autos {
     val CenterAlgaeAuto by command {
         Commands.sequence(
             // Drive to right branch, but it's on the far side of the reef so it's swapped
-            Chassis.driveToPoseWithCoralOffset { Branch.H.pose },
+            Chassis.driveToPoseWithCoralOffset({ Branch.H.pose }, true)
+                .alongWith(
+                    Commands.sequence(
+                        Pivot.goTo(RobotState.L4),
+                        Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                        SuperStructure.goToScoreCoral(RobotState.L4)))
+                .withTimeout(2.0),
             // Score L4
             goToLevelAndScore(RobotState.L4),
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
-            getAlgaeAndScore(FieldPoses.ReefFace.IJ),
+            getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
-            Chassis.pathfindToPose { FieldPoses.ReefFace.EF.pose },
+            Chassis.pathfindToPose({ FieldPoses.ReefFace.EF.pose }, false),
             SuperStructure.retrieveAlgaeFromReef,
-            Chassis.pathfindToPose { FieldPoses.closestRightBarge }
+            Chassis.pathfindToPose({ FieldPoses.closestRightBarge }, false)
                 .andThen(SuperStructure.autoScoreAlgaeInNet),
         )
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.driveToPose { face.pose }
-            .andThen(
+        Chassis.driveToPose({ face.pose })
+            .alongWith(
                 // Get algae
-                SuperStructure.retrieveAlgaeFromReef
-            )
+                Commands.sequence(
+                    Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                    SuperStructure.retrieveAlgaeFromReef))
             .andThen(
                 // Drive to barge
-                Chassis.driveToBargeRight
-            )
+                Chassis.driveToBargeRightSlow
+                    .alongWith(
+                        Commands.sequence(
+                            Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                            SuperStructure.smartGoTo(RobotState.AlgaeNet)))
+                    .withTimeout(3.5))
             .andThen(
-                // Score in net
+                // Score in net and retract
+                SuperStructure.autoScoreAlgaeInNet
+            )
+
+
+    private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace) =
+        Chassis.driveToPose({ face.pose })
+            .alongWith(
+                // Get algae
+                Commands.sequence(
+                    Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                    SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
+                        .withDeadline(Intake.intakeAlgaeThenHold())
+                        .andThen(retractWithAlgae())))
+            .andThen(
+                // Drive to barge
+                Chassis.driveToBargeRightSlow
+                    .alongWith(
+                        Commands.sequence(
+                            Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                            SuperStructure.smartGoTo(RobotState.AlgaeNet)))
+                    .withTimeout(3.5))
+            .andThen(
+                // Score in net and retract
                 SuperStructure.autoScoreAlgaeInNet
             )
 }

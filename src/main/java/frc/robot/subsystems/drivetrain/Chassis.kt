@@ -429,11 +429,11 @@ object Chassis :
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }, low_accel)
 
-    private fun pathfindToPose(pose: () -> Pose2d) =
+    fun pathfindToPose(pose: () -> Pose2d, low_accel: Boolean) =
         DeferredCommand(
             {
                 if (state.Pose.translation.getDistance(pose().translation) < 1.0) {
-                    driveToPose(pose)
+                    driveToPose(pose, low_accel)
                 } else {
                     AutoBuilder.pathfindToPose(
                         // Stay back 1 foot from the end point
@@ -591,6 +591,10 @@ object Chassis :
     val driveToBarge by command { driveToPose({ closestBarge }, false)}
     val driveToBargeLeft by command { driveToPose({ closestLeftBarge }, false)}
     val driveToBargeRight by command { driveToPose({ closestRightBarge }, false)}
+
+    val driveToBargeSlow by command { driveToPose({ closestBarge }, true)}
+    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }, true)}
+    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }, true)}
 
     val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) })}
     val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) })}
