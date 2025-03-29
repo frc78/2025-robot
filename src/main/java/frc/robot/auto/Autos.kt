@@ -92,7 +92,7 @@ object Autos {
                     Chassis.robotCentricDrive { withVelocityX(1.inchesPerSecond) }
                         .withTimeout(5.seconds)
                 ),
-            SuperStructure.smartGoTo(RobotState.CoralStation),
+//            SuperStructure.smartGoTo(RobotState.CoralStation),
         )
     }
     @Suppress("SpreadOperator")
@@ -131,15 +131,19 @@ object Autos {
 
     val CenterAlgae by command {
         Commands.sequence(
-            Chassis.driveToPose { Branch.H.pose },
-            goToL4AndScore,
-            Chassis.driveToPose { FieldPoses.ReefFace.GH.pose },
+            Chassis.driveToPose({ Branch.H.pose }),
+            goToLevelAndScore(RobotState.L4),
+            Chassis.driveToPose({ FieldPoses.ReefFace.GH.pose }),
             getAlgaeFromL3,
-            Chassis.snapToBarge({ 0.0 }, { this }),
+            Chassis.driveToBargeRight
+                .alongWith(
+                    Commands.sequence(
+                        Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                        SuperStructure.smartGoTo(RobotState.AlgaeNet))),
             SuperStructure.smartGoTo(RobotState.AlgaeNet),
-            Intake.scoreAlgae,
-            SuperStructure.smartGoTo(RobotState.CoralStation),
-            Chassis.driveToPose { FieldPoses.ReefFace.GH.pose },
+            SuperStructure.autoScoreAlgaeInNet,
+            Chassis.driveToPose({ FieldPoses.ReefFace.IJ.pose }),
+
         )
     }
 }

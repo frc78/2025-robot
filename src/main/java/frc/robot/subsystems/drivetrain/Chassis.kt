@@ -479,7 +479,7 @@ object Chassis :
 
     fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
-    private fun driveToPose(pose: () -> Pose2d, low_accel: Boolean = false): Command =
+    fun driveToPose(pose: () -> Pose2d, low_accel: Boolean = false): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
