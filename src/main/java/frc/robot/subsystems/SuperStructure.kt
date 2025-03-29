@@ -96,8 +96,8 @@ object SuperStructure {
 
             RobotState.L4 ->
                 Pivot.goTo(state)
-                    .andWait { Pivot.canExtendElevator }
-                    .andThen(Elevator.goTo(state).andWait { Elevator.position > 20.inches })
+                    .andWait { Pivot.angle > 80.degrees }
+                    .andThen(Elevator.goTo(state).andWait { Elevator.position > 30.inches })
                     .andThen(Wrist.goTo(state))
             else -> smartGoTo(state)
         }

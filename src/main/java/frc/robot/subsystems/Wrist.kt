@@ -118,7 +118,7 @@ object Wrist : SubsystemBase("wrist") {
                     FieldGeometry.CORAL_STATIONS,
                     Chassis.state.Pose.translation,
                 )
-                .meters > 0.9.meters
+                .meters >= 0.7.meters
         )
             setpoint = state.wristAngle
     }

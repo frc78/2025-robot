@@ -457,7 +457,7 @@ object Chassis :
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
-    private val posePIDController = PIDController(0.5, 0.0, 0.05)
+    private val posePIDController = PIDController(2.85, 0.0, 0.25)
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
@@ -514,7 +514,7 @@ object Chassis :
                     FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
                         .withVelocityY(ySpeed)
                 }
-                .until { poseController.atGoal() }
+//                .until { isWithinGoal(0.02) /*posePIDController.atGoal()*/ }
             )
             // Stop movement
             .finallyDo { _ ->

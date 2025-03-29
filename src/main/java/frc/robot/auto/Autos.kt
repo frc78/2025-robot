@@ -43,9 +43,7 @@ object Autos {
     @Suppress("SpreadOperator")
     val SideCoralFast by command {
         Commands.sequence(
-            Intake.intakeCoralThenHold(),
-            Wrist.goTo(RobotState.CoralStorage),
-            Pivot.goTo(RobotState.L4),
+            Intake.holdCoral.alongWith(Wrist.goTo(RobotState.CoralStorage)).alongWith(Pivot.goTo(RobotState.L4)),
             *listOf(
                     listOf(Branch.E, Branch.I),
                     listOf(Branch.D, Branch.K),
@@ -57,7 +55,7 @@ object Autos {
                         Chassis.driveToPoseWithCoralOffset({
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
                             })
-                            .alongWith(
+                            .withDeadline(
                                 Commands.sequence(
                                     // flip wrist and move pivot when away from coral station with
                                     // coral
@@ -66,18 +64,17 @@ object Autos {
                                                 FieldGeometry.CORAL_STATIONS,
                                                 Chassis.state.Pose.translation,
                                             )
-                                            .meters > 1.meters // && Intake.hasBranchCoral
+                                            .meters >= 0.7.meters
                                     },
                                     Wrist.goTo(RobotState.CoralStorage),
-                                    Pivot.goTo(RobotState.L4),
-                                    // move superstructure when close to reef
-                                    // this needs to be in this sequence to avoid two parallel
-                                    // commands requiring the superstructure
-                                    Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+//                                    Pivot.goTo(RobotState.L4),
+//                                    Commands.waitUntil { Chassis.isWithinGoal(2.25) },
                                     SuperStructure.goToScoreCoral(RobotState.L4),
+                                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
+                                    goToLevelAndScore(RobotState.L4),
                                 )
                             ),
-                        goToLevelAndScore(RobotState.L4),
+//                        goToLevelAndScore(RobotState.L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }

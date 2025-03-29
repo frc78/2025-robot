@@ -171,6 +171,10 @@ object Intake : SubsystemBase("intake") {
             .until { hasCoralByCurrent() }
             .withName("Intake coral then hold")
 
+    val holdCoral by command {
+        runOnce { leader.set(0.035) }
+    }
+
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
             .until { detectAlgaeByCurrent() }

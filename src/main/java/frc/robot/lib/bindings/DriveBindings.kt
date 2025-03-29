@@ -149,18 +149,23 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(notLeftBumper)
         .and(hasCoral)
         .whileTrue(
-            ConditionalCommand(
-                Chassis.driveToRightBranchFar.withDeadline(
-                    Commands.sequence(
-                        SuperStructure.goToScoreCoralWhenClose,
-                        Commands.waitUntil { SuperStructure.atPosition }))
-                    .andThen(Chassis.driveToRightBranchSlow)
-                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
                 Chassis.driveToRightBranch
-                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
-            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
-        )
+                    .alongWith(Commands.sequence(
+                        SuperStructure.goToScoreCoralWhenClose,
+                        Commands.waitUntil { Chassis.isWithinGoal(0.02) },
+                        SuperStructure.scoreCoralOnSelectedBranch)))
+//            ConditionalCommand(
+//                Chassis.driveToRightBranchFar.withDeadline(
+//                    Commands.sequence(
+//                        SuperStructure.goToScoreCoralWhenClose,
+//                        Commands.waitUntil { SuperStructure.atPosition }))
+//                    .andThen(Chassis.driveToRightBranchSlow)
+//                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+//                Chassis.driveToRightBranch
+//                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+//                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+//            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
+//        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
@@ -174,18 +179,23 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(notRightBumper)
         .and(hasCoral)
         .whileTrue(
-            ConditionalCommand(
-                Chassis.driveToLeftBranchFar.withDeadline(
-                    Commands.sequence(
-                        SuperStructure.goToScoreCoralWhenClose,
-                        Commands.waitUntil { SuperStructure.atPosition }))
-                    .andThen(Chassis.driveToLeftBranchSlow)
-                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
                 Chassis.driveToLeftBranch
-                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
-            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
-        )
+                    .alongWith(Commands.sequence(
+                        SuperStructure.goToScoreCoralWhenClose,
+                        Commands.waitUntil { Chassis.isWithinGoal(0.02) },
+                        SuperStructure.scoreCoralOnSelectedBranch)))
+//            ConditionalCommand(
+//                Chassis.driveToLeftBranchFar.withDeadline(
+//                    Commands.sequence(
+//                        SuperStructure.goToScoreCoralWhenClose,
+//                        Commands.waitUntil { SuperStructure.atPosition }))
+//                    .andThen(Chassis.driveToLeftBranchSlow)
+//                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+//                Chassis.driveToLeftBranch
+//                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+//                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+//            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
+//        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
