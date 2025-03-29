@@ -2,9 +2,12 @@ package frc.robot.auto
 
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
+import frc.robot.lib.inchesPerSecond
+import frc.robot.lib.seconds
 import frc.robot.lib.meters
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -80,6 +83,18 @@ object Autos {
                 .toTypedArray(),
         )
     }
+
+    private val getAlgaeFromL3 by command {
+        Commands.sequence(
+            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake),
+            Intake.intakeAlgaeThenHold()
+                .deadlineFor(
+                    Chassis.robotCentricDrive { withVelocityX(1.inchesPerSecond) }
+                        .withTimeout(5.seconds)
+                ),
+            SuperStructure.smartGoTo(RobotState.CoralStation),
+        )
+    }
     @Suppress("SpreadOperator")
     val FourCoralAuto by command {
         Commands.sequence(
@@ -111,6 +126,20 @@ object Autos {
                     )
                 }
                 .toTypedArray(),
+        )
+    }
+
+    val CenterAlgae by command {
+        Commands.sequence(
+            Chassis.driveToPose { Branch.H.pose },
+            goToL4AndScore,
+            Chassis.driveToPose { FieldPoses.ReefFace.GH.pose },
+            getAlgaeFromL3,
+            Chassis.snapToBarge({ 0.0 }, { this }),
+            SuperStructure.smartGoTo(RobotState.AlgaeNet),
+            Intake.scoreAlgae,
+            SuperStructure.smartGoTo(RobotState.CoralStation),
+            Chassis.driveToPose { FieldPoses.ReefFace.GH.pose },
         )
     }
 }

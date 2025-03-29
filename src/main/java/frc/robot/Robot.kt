@@ -129,6 +129,7 @@ object Robot : LoggedRobot() {
         SendableChooser<Command>().apply {
             setDefaultOption("Four Coral", Autos.FourCoralAuto)
             addOption("Beast Mode 😎", Autos.SideCoralFast)
+            addOption("Center Algae", Autos.CenterAlgae)
             SmartDashboard.putData("Auto Mode", this)
         }
 
@@ -158,6 +159,7 @@ object Robot : LoggedRobot() {
                 MechanismLigament2d("wrist", 12.0, 90.0, 6.0, Color8Bit(Color.kPurple))
             )
         wristMech.append(MechanismLigament2d("coral", 6.25, 112.0, 6.0, Color8Bit(Color.kWhite)))
+        wristMech.append(MechanismLigament2d("algae", 16.0, -125.0, 6.0, Color8Bit(Color.kTeal)))
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
