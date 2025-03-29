@@ -167,7 +167,7 @@ object SuperStructure {
         smartGoTo(RobotState.AlgaeNet)
             .andWait { atPosition }
             .andThen(Intake.scoreAlgae)
-            .andThen(smartGoTo(RobotState.ReadyToClimb))
+            .andThen(smartGoTo(RobotState.CoralStation))
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
 }

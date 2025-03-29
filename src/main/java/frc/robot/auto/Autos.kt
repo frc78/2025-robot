@@ -83,18 +83,6 @@ object Autos {
                 .toTypedArray(),
         )
     }
-
-    private val getAlgaeFromL3 by command {
-        Commands.sequence(
-            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake),
-            Intake.intakeAlgaeThenHold()
-                .deadlineFor(
-                    Chassis.robotCentricDrive { withVelocityX(1.inchesPerSecond) }
-                        .withTimeout(5.seconds)
-                ),
-//            SuperStructure.smartGoTo(RobotState.CoralStation),
-        )
-    }
     @Suppress("SpreadOperator")
     val FourCoralAuto by command {
         Commands.sequence(
@@ -129,21 +117,34 @@ object Autos {
         )
     }
 
-    val CenterAlgae by command {
+    val CenterAlgaeAuto by command {
         Commands.sequence(
-            Chassis.driveToPose({ Branch.H.pose }),
+            // Drive to right branch, but it's on the far side of the reef so it's swapped
+            Chassis.driveToPoseWithCoralOffset { Branch.H.pose },
+            // Score L4
             goToLevelAndScore(RobotState.L4),
-            Chassis.driveToPose({ FieldPoses.ReefFace.GH.pose }),
-            getAlgaeFromL3,
-            Chassis.driveToBargeRight
-                .alongWith(
-                    Commands.sequence(
-                        Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                        SuperStructure.smartGoTo(RobotState.AlgaeNet))),
-            SuperStructure.smartGoTo(RobotState.AlgaeNet),
-            SuperStructure.autoScoreAlgaeInNet,
-            Chassis.driveToPose({ FieldPoses.ReefFace.IJ.pose }),
-
+            getAlgaeAndScore(FieldPoses.ReefFace.GH),
+            getAlgaeAndScore(FieldPoses.ReefFace.IJ),
+            // Pathfind to EF since it's around the reef
+            Chassis.pathfindToPose { FieldPoses.ReefFace.EF.pose },
+            SuperStructure.retrieveAlgaeFromReef,
+            Chassis.pathfindToPose { FieldPoses.closestRightBarge }
+                .andThen(SuperStructure.autoScoreAlgaeInNet),
         )
     }
+
+    private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
+        Chassis.driveToPose { face.pose }
+            .andThen(
+                // Get algae
+                SuperStructure.retrieveAlgaeFromReef
+            )
+            .andThen(
+                // Drive to barge
+                Chassis.driveToBargeRight
+            )
+            .andThen(
+                // Score in net
+                SuperStructure.autoScoreAlgaeInNet
+            )
 }
