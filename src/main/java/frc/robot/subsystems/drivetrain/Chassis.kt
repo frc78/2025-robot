@@ -452,7 +452,7 @@ object Chassis :
         )
 
     private val poseController =
-        ProfiledPIDController(0.4, 0.0, 0.05, TrapezoidProfile.Constraints(4.0, 2.5)).apply {
+        ProfiledPIDController(0.05, 0.0, 0.01, TrapezoidProfile.Constraints(4.54, 4.15)).apply {
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
@@ -483,23 +483,29 @@ object Chassis :
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
-                        val robot = Chassis.state.Pose
-                        val target = pose()
-                        val diff = robot.translation - target.translation
+                    val robot = Chassis.state.Pose
+                    val target = pose()
+                    val diff = robot.translation - target.translation
 
-                        distanceFromPoseGoal = diff.norm
-                        val output = poseController.calculate(diff.norm, poseController.goal,
-                            if (low_accel) TrapezoidProfile.Constraints(4.0, 1.6)
-                            else TrapezoidProfile.Constraints(4.0, 2.3))
+                    distanceFromPoseGoal = diff.norm
 
-                        val angle = diff.angle
-                        val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
-                        val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
 
-                        FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
-                            .withVelocityY(ySpeed)
-                    }
-                    .until { poseController.atGoal() }
+
+                    val output =
+                            if (low_accel) poseController.calculate(diff.norm, poseController.goal,
+                                TrapezoidProfile.Constraints(4.5, 1.6))
+                            else
+                            poseController.calculate(diff.norm, poseController.goal,
+                                TrapezoidProfile.Constraints(4.5, 4.0))
+
+                    val angle = diff.angle
+                    val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
+                    val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
+
+                    FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
+                        .withVelocityY(ySpeed)
+                }
+                .until { poseController.atGoal() }
             )
             // Stop movement
             .finallyDo { _ ->
@@ -568,7 +574,7 @@ object Chassis :
     // Drive to left/right branches spaced slightly backwards
     // Do this and wait for SuperStructure to be in position before going all the way in
 
-    private val spaceBack: Transform2d = Transform2d(0.25.meters, 0.meters, Rotation2d.kZero)
+    private val spaceBack: Transform2d = Transform2d(0.2.meters, 0.meters, Rotation2d.kZero)
 
     val driveToLeftBranchFar by command {
             driveToPoseWithCoralOffset({ closestLeftBranch.transformBy(spaceBack) })
@@ -582,9 +588,13 @@ object Chassis :
 
     val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation })}
 
-    val driveToBarge by command { driveToPose({ closestBarge })}
-    val driveToBargeLeft by command { driveToPose({ closestLeftBarge })}
-    val driveToBargeRight by command { driveToPose({ closestRightBarge })}
+    val driveToBarge by command { driveToPose({ closestBarge }, false)}
+    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }, false)}
+    val driveToBargeRight by command { driveToPose({ closestRightBarge }, false)}
+
+    val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) })}
+    val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) })}
+    val driveToBargeFarRight by command { driveToPose({ closestRightBarge.transformBy(spaceBack) })}
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle

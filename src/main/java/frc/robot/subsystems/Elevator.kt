@@ -173,7 +173,7 @@ object Elevator : SubsystemBase("elevator") {
                             ForwardSoftLimitEnable = true
                             ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
                             ReverseSoftLimitEnable = true
-                            ReverseSoftLimitThreshold = 0.25
+                            ReverseSoftLimitThreshold = 0.1
                         }
                     )
                 },

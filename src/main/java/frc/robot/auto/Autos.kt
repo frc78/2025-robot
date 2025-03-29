@@ -31,7 +31,7 @@ object Autos {
 
     private val goToCoralStationAndGetCoral by command {
         Commands.sequence(
-            SuperStructure.smartGoTo(RobotState.CoralStation),
+            SuperStructure.smartGoTo(RobotState.NewCoralStation),
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
         )
     }

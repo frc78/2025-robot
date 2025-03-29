@@ -22,10 +22,11 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L3(92.6.degrees, 17.25.inches, 36.degrees),
     L4(92.5.degrees, 46.inches, 29.25.degrees),
     CoralStation(62.92.degrees, 0.25.inches, 176.degrees),
+    NewCoralStation(68.2.degrees, 0.1.inches, 185.8.degrees),
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
     Processor(23.degrees, 0.25.inches, 113.625.degrees),
-    HighAlgaeIntake(98.2.degrees, 19.33.inches, 11.25.degrees),
-    LowAlgaeIntake(102.degrees, 0.25.inches, 17.2125.degrees),
+    HighAlgaeIntake(100.2.degrees, 19.33.inches, 13.25.degrees),
+    LowAlgaeIntake(104.degrees, 0.25.inches, 19.2125.degrees),
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
@@ -153,7 +154,7 @@ object SuperStructure {
     }
 
     val goToNetWhileAligning by command {
-        Commands.waitUntil { Chassis.isWithinGoal(1.25) }.andThen(smartGoTo(RobotState.AlgaeNet))
+        Commands.waitUntil { Chassis.isWithinGoal(1.5) }.andThen(smartGoTo(RobotState.AlgaeNet))
     }
 
     val retrieveAlgaeFromReef by command {

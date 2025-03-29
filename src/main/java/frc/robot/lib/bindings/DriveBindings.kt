@@ -133,7 +133,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     b().whileTrue(Chassis.driveToProcessor)
     a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
     a().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+        SuperStructure.smartGoTo(RobotState.NewCoralStation).alongWith(Intake.intakeCoralThenHold())
     )
     configureReefAlignments()
     configureBargeAlignments()
@@ -213,6 +213,14 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().and(notLeftBumper)
         .and(notRightBumper)
         .whileTrue(
+//            Chassis.driveToBargeFar.withDeadline(
+//                Commands.sequence(
+//                    SuperStructure.goToNetWhileAligning,
+//                    Commands.waitUntil { SuperStructure.atPosition }))
+//                .andThen(Chassis.driveToBarge)
+//                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
+
             Chassis.driveToBarge
                 .alongWith(SuperStructure.goToNetWhileAligning)
                 .andThen(SuperStructure.autoScoreAlgaeInNet)
@@ -221,6 +229,13 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().and(leftBumper())
         .and(notRightBumper)
         .whileTrue(
+//            Chassis.driveToBargeFarLeft.withDeadline(
+//                Commands.sequence(
+//                    SuperStructure.goToNetWhileAligning,
+//                    Commands.waitUntil { SuperStructure.atPosition }))
+//                .andThen(Chassis.driveToBargeLeft)
+//                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
             Chassis.driveToBargeLeft
                 .alongWith(SuperStructure.goToNetWhileAligning)
                 .andThen(SuperStructure.autoScoreAlgaeInNet)
@@ -229,6 +244,13 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().and(rightBumper())
         .and(notLeftBumper)
         .whileTrue(
+//            Chassis.driveToBargeFarRight.withDeadline(
+//                Commands.sequence(
+//                    SuperStructure.goToNetWhileAligning,
+//                    Commands.waitUntil { SuperStructure.atPosition }))
+//                .andThen(Chassis.driveToBargeRight)
+//                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
             Chassis.driveToBargeRight
                 .alongWith(SuperStructure.goToNetWhileAligning)
                 .andThen(SuperStructure.autoScoreAlgaeInNet)
