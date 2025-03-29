@@ -14,6 +14,7 @@ import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.util.DriveFeedforwards
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
+import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -456,6 +457,8 @@ object Chassis :
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
+    private val posePIDController = PIDController(0.5, 0.0, 0.05)
+
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
             val target = pose()
@@ -463,6 +466,7 @@ object Chassis :
             val distance = diff.translation.norm
             distanceFromPoseGoal = distance
             poseController.reset(distance, 0.0)
+            posePIDController.reset()
 
             Logger.recordOutput("DriveToPose target", target)
             FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
@@ -488,11 +492,11 @@ object Chassis :
                         val diff = robot.translation - target.translation
 
                         distanceFromPoseGoal = diff.norm
-                        val output = poseController.calculate(diff.norm)
+                        val output = posePIDController.calculate(diff.norm)
 
                         val angle = diff.angle
-                        val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
-                        val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
+                        val xSpeed = (output) * angle.cos
+                        val ySpeed = (output) * angle.sin
 
                         FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
                             .withVelocityY(ySpeed)
