@@ -154,7 +154,7 @@ object SuperStructure {
     }
 
     val goToNetWhileAligning by command {
-        Commands.waitUntil { Chassis.isWithinGoal(1.5) }.andThen(smartGoTo(RobotState.AlgaeNet))
+        Commands.waitUntil { Chassis.isWithinGoal(1.75) }.andThen(smartGoTo(RobotState.AlgaeNet))
     }
 
     val retrieveAlgaeFromReef by command {

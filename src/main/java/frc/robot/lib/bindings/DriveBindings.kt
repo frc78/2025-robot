@@ -231,9 +231,11 @@ private fun CommandXboxController.configureBargeAlignments() {
 //                .andThen(SuperStructure.autoScoreAlgaeInNet)
 
 
-            Chassis.driveToBarge
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            Chassis.driveToBarge.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    SuperStructure.autoScoreAlgaeInNet))
         )
     // y and left bumper
     y().and(leftBumper())
@@ -246,9 +248,11 @@ private fun CommandXboxController.configureBargeAlignments() {
 //                .andThen(Chassis.driveToBargeLeft)
 //                .andThen(SuperStructure.autoScoreAlgaeInNet)
 
-            Chassis.driveToBargeLeft
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            Chassis.driveToBargeLeft.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    SuperStructure.autoScoreAlgaeInNet))
         )
     // y and right bumper
     y().and(rightBumper())
@@ -261,9 +265,11 @@ private fun CommandXboxController.configureBargeAlignments() {
 //                .andThen(Chassis.driveToBargeRight)
 //                .andThen(SuperStructure.autoScoreAlgaeInNet)
 
-            Chassis.driveToBargeRight
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            Chassis.driveToBargeRight.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    SuperStructure.autoScoreAlgaeInNet))
         )
     // y released, retract to algae storage with algae or CoralStation without
     y().onFalse(
