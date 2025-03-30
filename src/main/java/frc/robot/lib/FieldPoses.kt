@@ -16,8 +16,8 @@ import kotlin.jvm.optionals.getOrNull
 object FieldPoses {
     val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(12.94 / 2).inches, Rotation2d.kZero)
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (12.94 / 2).inches, Rotation2d.kZero)
-    private val REEF_TO_BOT_TRANSFORM = Transform2d(0.72.meters, 0.meters, Rotation2d.kZero)
-    private val CORAL_TO_BOT_TRANSFORM = Transform2d(/*.53.meters*/.435.meters, 0.meters, Rotation2d.k180deg)
+    private val REEF_TO_BOT_TRANSFORM = Transform2d(0.7.meters, 0.meters, Rotation2d.kZero) //0.72 at home
+    private val CORAL_TO_BOT_TRANSFORM = Transform2d(/*.53.meters*/.1.meters, 0.meters, Rotation2d.k180deg) //.435 at home .36 wpi
 
     // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
@@ -179,7 +179,7 @@ object FieldPoses {
         get() = Chassis.state.Pose.nearest(PROCESSOR_POSES)
 
     // Offset from the april tag coordinate to where the robot needs to be to score/align
-    private val BARGE_TO_BOT = Transform2d(0.5922.meters, 0.0.meters, Rotation2d.kZero)
+    private val BARGE_TO_BOT = Transform2d(0.62.meters, 0.0.meters, Rotation2d.kZero) //0.5922
 
     private val BLUE_BARGE_POSES =
         intArrayOf(4, 14).map {

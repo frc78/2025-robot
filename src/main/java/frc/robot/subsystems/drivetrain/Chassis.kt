@@ -457,7 +457,7 @@ object Chassis :
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
-    private val posePIDController = PIDController(2.85, 0.0, 0.25)
+    private val posePIDController = PIDController(2.85, 0.0, 0.28) //2.85, 0.0, 0.25 for 4piece auto
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({

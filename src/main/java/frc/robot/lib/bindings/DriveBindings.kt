@@ -169,7 +169,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation),
             ) {
                 Intake.hasBranchCoral
             }
@@ -199,7 +199,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation),
             ) {
                 Intake.hasBranchCoral
             }
@@ -275,7 +275,7 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().onFalse(
         ConditionalCommand(
             SuperStructure.smartGoTo(RobotState.AlgaeStorage),
-            SuperStructure.smartGoTo(RobotState.CoralStation),
+            SuperStructure.smartGoTo(RobotState.NewCoralStation),
         ) {
             Intake.detectAlgaeByCurrent()
         }

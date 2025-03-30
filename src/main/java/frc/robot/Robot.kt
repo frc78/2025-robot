@@ -193,6 +193,7 @@ object Robot : LoggedRobot() {
             DataLogManager.stop()
             SignalLogger.stop()
         }
+        Pivot.brake()
     }
 
     override fun testInit() {
