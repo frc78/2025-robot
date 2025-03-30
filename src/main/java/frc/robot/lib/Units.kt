@@ -6,11 +6,13 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.units.AngularAccelerationUnit
+import edu.wpi.first.units.MomentOfInertiaUnit
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Centimeters
 import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.FeetPerSecond
 import edu.wpi.first.units.Units.Inches
+import edu.wpi.first.units.Units.InchesPerSecond
 import edu.wpi.first.units.Units.KilogramSquareMeters
 import edu.wpi.first.units.Units.Kilograms
 import edu.wpi.first.units.Units.Meters
@@ -91,6 +93,11 @@ val Number.pounds: Mass
     get() = Pounds.of(this.toDouble())
 val Number.kilogramSquareMeters: MomentOfInertia
     get() = KilogramSquareMeters.of(this.toDouble())
+val Number.poundSquareInches: MomentOfInertia
+    get() = PoundsSquareInches.of(this.toDouble())
+
+val PoundsSquareInches: MomentOfInertiaUnit =
+    Pounds.mult(InchesPerSecond).mult(Inches).mult(RadiansPerSecond)
 
 // These extension properties allow converting from a unit to a raw value
 // You can use them like so:
@@ -126,6 +133,8 @@ val Current.amps
     get() = this.`in`(Amps)
 val Mass.kilograms
     get() = this.`in`(Kilograms)
+val MomentOfInertia.kilogramSquareMeters
+    get() = this.`in`(KilogramSquareMeters)
 
 fun Angle.toDistance(radius: Distance): Distance = radius * this.radians
 

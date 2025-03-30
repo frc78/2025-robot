@@ -14,10 +14,10 @@ import kotlin.jvm.optionals.getOrNull
 
 /** Poses that the robot can auto-align to */
 object FieldPoses {
-    val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(13 / 2).inches, Rotation2d.kZero)
-    val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (13 / 2).inches, Rotation2d.kZero)
+    val REEF_TO_BRANCH_LEFT = Transform2d(0.meters, -(12.94 / 2).inches, Rotation2d.kZero)
+    val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (12.94 / 2).inches, Rotation2d.kZero)
     private val REEF_TO_BOT_TRANSFORM = Transform2d(0.72.meters, 0.meters, Rotation2d.kZero)
-    private val CORAL_TO_BOT_TRANSFORM = Transform2d(.5.meters, 0.meters, Rotation2d.k180deg)
+    private val CORAL_TO_BOT_TRANSFORM = Transform2d(.515.meters, 0.meters, Rotation2d.k180deg)
 
     // Tag IDs are in order of ReefFaces
     private val BLUE_REEF_POSES =
@@ -39,6 +39,19 @@ object FieldPoses {
         RED_REEF_POSES.flatMap {
             listOf(it.transformBy(REEF_TO_BRANCH_LEFT), it.transformBy(REEF_TO_BRANCH_RIGHT))
         }
+
+    private val HIGH_ALGAE_REEF_POSES =
+        listOf(
+            BLUE_REEF_POSES[0],
+            BLUE_REEF_POSES[2],
+            BLUE_REEF_POSES[4],
+            RED_REEF_POSES[0],
+            RED_REEF_POSES[2],
+            RED_REEF_POSES[4],
+        )
+
+    val closestAlgaeIsHigh
+        get() = closestReef in HIGH_ALGAE_REEF_POSES
 
     private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
     private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)

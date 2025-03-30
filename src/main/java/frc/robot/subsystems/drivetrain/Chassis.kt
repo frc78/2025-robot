@@ -36,7 +36,6 @@ import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
@@ -47,16 +46,32 @@ import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
 import frc.robot.lib.*
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBarge
 import frc.robot.lib.FieldPoses.closestLeftBranch
-import frc.robot.lib.FieldPoses.closestLeftCoralStation
 import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
+import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
+import frc.robot.lib.amps
+import frc.robot.lib.command
+import frc.robot.lib.inches
+import frc.robot.lib.kilogramSquareMeters
+import frc.robot.lib.meters
+import frc.robot.lib.metersPerSecond
+import frc.robot.lib.metersPerSecondPerSecond
+import frc.robot.lib.pounds
+import frc.robot.lib.radians
+import frc.robot.lib.rotateByAlliance
+import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.rotationsPerSecondPerSecond
+import frc.robot.lib.seconds
+import frc.robot.lib.volts
+import frc.robot.lib.voltsPerSecond
 import frc.robot.lib.FieldPoses.closestRightCoralStation
 import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.subsystems.Intake
@@ -409,8 +424,6 @@ object Chassis :
         closestBranchPub.set(closestBranch)
         closestCoralStationPub.set(closestCoralStation)
         closestProcessorPub.set(closestProcessor)
-        closestLeftCoralStationPub.set(closestLeftCoralStation)
-        closestRightCoralStationPub.set(closestRightCoralStation)
 
         closestBargePub.set(closestBarge)
         closestBargeLeftPub.set(closestLeftBarge)
@@ -530,17 +543,9 @@ object Chassis :
         driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
     }
 
-    val driveToSelectedBranch by command {
-        ConditionalCommand(driveToLeftBranch, driveToRightBranch) { SelectedBranch == Branch.LEFT }
-    }
-
     val driveToProcessor by command { driveToPose { closestProcessor } }
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
-
-    val driveToClosestLeftCoralStation by command { driveToPose { closestLeftCoralStation } }
-
-    val driveToClosestRightCoralStation by command { driveToPose { closestRightCoralStation } }
 
     val driveToBarge by command { driveToPose { closestBarge } }
     val driveToBargeLeft by command { driveToPose { closestLeftBarge } }
@@ -573,6 +578,9 @@ object Chassis :
     ): Command {
         return applyRequest { FieldCentric.block() }
     }
+
+    fun robotCentricDrive(block: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric) =
+        applyRequest { RobotRelative.block() }.finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     fun driveToClosestSubstation(
         strafeSpeedY: () -> Double,
