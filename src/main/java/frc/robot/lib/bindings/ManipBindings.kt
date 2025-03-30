@@ -4,12 +4,10 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -63,22 +61,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     // Coral Stuff
     a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
-    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
-    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
-    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)) // TODO test all these!
+    b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
+    x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
+    y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
 
     start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
-    back()
-        .onTrue(
-            Wrist.goTo(RobotState.FullyClimbed)
-                .alongWith(Elevator.goTo(RobotState.FullyClimbed))
-                .alongWith(
-                    Pivot.goTo(RobotState.FullyClimbed).andWait {
-                        Pivot.angle < Pivot.EXTEND_FOOT_THRESHOLD
-                    }
-                )
-                .andThen(Climber.extend)
-        )
+    back().onTrue(SuperStructure.smartGoTo(RobotState.FullyClimbed).alongWith(Climber.extend))
 
     rightTrigger(0.55)
         .onTrue(
@@ -91,7 +79,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
         )
 
-    // trigger value goes from 0 (not pressed) to 1 (fully pressed)
     rightBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.CoralStation)
@@ -176,8 +163,21 @@ private fun CommandXboxController.selectWithStick() {
 /** Used for setting up a test controller / joystick */
 fun CommandJoystick.configureManipTestBindings() {
     trigger().whileTrue(Chassis.measureWheelRotations)
-    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
-    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+
+    // SuperStructure manual control
+    button(5).whileTrue(Pivot.moveUp)
+    button(3).whileTrue(Pivot.moveDown)
+    button(6).whileTrue(Elevator.manualUp)
+    button(4).whileTrue(Elevator.manualDown)
+    button(12).whileTrue(Wrist.manualUp)
+    button(11).whileTrue(Wrist.manualDown)
+
+    // Intake
+    button(10).whileTrue(Intake.manualIntake)
+    button(9).whileTrue(Intake.manualOuttake)
+
+    //    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+    //    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+    //    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
+    //    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }

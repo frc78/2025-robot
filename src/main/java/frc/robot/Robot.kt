@@ -107,11 +107,11 @@ object Robot : LoggedRobot() {
                         FieldGeometry.CORAL_STATIONS,
                         Chassis.state.Pose.translation,
                     )
-                    .meters > 1.5.meters
+                    .meters > 1.meters
             }
             .onTrue(
                 Commands.either(
-                    SuperStructure.smartGoTo(RobotState.CoralStorage),
+                    Wrist.goToWithoutRequiring(RobotState.CoralStorage),
                     Commands.none(),
                 ) {
                     Intake.hasBranchCoral
@@ -128,6 +128,7 @@ object Robot : LoggedRobot() {
     private val autoChooser =
         SendableChooser<Command>().apply {
             setDefaultOption("Four Coral", Autos.FourCoralAuto)
+            addOption("Beast Mode 😎", Autos.SideCoralFast)
             SmartDashboard.putData("Auto Mode", this)
         }
 
