@@ -80,10 +80,10 @@ object FieldPoses {
             } else RED_BRANCH_POSES
 
     val closestReef: Pose2d
-        get() = Chassis.state.Pose.nearest(reefPoses)
+        get() = Chassis.predictedPose.nearest(reefPoses)
 
     val closestBranch: Pose2d
-        get() = Chassis.state.Pose.nearest(branchPoses)
+        get() = Chassis.predictedPose.nearest(branchPoses)
 
     /** Returns true if the pose is on the far side of the reef from the alliance wall */
     val Pose2d.isFarReef: Boolean
@@ -119,7 +119,7 @@ object FieldPoses {
                     Red -> RED_CORAL_STATION_LOCATIONS
                     Blue -> BLUE_CORAL_STATION_LOCATIONS
                 }
-            return Chassis.state.Pose.nearest(allianceCoralStations)
+            return Chassis.predictedPose.nearest(allianceCoralStations)
         }
 
     val closestLeftCoralStation
