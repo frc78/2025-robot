@@ -431,7 +431,7 @@ object Chassis :
     }
 
     private val distanceController =
-        ProfiledPIDController(1.5, 0.0, 0.25, TrapezoidProfile.Constraints(4.0, 6.0)).apply {
+        AsymProfiledPIDController(1.5, 0.0, 0.25, AsymtrapezoidalProfile.Constraints(4.0, 12.0, 3.0)).apply {
             setTolerance(0.01)
         }
 
@@ -521,6 +521,7 @@ object Chassis :
 
                     Logger.recordOutput("driveToPose position error", distanceController.positionError)
                     Logger.recordOutput("driveToPose velocity error", distanceController.velocityError)
+                    Logger.recordOutput("driveToPose velocity setpoint", distanceController.setpoint.velocity)
 
                     FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
                         .withVelocityY(speeds[1])
@@ -654,5 +655,11 @@ object Chassis :
                 wheelRotations.map { linearDisplacement / (it * 2 * PI) }.toDoubleArray()
             Logger.recordOutput("module_radius", wheelRadii)
         }
+    }
+
+    fun isWithinGoal(
+        distance: Double,
+    ): Boolean {
+        return distanceController.positionError <= distance
     }
 }
