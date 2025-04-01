@@ -80,11 +80,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightBumper()
-        .onTrue(
-            SuperStructure.smartGoTo(RobotState.NewCoralStation)
-                .alongWith(Intake.intakeCoralThenHold())
+        .whileTrue(
+//            SuperStructure.smartGoTo(RobotState.NewCoralStation)
+                Intake.intakeCoral
                 .withName("Intake coral from coral station")
         )
+        .onFalse(Intake.holdCoral)
 
     // Algae Stuff
     povUp()

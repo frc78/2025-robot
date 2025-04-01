@@ -1,5 +1,6 @@
 package frc.robot.auto
 
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import frc.robot.lib.FieldPoses
@@ -40,6 +41,8 @@ object Autos {
         )
     }
 
+    private val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
+
     @Suppress("SpreadOperator")
     val SideCoralFast by command {
         Commands.sequence(
@@ -64,13 +67,13 @@ object Autos {
                                                 FieldGeometry.CORAL_STATIONS,
                                                 Chassis.state.Pose.translation,
                                             )
-                                            .meters >= 0.7.meters
+                                            .meters >= 0.6.meters
                                     },
                                     Wrist.goTo(RobotState.CoralStorage),
 //                                    Pivot.goTo(RobotState.L4),
 //                                    Commands.waitUntil { Chassis.isWithinGoal(2.25) },
                                     SuperStructure.goToScoreCoral(RobotState.L4),
-                                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
+                                    Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06)) },
                                     goToLevelAndScore(RobotState.L4),
                                 )
                             ),
@@ -130,16 +133,17 @@ object Autos {
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
-            Chassis.pathfindToPose({ FieldPoses.ReefFace.EF.pose }, false),
-            SuperStructure.retrieveAlgaeFromReef,
-            Chassis.pathfindToPose({ FieldPoses.closestRightBarge }, false)
-                .andThen(SuperStructure.autoScoreAlgaeInNet),
+            goToCoralStationAndGetCoral // todo test this at WPI
+//            Chassis.pathfindToPose({ FieldPoses.ReefFace.EF.pose }, false),
+//            SuperStructure.retrieveAlgaeFromReef,
+//            Chassis.pathfindToPose({ FieldPoses.closestRightBarge }, false)
+//                .andThen(SuperStructure.autoScoreAlgaeInNet),
         )
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
         Chassis.driveToPose({ face.pose })
-            .alongWith(
+            .withDeadline(
                 // Get algae
                 Commands.sequence(
                     Commands.waitUntil { Chassis.isWithinGoal(1.5) },
@@ -147,36 +151,33 @@ object Autos {
             .andThen(
                 // Drive to barge
                 Chassis.driveToBargeRightSlow
-                    .alongWith(
+                    .withDeadline(
                         Commands.sequence(
                             Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                            SuperStructure.smartGoTo(RobotState.AlgaeNet)))
-                    .withTimeout(3.5))
-            .andThen(
-                // Score in net and retract
-                SuperStructure.autoScoreAlgaeInNet
-            )
+                            SuperStructure.smartGoTo(RobotState.AlgaeNet),
+                            Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06)) },
+                            SuperStructure.autoScoreAlgaeInNet))
+                    .withTimeout(4.0))
 
 
     private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace) =
         Chassis.driveToPose({ face.pose })
-            .alongWith(
+            .withDeadline(
                 // Get algae
                 Commands.sequence(
-                    Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                    SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-                        .withDeadline(Intake.intakeAlgaeThenHold())
-                        .andThen(retractWithAlgae())))
+                    Commands.waitUntil { Chassis.isWithinGoal(0.3) },
+                    Commands.sequence(
+                        SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
+                            .withDeadline(Intake.intakeAlgaeThenHold())
+                            .andThen(retractWithAlgae()))))
             .andThen(
                 // Drive to barge
                 Chassis.driveToBargeRightSlow
-                    .alongWith(
+                    .withDeadline(
                         Commands.sequence(
                             Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                            SuperStructure.smartGoTo(RobotState.AlgaeNet)))
-                    .withTimeout(3.5))
-            .andThen(
-                // Score in net and retract
-                SuperStructure.autoScoreAlgaeInNet
-            )
+                            SuperStructure.smartGoTo(RobotState.AlgaeNet),
+                            Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06)) },
+                            SuperStructure.autoScoreAlgaeInNet))
+                    .withTimeout(4.0))
 }

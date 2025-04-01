@@ -1,5 +1,6 @@
 package frc.robot.lib.bindings
 
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -133,13 +134,15 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     b().whileTrue(Chassis.driveToProcessor)
     a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
     a().onTrue(
-        SuperStructure.smartGoTo(RobotState.NewCoralStation).alongWith(Intake.intakeCoralThenHold())
-    )
+        SuperStructure.smartGoTo(RobotState.NewCoralStation)
+            .alongWith(Intake.overIntakeCoralThenHold))
+
     configureReefAlignments()
     configureBargeAlignments()
 }
 
 private fun CommandXboxController.configureReefAlignments() {
+    val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
     val hasCoral = Trigger { Intake.hasBranchCoral }
@@ -152,7 +155,7 @@ private fun CommandXboxController.configureReefAlignments() {
                 Chassis.driveToRightBranch
                     .alongWith(Commands.sequence(
                         SuperStructure.goToScoreCoralWhenClose,
-                        Commands.waitUntil { Chassis.isWithinGoal(0.02) },
+                        Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                         SuperStructure.scoreCoralOnSelectedBranch)))
 //            ConditionalCommand(
 //                Chassis.driveToRightBranchFar.withDeadline(
@@ -182,7 +185,7 @@ private fun CommandXboxController.configureReefAlignments() {
                 Chassis.driveToLeftBranch
                     .alongWith(Commands.sequence(
                         SuperStructure.goToScoreCoralWhenClose,
-                        Commands.waitUntil { Chassis.isWithinGoal(0.02) },
+                        Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                         SuperStructure.scoreCoralOnSelectedBranch)))
 //            ConditionalCommand(
 //                Chassis.driveToLeftBranchFar.withDeadline(
@@ -210,7 +213,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(hasNoCoral)
         .whileTrue(Chassis.driveToClosestReef.alongWith(
             Commands.sequence(
-                Commands.waitUntil { Chassis.isWithinGoal(1.25) },
+                Commands.waitUntil { Chassis.isWithinGoal(1.5) },
                 SuperStructure.retrieveAlgaeFromReef)))
         .onFalse(SuperStructure.retractWithAlgae())
 }
@@ -234,7 +237,7 @@ private fun CommandXboxController.configureBargeAlignments() {
             Chassis.driveToBarge.alongWith(
                 Commands.sequence(
                     SuperStructure.goToNetWhileAligning,
-                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet))
         )
     // y and left bumper
@@ -251,7 +254,7 @@ private fun CommandXboxController.configureBargeAlignments() {
             Chassis.driveToBargeLeft.alongWith(
                 Commands.sequence(
                     SuperStructure.goToNetWhileAligning,
-                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet))
         )
     // y and right bumper
@@ -268,7 +271,7 @@ private fun CommandXboxController.configureBargeAlignments() {
             Chassis.driveToBargeRight.alongWith(
                 Commands.sequence(
                     SuperStructure.goToNetWhileAligning,
-                    Commands.waitUntil { Chassis.isWithinGoal(0.04) },
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet))
         )
     // y released, retract to algae storage with algae or CoralStation without
