@@ -184,7 +184,7 @@ object Intake : SubsystemBase("intake") {
         runOnce { leader.set(0.7) }
     }
     val holdCoral by command {
-        runOnce { leader.set(0.035) } //0.035, upping at WPI because it's not gripping
+        runOnce { leader.set(0.035) }
     }
 
     fun intakeAlgaeThenHold(): Command =

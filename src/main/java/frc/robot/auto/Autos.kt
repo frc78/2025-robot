@@ -41,7 +41,7 @@ object Autos {
         )
     }
 
-    private val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
+    private val alignmentDebouncer = Debouncer(0.1, Debouncer.DebounceType.kRising) // was 0.5
 
     @Suppress("SpreadOperator")
     val SideCoralFast by command {
@@ -73,7 +73,7 @@ object Autos {
 //                                    Pivot.goTo(RobotState.L4),
 //                                    Commands.waitUntil { Chassis.isWithinGoal(2.25) },
                                     SuperStructure.goToScoreCoral(RobotState.L4),
-                                    Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06)) },
+                                    Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                                     goToLevelAndScore(RobotState.L4),
                                 )
                             ),
