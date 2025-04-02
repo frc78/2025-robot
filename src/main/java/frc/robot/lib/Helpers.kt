@@ -3,6 +3,7 @@ package frc.robot.lib
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.numbers.N2
+import edu.wpi.first.wpilibj.RobotBase.isReal
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
@@ -51,21 +52,21 @@ fun command(command: () -> Command) = CommandDelegate(command)
 //}
 
 fun Vector<N2>.logChassisOffset(entryName: String): Vector<N2> {
-    Logger.recordOutput(entryName, this.toTranslation().plus(Chassis.state.Pose.translation))
+    if (!isReal()) {Logger.recordOutput(entryName, this.toTranslation().plus(Chassis.state.Pose.translation))}
     return this
 }
 
 fun Vector<N2>.log(entryName: String): Vector<N2> {
-    Logger.recordOutput(entryName, this.toTranslation())
+    if (!isReal()) {Logger.recordOutput(entryName, this.toTranslation())}
     return this
 }
 
 fun Pose2d.log(entryName: String): Pose2d {
-    Logger.recordOutput(entryName, this)
+    if (!isReal()) {Logger.recordOutput(entryName, this)}
     return this
 }
 
 fun Double.log(entryName: String): Double {
-    Logger.recordOutput(entryName, this)
+    if(!isReal()) {Logger.recordOutput(entryName, this)}
     return this
 }
