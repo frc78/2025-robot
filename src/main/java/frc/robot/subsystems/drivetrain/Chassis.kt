@@ -15,6 +15,7 @@ import com.pathplanner.lib.util.DriveFeedforwards
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -436,11 +437,12 @@ object Chassis :
         }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
-        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-    }
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) =
+        driveToPose({
+            pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+        })
 
-    private fun pathfindToPose(pose: () -> Pose2d) =
+    fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
             {
                 if (state.Pose.translation.getDistance(pose().translation) < 1.0) {
@@ -539,23 +541,54 @@ object Chassis :
     val predictedPose: Pose2d
         get() = Pose2d(state.Pose.translation.plus(fieldRelativeSpeeds.toVector().toTranslation().times(0.5)), state.Pose.rotation).log("Predicted Pose")
 
-    val driveToClosestReef by command { driveToPose { closestReef } }
+    val driveToClosestReef by command { driveToPose({ closestReef }) }
 
     val driveToLeftBranch by command {
-        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
+        driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch right")
+        driveToPoseWithCoralOffset({ closestRightBranch }).withName("Drive to branch left")
     }
 
-    val driveToProcessor by command { driveToPose { closestProcessor } }
+    val driveToLeftBranchSlow by command {
+        driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left slow")
+    }
 
-    val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
+    val driveToRightBranchSlow by command {
+        driveToPoseWithCoralOffset({ closestRightBranch }).withName("Drive to branch right slow")
+    }
 
-    val driveToBarge by command { driveToPose { closestBarge } }
-    val driveToBargeLeft by command { driveToPose { closestLeftBarge } }
-    val driveToBargeRight by command { driveToPose { closestRightBarge } }
+    // Drive to left/right branches spaced slightly backwards
+    // Do this and wait for SuperStructure to be in position before going all the way in
+
+    private val spaceBack: Transform2d = Transform2d(0.2.meters, 0.meters, Rotation2d.kZero)
+
+    val driveToLeftBranchFar by command {
+        driveToPoseWithCoralOffset({ closestLeftBranch.transformBy(spaceBack) })
+    }
+
+    val driveToRightBranchFar by command {
+        driveToPoseWithCoralOffset({ closestRightBranch.transformBy(spaceBack) })
+    }
+
+    val driveToProcessor by command { driveToPose({ closestProcessor }) }
+
+    val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation }) }
+
+    val driveToBarge by command { driveToPose({ closestBarge }) }
+    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }) }
+    val driveToBargeRight by command { driveToPose({ closestRightBarge }) }
+
+    val driveToBargeSlow by command { driveToPose({ closestBarge }) }
+    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }) }
+    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }) }
+
+    val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) }) }
+    val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) }) }
+    val driveToBargeFarRight by command {
+        driveToPose({ closestRightBarge.transformBy(spaceBack) })
+    }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle

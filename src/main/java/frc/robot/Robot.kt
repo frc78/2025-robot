@@ -127,8 +127,8 @@ object Robot : LoggedRobot() {
 
     private val autoChooser =
         SendableChooser<Command>().apply {
-            setDefaultOption("Four Coral", Autos.FourCoralAuto)
             addOption("Beast Mode 😎", Autos.SideCoralFast)
+            addOption("Ball Up Top", Autos.CenterAlgaeAuto)
             SmartDashboard.putData("Auto Mode", this)
         }
 
@@ -192,6 +192,7 @@ object Robot : LoggedRobot() {
             DataLogManager.stop()
             SignalLogger.stop()
         }
+        Pivot.brake()
     }
 
     override fun testInit() {

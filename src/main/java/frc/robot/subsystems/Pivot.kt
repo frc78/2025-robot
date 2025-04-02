@@ -60,9 +60,9 @@ object Pivot : SubsystemBase("pivot") {
 
     private val COMP_BOT_ELEVATOR_DOWN_GAINS =
         Slot0Configs()
-            .withKP(200.0)
+            .withKP(180.0) // 200
             .withKI(0.0)
-            .withKD(0.29431)
+            .withKD(0.2) // 0.29431
             .withKS(0.24723)
             .withKV(29.598)
             .withKA(0.42529)
@@ -106,8 +106,8 @@ object Pivot : SubsystemBase("pivot") {
                     Slot0 = if (IS_COMP) COMP_BOT_ELEVATOR_DOWN_GAINS else ALPHA_BOT_SLOT0_CONFIGS
                     Slot1 = COMP_BOT_ELEVATOR_UP_GAINS
                     MotionMagic.MotionMagicCruiseVelocity = .25
-                    MotionMagic.MotionMagicAcceleration = .5
-                    MotionMagic.MotionMagicJerk = 2.5
+                    MotionMagic.MotionMagicAcceleration = 1.0 // .5
+                    MotionMagic.MotionMagicJerk = 3.5 // 2.5
                 }
 
             configurator.apply(config)

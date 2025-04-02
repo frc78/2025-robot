@@ -1,5 +1,6 @@
 package frc.robot.lib.bindings
 
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Commands
@@ -132,29 +133,49 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     b().whileTrue(Chassis.driveToProcessor)
     a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
     a().onTrue(
-        SuperStructure.smartGoTo(RobotState.CoralStation).alongWith(Intake.intakeCoralThenHold())
+        SuperStructure.smartGoTo(RobotState.NewCoralStation)
+            .alongWith(Intake.overIntakeCoralThenHold)
     )
+
     configureReefAlignments()
     configureBargeAlignments()
 }
 
 private fun CommandXboxController.configureReefAlignments() {
+    val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
     val hasCoral = Trigger { Intake.hasBranchCoral }
     val hasNoCoral = Trigger { !Intake.hasBranchCoral }
+
     rightBumper()
         .and(notLeftBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToRightBranch
-                .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+            Chassis.driveToRightBranch.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToScoreCoralWhenClose,
+                    Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
+                    SuperStructure.scoreCoralOnSelectedBranch,
+                )
+            )
         )
+        //            ConditionalCommand(
+        //                Chassis.driveToRightBranchFar.withDeadline(
+        //                    Commands.sequence(
+        //                        SuperStructure.goToScoreCoralWhenClose,
+        //                        Commands.waitUntil { SuperStructure.atPosition }))
+        //                    .andThen(Chassis.driveToRightBranchSlow)
+        //                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+        //                Chassis.driveToRightBranch
+        //                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+        //                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        //            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
+        //        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation),
             ) {
                 Intake.hasBranchCoral
             }
@@ -164,14 +185,30 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(notRightBumper)
         .and(hasCoral)
         .whileTrue(
-            Chassis.driveToLeftBranch
-                .alongWith(SuperStructure.goToScoreCoralWhenClose)
-                .andThen(SuperStructure.scoreCoralOnSelectedBranch)
+            Chassis.driveToLeftBranch.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToScoreCoralWhenClose,
+                    Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
+                    SuperStructure.scoreCoralOnSelectedBranch,
+                )
+            )
         )
+        //            ConditionalCommand(
+        //                Chassis.driveToLeftBranchFar.withDeadline(
+        //                    Commands.sequence(
+        //                        SuperStructure.goToScoreCoralWhenClose,
+        //                        Commands.waitUntil { SuperStructure.atPosition }))
+        //                    .andThen(Chassis.driveToLeftBranchSlow)
+        //                    .andThen(SuperStructure.scoreCoralOnSelectedBranch),
+        //                Chassis.driveToLeftBranch
+        //                    .alongWith(SuperStructure.goToScoreCoralWhenClose)
+        //                    .andThen(SuperStructure.scoreCoralOnSelectedBranch))
+        //            { ScoreSelector.SelectedLevel.state == RobotState.L4 }
+        //        )
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStation),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation),
             ) {
                 Intake.hasBranchCoral
             }
@@ -180,7 +217,14 @@ private fun CommandXboxController.configureReefAlignments() {
     leftBumper()
         .and(rightBumper())
         .and(hasNoCoral)
-        .whileTrue(Chassis.driveToClosestReef.alongWith(SuperStructure.retrieveAlgaeFromReef))
+        .whileTrue(
+            Chassis.driveToClosestReef.alongWith(
+                Commands.sequence(
+                    Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                    SuperStructure.retrieveAlgaeFromReef,
+                )
+            )
+        )
         .onFalse(SuperStructure.retractWithAlgae())
 }
 
@@ -192,31 +236,64 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().and(notLeftBumper)
         .and(notRightBumper)
         .whileTrue(
-            Chassis.driveToBarge
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            //            Chassis.driveToBargeFar.withDeadline(
+            //                Commands.sequence(
+            //                    SuperStructure.goToNetWhileAligning,
+            //                    Commands.waitUntil { SuperStructure.atPosition }))
+            //                .andThen(Chassis.driveToBarge)
+            //                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
+            Chassis.driveToBarge.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
+                    SuperStructure.autoScoreAlgaeInNet,
+                )
+            )
         )
     // y and left bumper
     y().and(leftBumper())
         .and(notRightBumper)
         .whileTrue(
-            Chassis.driveToBargeLeft
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            //            Chassis.driveToBargeFarLeft.withDeadline(
+            //                Commands.sequence(
+            //                    SuperStructure.goToNetWhileAligning,
+            //                    Commands.waitUntil { SuperStructure.atPosition }))
+            //                .andThen(Chassis.driveToBargeLeft)
+            //                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
+            Chassis.driveToBargeLeft.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
+                    SuperStructure.autoScoreAlgaeInNet,
+                )
+            )
         )
     // y and right bumper
     y().and(rightBumper())
         .and(notLeftBumper)
         .whileTrue(
-            Chassis.driveToBargeRight
-                .alongWith(SuperStructure.goToNetWhileAligning)
-                .andThen(SuperStructure.autoScoreAlgaeInNet)
+            //            Chassis.driveToBargeFarRight.withDeadline(
+            //                Commands.sequence(
+            //                    SuperStructure.goToNetWhileAligning,
+            //                    Commands.waitUntil { SuperStructure.atPosition }))
+            //                .andThen(Chassis.driveToBargeRight)
+            //                .andThen(SuperStructure.autoScoreAlgaeInNet)
+
+            Chassis.driveToBargeRight.alongWith(
+                Commands.sequence(
+                    SuperStructure.goToNetWhileAligning,
+                    Commands.waitUntil { Chassis.isWithinGoal(0.06) },
+                    SuperStructure.autoScoreAlgaeInNet,
+                )
+            )
         )
     // y released, retract to algae storage with algae or CoralStation without
     y().onFalse(
         ConditionalCommand(
             SuperStructure.smartGoTo(RobotState.AlgaeStorage),
-            SuperStructure.smartGoTo(RobotState.CoralStation),
+            SuperStructure.smartGoTo(RobotState.NewCoralStation),
         ) {
             Intake.detectAlgaeByCurrent()
         }
