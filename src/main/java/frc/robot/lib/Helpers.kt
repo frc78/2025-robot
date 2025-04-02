@@ -6,11 +6,9 @@ import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.wpilibj.RobotBase.isReal
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.drivetrain.Chassis
-import org.littletonrobotics.junction.Logger
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
+import org.littletonrobotics.junction.Logger
 
 /**
  * Delegate for creating commands.
@@ -41,32 +39,40 @@ class CommandDelegate(private val command: () -> Command) : ReadOnlyProperty<Any
 
 fun command(command: () -> Command) = CommandDelegate(command)
 
-//@kotlin.internal.InlineOnly
-//@SinceKotlin("1.1")
-//public inline fun <T> T.also(block: (T) -> Unit): T {
+// @kotlin.internal.InlineOnly
+// @SinceKotlin("1.1")
+// public inline fun <T> T.also(block: (T) -> Unit): T {
 //    contract {
 //        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
 //    }
 //    block(this)
 //    return this
-//}
+// }
 
 fun Vector<N2>.logChassisOffset(entryName: String): Vector<N2> {
-    if (!isReal()) {Logger.recordOutput(entryName, this.toTranslation().plus(Chassis.state.Pose.translation))}
+    if (!isReal()) {
+        Logger.recordOutput(entryName, this.toTranslation().plus(Chassis.state.Pose.translation))
+    }
     return this
 }
 
 fun Vector<N2>.log(entryName: String): Vector<N2> {
-    if (!isReal()) {Logger.recordOutput(entryName, this.toTranslation())}
+    if (!isReal()) {
+        Logger.recordOutput(entryName, this.toTranslation())
+    }
     return this
 }
 
 fun Pose2d.log(entryName: String): Pose2d {
-    if (!isReal()) {Logger.recordOutput(entryName, this)}
+    if (!isReal()) {
+        Logger.recordOutput(entryName, this)
+    }
     return this
 }
 
 fun Double.log(entryName: String): Double {
-    if(!isReal()) {Logger.recordOutput(entryName, this)}
+    if (!isReal()) {
+        Logger.recordOutput(entryName, this)
+    }
     return this
 }

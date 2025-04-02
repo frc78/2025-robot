@@ -8,20 +8,21 @@ import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.util.sendable.SendableRegistry
 import java.lang.IllegalArgumentException
 
-class AsymProfiledPIDController @JvmOverloads constructor(
+class AsymProfiledPIDController
+@JvmOverloads
+constructor(
     kP: Double,
     kI: Double,
     kD: Double,
     constraints: AsymtrapezoidalProfile.Constraints,
-    period: Double = 0.02
-) :
-    Sendable {
+    period: Double = 0.02,
+) : Sendable {
     private val controller = PIDController(kP, kI, kD, period)
     private var minimumInput = 0.0
     private var maximumInput = 0.0
 
-    private var m_constraints: AsymtrapezoidalProfile.Constraints
     private var profile: AsymtrapezoidalProfile
+
     /**
      * Gets the goal for the ProfiledPIDController.
      *
@@ -43,50 +44,34 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         private set
 
     /**
-     * Allocates a ProfiledPIDController with the given constants for Kp, Ki, and Kd.
-     *
-     * @param kP The proportional coefficient.
-     * @param kI The integral coefficient.
-     * @param kD The derivative coefficient.
-     * @param constraints Velocity and acceleration constraints for goal.
-     * @param period The period between controller updates in seconds. The default is 0.02 seconds.
-     * @throws IllegalArgumentException if kp &lt; 0
-     * @throws IllegalArgumentException if ki &lt; 0
-     * @throws IllegalArgumentException if kd &lt; 0
-     * @throws IllegalArgumentException if period &lt;= 0
-     */
-    /**
-     * Allocates a ProfiledPIDController with the given constants for Kp, Ki, and Kd.
-     *
-     * @param Kp The proportional coefficient.
-     * @param Ki The integral coefficient.
-     * @param Kd The derivative coefficient.
-     * @param constraints Velocity and acceleration constraints for goal.
-     * @throws IllegalArgumentException if kp &lt; 0
-     * @throws IllegalArgumentException if ki &lt; 0
-     * @throws IllegalArgumentException if kd &lt; 0
-     */
-    init {
-        m_constraints = constraints
-        profile = AsymtrapezoidalProfile(m_constraints)
-        instances++
-
-        SendableRegistry.add(this, "AsymProfiledPIDController", instances)
-    }
-
-    /**
      * Sets the PID Controller gain parameters.
-     *
      *
      * Sets the proportional, integral, and differential coefficients.
      *
-     * @param Kp The proportional coefficient. Must be &gt;= 0.
-     * @param Ki The integral coefficient. Must be &gt;= 0.
-     * @param Kd The differential coefficient. Must be &gt;= 0.
+     * @param kP The proportional coefficient. Must be &gt;= 0.
+     * @param kI The integral coefficient. Must be &gt;= 0.
+     * @param kD The differential coefficient. Must be &gt;= 0.
      */
-    fun setPID(Kp: Double, Ki: Double, Kd: Double) {
-        controller.setPID(Kp, Ki, Kd)
+    fun setPID(kP: Double, kI: Double, kD: Double) {
+        controller.setPID(kP, kI, kD)
     }
+
+    private var constraints: AsymtrapezoidalProfile.Constraints = constraints
+        /**
+         * Get the velocity and acceleration constraints for this controller.
+         *
+         * @return Velocity and acceleration constraints.
+         */
+        get() = field
+        /**
+         * Set velocity and acceleration constraints for goal.
+         *
+         * @param constraints Velocity and acceleration constraints for goal.
+         */
+        set(constraints) {
+            this.constraints = constraints
+            profile = AsymtrapezoidalProfile(constraints)
+        }
 
     var p: Double
         /**
@@ -144,11 +129,11 @@ class AsymProfiledPIDController @JvmOverloads constructor(
          */
         get() = controller.iZone
         /**
-         * Sets the IZone range. When the absolute value of the position error is greater than IZone, the
-         * total accumulated error will reset to zero, disabling integral gain until the absolute value of
-         * the position error is less than IZone. This is used to prevent integral windup. Must be
-         * non-negative. Passing a value of zero will effectively disable integral gain. Passing a value
-         * of [Double.POSITIVE_INFINITY] disables IZone functionality.
+         * Sets the IZone range. When the absolute value of the position error is greater than
+         * IZone, the total accumulated error will reset to zero, disabling integral gain until the
+         * absolute value of the position error is less than IZone. This is used to prevent integral
+         * windup. Must be non-negative. Passing a value of zero will effectively disable integral
+         * gain. Passing a value of [Double.POSITIVE_INFINITY] disables IZone functionality.
          *
          * @param iZone Maximum magnitude of error to allow integral control.
          * @throws IllegalArgumentException if iZone &lt;= 0
@@ -190,6 +175,37 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         get() = controller.accumulatedError
 
     /**
+     * Allocates a ProfiledPIDController with the given constants for Kp, Ki, and Kd.
+     *
+     * @param kP The proportional coefficient.
+     * @param kI The integral coefficient.
+     * @param kD The derivative coefficient.
+     * @param constraints Velocity and acceleration constraints for goal.
+     * @param period The period between controller updates in seconds. The default is 0.02 seconds.
+     * @throws IllegalArgumentException if kp &lt; 0
+     * @throws IllegalArgumentException if ki &lt; 0
+     * @throws IllegalArgumentException if kd &lt; 0
+     * @throws IllegalArgumentException if period &lt;= 0
+     */
+    /**
+     * Allocates a ProfiledPIDController with the given constants for Kp, Ki, and Kd.
+     *
+     * @param Kp The proportional coefficient.
+     * @param Ki The integral coefficient.
+     * @param Kd The derivative coefficient.
+     * @param constraints Velocity and acceleration constraints for goal.
+     * @throws IllegalArgumentException if kp &lt; 0
+     * @throws IllegalArgumentException if ki &lt; 0
+     * @throws IllegalArgumentException if kd &lt; 0
+     */
+    init {
+        profile = AsymtrapezoidalProfile(constraints)
+        instances++
+
+        SendableRegistry.add(this, "AsymProfiledPIDController", instances)
+    }
+
+    /**
      * Sets the goal for the ProfiledPIDController.
      *
      * @param goal The desired goal position.
@@ -201,7 +217,6 @@ class AsymProfiledPIDController @JvmOverloads constructor(
     /**
      * Returns true if the error is within the tolerance of the error.
      *
-     *
      * This will return false until at least one input value has been computed.
      *
      * @return True if the error is within the tolerance of the error.
@@ -210,26 +225,8 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         return atSetpoint() && goal == setpoint
     }
 
-    var constraints: AsymtrapezoidalProfile.Constraints
-        /**
-         * Get the velocity and acceleration constraints for this controller.
-         *
-         * @return Velocity and acceleration constraints.
-         */
-        get() = m_constraints
-        /**
-         * Set velocity and acceleration constraints for goal.
-         *
-         * @param constraints Velocity and acceleration constraints for goal.
-         */
-        set(constraints) {
-            m_constraints = constraints
-            profile = AsymtrapezoidalProfile(m_constraints)
-        }
-
     /**
      * Returns true if the error is within the tolerance of the error.
-     *
      *
      * This will return false until at least one input value has been computed.
      *
@@ -241,7 +238,6 @@ class AsymProfiledPIDController @JvmOverloads constructor(
 
     /**
      * Enables continuous input.
-     *
      *
      * Rather then using the max and min input range as constraints, it considers them to be the
      * same point and automatically calculates the shortest route to the setpoint.
@@ -255,14 +251,13 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         this.maximumInput = maximumInput
     }
 
-    /** Disables continuous input.  */
+    /** Disables continuous input. */
     fun disableContinuousInput() {
         controller.disableContinuousInput()
     }
 
     /**
      * Sets the minimum and maximum contributions of the integral term.
-     *
      *
      * The internal integrator is clamped so that the integral term's contribution to the output
      * stays between minimumIntegral and maximumIntegral. This prevents integral windup.
@@ -324,10 +319,14 @@ class AsymProfiledPIDController @JvmOverloads constructor(
             val setpointMinDistance =
                 MathUtil.inputModulus(setpoint.position - measurement, -errorBound, errorBound)
 
-            // Recompute the profile goal with the smallest error, thus giving the shortest path. The goal
-            // may be outside the input range after this operation, but that's OK because the controller
-            // will still go there and report an error of zero. In other words, the setpoint only needs to
-            // be offset from the measurement by the input range modulus; they don't need to be equal.
+            // Recompute the profile goal with the smallest error, thus giving the shortest path.
+            // The goal
+            // may be outside the input range after this operation, but that's OK because the
+            // controller
+            // will still go there and report an error of zero. In other words, the setpoint only
+            // needs to
+            // be offset from the measurement by the input range modulus; they don't need to be
+            // equal.
             goal.position = goalMinDistance + measurement
             setpoint.position = setpointMinDistance + measurement
         }
@@ -373,7 +372,9 @@ class AsymProfiledPIDController @JvmOverloads constructor(
      * @return The controller's next output.
      */
     fun calculate(
-        measurement: Double, goal: AsymtrapezoidalProfile.State, constraints: AsymtrapezoidalProfile.Constraints
+        measurement: Double,
+        goal: AsymtrapezoidalProfile.State,
+        constraints: AsymtrapezoidalProfile.Constraints,
     ): Double {
         this.constraints = constraints
         return calculate(measurement, goal)
@@ -398,8 +399,8 @@ class AsymProfiledPIDController @JvmOverloads constructor(
     /**
      * Reset the previous error and the integral term.
      *
-     * @param measuredPosition The current measured position of the system. The velocity is assumed to
-     * be zero.
+     * @param measuredPosition The current measured position of the system. The velocity is assumed
+     *   to be zero.
      */
     @JvmOverloads
     fun reset(measuredPosition: Double, measuredVelocity: Double = 0.0) {
@@ -408,18 +409,9 @@ class AsymProfiledPIDController @JvmOverloads constructor(
 
     override fun initSendable(builder: SendableBuilder) {
         builder.setSmartDashboardType("ProfiledPIDController")
-        builder.addDoubleProperty("p", { this.p }, { Kp: Double ->
-            this.p =
-                Kp
-        })
-        builder.addDoubleProperty("i", { this.i }, { Ki: Double ->
-            this.i =
-                Ki
-        })
-        builder.addDoubleProperty("d", { this.d }, { Kd: Double ->
-            this.d =
-                Kd
-        })
+        builder.addDoubleProperty("p", { this.p }, { Kp: Double -> this.p = Kp })
+        builder.addDoubleProperty("i", { this.i }, { Ki: Double -> this.i = Ki })
+        builder.addDoubleProperty("d", { this.d }, { Kd: Double -> this.d = Kd })
         builder.addDoubleProperty(
             "izone",
             { this.iZone },
@@ -427,31 +419,50 @@ class AsymProfiledPIDController @JvmOverloads constructor(
                 try {
                     iZone = toSet
                 } catch (e: IllegalArgumentException) {
-                    MathSharedStore.reportError("IZone must be a non-negative number!", e.stackTrace)
+                    MathSharedStore.reportError(
+                        "IZone must be a non-negative number!",
+                        e.stackTrace,
+                    )
                 }
-            })
+            },
+        )
         builder.addDoubleProperty(
             "maxVelocity",
             { constraints.maxVelocity },
             { maxVelocity: Double ->
-                constraints = AsymtrapezoidalProfile.Constraints(maxVelocity, constraints.maxAcceleration, constraints.maxDeceleration)
-            })
+                constraints =
+                    AsymtrapezoidalProfile.Constraints(
+                        maxVelocity,
+                        constraints.maxAcceleration,
+                        constraints.maxDeceleration,
+                    )
+            },
+        )
         builder.addDoubleProperty(
             "maxAcceleration",
             { constraints.maxAcceleration },
             { maxAcceleration: Double ->
-                constraints = AsymtrapezoidalProfile.Constraints(constraints.maxVelocity, maxAcceleration, constraints.maxDeceleration)
-            })
+                constraints =
+                    AsymtrapezoidalProfile.Constraints(
+                        constraints.maxVelocity,
+                        maxAcceleration,
+                        constraints.maxDeceleration,
+                    )
+            },
+        )
         builder.addDoubleProperty(
             "maxDeceleration",
             { constraints.maxDeceleration },
             { maxDeceleration: Double ->
-                constraints = AsymtrapezoidalProfile.Constraints(constraints.maxVelocity, constraints.maxAcceleration, maxDeceleration)
-            })
-        builder.addDoubleProperty(
-            "goal",
-            { goal.position },
-            { goal: Double -> this.setGoal(goal) })
+                constraints =
+                    AsymtrapezoidalProfile.Constraints(
+                        constraints.maxVelocity,
+                        constraints.maxAcceleration,
+                        maxDeceleration,
+                    )
+            },
+        )
+        builder.addDoubleProperty("goal", { goal.position }, { goal: Double -> this.setGoal(goal) })
     }
 
     companion object {

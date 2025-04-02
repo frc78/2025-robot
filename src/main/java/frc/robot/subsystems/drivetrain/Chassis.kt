@@ -15,10 +15,7 @@ import com.pathplanner.lib.util.DriveFeedforwards
 import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
-import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Translation2d
@@ -26,7 +23,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
@@ -73,10 +69,7 @@ import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
-import frc.robot.lib.FieldPoses.closestRightCoralStation
-import frc.robot.lib.ScoreSelector.SelectedBranch
 import frc.robot.subsystems.Intake
-import org.littletonrobotics.junction.AutoLog
 import java.io.IOException
 import java.text.ParseException
 import kotlin.math.PI
@@ -432,9 +425,13 @@ object Chassis :
     }
 
     private val distanceController =
-        AsymProfiledPIDController(1.5, 0.0, 0.25, AsymtrapezoidalProfile.Constraints(4.0, 12.0, 3.0)).apply {
-            setTolerance(0.01)
-        }
+        AsymProfiledPIDController(
+                1.5,
+                0.0,
+                0.25,
+                AsymtrapezoidalProfile.Constraints(4.0, 12.0, 3.0),
+            )
+            .apply { setTolerance(0.01) }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) =
@@ -474,20 +471,18 @@ object Chassis :
 
     var driveTarget = Pose2d()
 
-    private fun driveToPose(pose: () -> Pose2d): Command =
+    fun driveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
                 driveTarget = pose().log("driveToPose target")
                 val displacement = state.Pose.translation.minus(driveTarget.translation).toVector()
 
                 distanceController.reset(
                     displacement.norm(),
-                    fieldRelativeSpeeds.toVector().dot(displacement).div(displacement.norm())
+                    fieldRelativeSpeeds.toVector().dot(displacement).div(displacement.norm()),
                 )
             })
             .andThen(
                 applyRequest {
-                    val fieldRelativeSpeeds =
-                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
                     val displacement =
                         state.Pose.translation.minus(driveTarget.translation).toVector()
 
@@ -496,22 +491,20 @@ object Chassis :
                     val distance = displacement.norm().log("driveToPose distance")
 
                     val distanceOutput =
-                        if(distance >= 0.5) {
-                        distanceController.setpoint.velocity +
-                            distanceController
-                                .calculate(
-                                    distance,
-                                    0.0,
-                                )} else {
-                            distanceController.calculateOnlyPID(distance, 0.0)}.log("driveToPose distanceOutput")
+                        if (distance >= 0.5) {
+                                distanceController.setpoint.velocity +
+                                    distanceController.calculate(distance, 0.0)
+                            } else {
+                                distanceController.calculateOnlyPID(distance, 0.0)
+                            }
+                            .log("driveToPose distanceOutput")
 
-                    Logger.recordOutput("driveToPose setpoint position", distanceController.setpoint.position)
+                    distanceController.setpoint.position.log("driveToPose setpoint position")
 
                     val heading =
-                        fieldRelativeSpeeds.toVector()
-                            .logChassisOffset(
-                                "driveToPose heading"
-                            )
+                        ChassisSpeeds.fromRobotRelativeSpeeds(state.Speeds, state.Pose.rotation)
+                            .toVector()
+                            .logChassisOffset("driveToPose heading")
                     val tangentialVel =
                         heading
                             .projection(displacement.times(-1.0).getPerpendicularVector().unit())
@@ -526,9 +519,9 @@ object Chassis :
                                 else VecBuilder.fill(0.0, 0.0)
                             )
 
-                    Logger.recordOutput("driveToPose position error", distanceController.positionError)
-                    Logger.recordOutput("driveToPose velocity error", distanceController.velocityError)
-                    Logger.recordOutput("driveToPose velocity setpoint", distanceController.setpoint.velocity)
+                    distanceController.positionError.log("driveToPose position error")
+                    distanceController.velocityError.log("driveToPose velocity error")
+                    distanceController.setpoint.velocity.log("driveToPose velocity setpoint")
 
                     FieldCentricFacingAngleAlignments.withVelocityX(speeds[0])
                         .withVelocityY(speeds[1])
@@ -539,7 +532,14 @@ object Chassis :
             .finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     val predictedPose: Pose2d
-        get() = Pose2d(state.Pose.translation.plus(fieldRelativeSpeeds.toVector().toTranslation().times(0.5)), state.Pose.rotation).log("Predicted Pose")
+        get() =
+            Pose2d(
+                    state.Pose.translation.plus(
+                        fieldRelativeSpeeds.toVector().toTranslation().times(0.5)
+                    ),
+                    state.Pose.rotation,
+                )
+                .log("Predicted Pose")
 
     val driveToClosestReef by command { driveToPose({ closestReef }) }
 
@@ -622,7 +622,6 @@ object Chassis :
         applyRequest { RobotRelative.block() }.finallyDo { _ -> setControl(ApplyRobotSpeeds()) }
 
     fun driveToClosestSubstation(
-        strafeSpeedY: () -> Double,
         withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
         distanceToSubstation: Double,
     ): Command =
@@ -655,8 +654,7 @@ object Chassis :
             .andThen(applyRequest { RobotRelative.withSpeeds() })
 
     fun driveToBarge(
-        strafeSpeedY: () -> Double,
-        withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric,
+        withSpeeds: SwerveRequest.RobotCentric.() -> SwerveRequest.RobotCentric
     ): Command =
         // Our target distance from the line segment of the substation
         driveToPose({
@@ -695,9 +693,7 @@ object Chassis :
         }
     }
 
-    fun isWithinGoal(
-        distance: Double,
-    ): Boolean {
+    fun isWithinGoal(distance: Double): Boolean {
         return distanceController.positionError <= distance
     }
 }

@@ -11,8 +11,10 @@ class AsymtrapezoidalProfile
 /**
  * Constructs an Asymmetrical Trapezoidal Profile.
  *
- * @param constraints The constraints on the profile, including maximum velocity, acceleration, and deceleration.
- */(private val constraints: Constraints) {
+ * @param constraints The constraints on the profile, including maximum velocity, acceleration, and
+ *   deceleration.
+ */
+(private val constraints: Constraints) {
     // The direction of the profile, either 1 for forwards or -1 for inverted
     private var direction = 0
 
@@ -22,14 +24,14 @@ class AsymtrapezoidalProfile
     private var endFullSpeed = 0.0
     private var endDecel = 0.0
 
-    /** Profile constraints.  */
+    /** Profile constraints. */
     class Constraints(
-        /** Maximum velocity.  */
+        /** Maximum velocity. */
         val maxVelocity: Double,
-        /** Maximum acceleration.  */
+        /** Maximum acceleration. */
         val maxAcceleration: Double,
-        /** Maximum deceleration.  */
-        val maxDeceleration: Double
+        /** Maximum deceleration. */
+        val maxDeceleration: Double,
     ) {
         /**
          * Constructs constraints for an Asymmetrical Trapezoidal Profile.
@@ -43,23 +45,25 @@ class AsymtrapezoidalProfile
         }
     }
 
-    /** Profile state.  */
+    /** Profile state. */
     class State
     /**
      * Constructs constraints for a Trapezoid Profile.
      *
      * @param position The position at this state.
      * @param velocity The velocity at this state.
-     */(
-        /** The position at this state.  */
+     */
+    (
+        /** The position at this state. */
         var position: Double = 0.0,
-        /** The velocity at this state.  */
-        var velocity: Double = 0.0
+        /** The velocity at this state. */
+        var velocity: Double = 0.0,
     ) {
 
         override fun equals(other: Any?): Boolean {
-            return other is State
-                    && this.position == other.position && this.velocity == other.velocity
+            return other is State &&
+                this.position == other.position &&
+                this.velocity == other.velocity
         }
 
         override fun hashCode(): Int {
@@ -68,8 +72,8 @@ class AsymtrapezoidalProfile
     }
 
     /**
-     * Calculates the position and velocity for the profile at a time t where the current state is at
-     * time t = 0.
+     * Calculates the position and velocity for the profile at a time t where the current state is
+     * at time t = 0.
      *
      * @param t How long to advance from the current state toward the desired state.
      * @param current The current state.
@@ -103,16 +107,21 @@ class AsymtrapezoidalProfile
         var decelerationTime = constraints.maxVelocity / constraints.maxDeceleration
 
         var fullSpeedDist =
-            fullTrapezoidDist - (accelerationTime.squared() * constraints.maxAcceleration / 2.0) -
-                    (decelerationTime.squared() * constraints.maxDeceleration / 2.0)
+            fullTrapezoidDist -
+                (accelerationTime.squared() * constraints.maxAcceleration / 2.0) -
+                (decelerationTime.squared() * constraints.maxDeceleration / 2.0)
 
         // Handle the case where the profile never reaches full speed
         if (fullSpeedDist < 0) {
             // Solve for the peak velocity that is attainable
-            val peakVel = sqrt(
-                (2.0 * constraints.maxAcceleration * constraints.maxDeceleration * fullTrapezoidDist) /
+            val peakVel =
+                sqrt(
+                    (2.0 *
+                        constraints.maxAcceleration *
+                        constraints.maxDeceleration *
+                        fullTrapezoidDist) /
                         (constraints.maxAcceleration + constraints.maxDeceleration)
-            )
+                )
             accelerationTime = peakVel / constraints.maxAcceleration
             decelerationTime = peakVel / constraints.maxDeceleration
             fullSpeedDist = 0.0
@@ -129,14 +138,14 @@ class AsymtrapezoidalProfile
         } else if (t < endFullSpeed) {
             result.velocity = constraints.maxVelocity
             result.position +=
-                ((currrent!!.velocity + endAccel * constraints.maxAcceleration / 2.0) * endAccel
-                        + constraints.maxVelocity * (t - endAccel))
+                ((currrent!!.velocity + endAccel * constraints.maxAcceleration / 2.0) * endAccel +
+                    constraints.maxVelocity * (t - endAccel))
         } else if (t <= endDecel) {
             result.velocity = goal.velocity + (endDecel - t) * constraints.maxDeceleration
             val timeLeft = endDecel - t
             result.position =
-                (goal.position
-                        - (goal.velocity + timeLeft * constraints.maxDeceleration / 2.0) * timeLeft)
+                (goal.position -
+                    (goal.velocity + timeLeft * constraints.maxDeceleration / 2.0) * timeLeft)
         } else {
             result = goal
         }
@@ -175,11 +184,12 @@ class AsymtrapezoidalProfile
         }
 
         var accelDist = velocity * endAccel + 0.5 * acceleration * endAccel * endAccel
-        val decelVelocity = if (endAccel > 0) {
-            sqrt(abs(velocity * velocity + 2 * acceleration * accelDist))
-        } else {
-            velocity
-        }
+        val decelVelocity =
+            if (endAccel > 0) {
+                sqrt(abs(velocity * velocity + 2 * acceleration * accelDist))
+            } else {
+                velocity
+            }
 
         var fullSpeedDist = constraints.maxVelocity * endFullSpeed
         val decelDist: Double
@@ -196,13 +206,12 @@ class AsymtrapezoidalProfile
         }
 
         val accelTime =
-            ((-velocity + sqrt(abs(velocity.squared() + 2 * acceleration * accelDist)))
-                    / acceleration)
+            ((-velocity + sqrt(abs(velocity.squared() + 2 * acceleration * accelDist))) /
+                acceleration)
 
         val decelTime =
-            ((-decelVelocity
-                    + sqrt(abs(decelVelocity.squared() + 2 * deceleration * decelDist)))
-                    / deceleration)
+            ((-decelVelocity + sqrt(abs(decelVelocity.squared() + 2 * deceleration * decelDist))) /
+                deceleration)
 
         val fullSpeedTime = fullSpeedDist / constraints.maxVelocity
 
@@ -221,7 +230,6 @@ class AsymtrapezoidalProfile
     /**
      * Returns true if the profile has reached the goal.
      *
-     *
      * The profile has reached the goal if the time since the profile started has exceeded the
      * profile's total time.
      *
@@ -233,8 +241,8 @@ class AsymtrapezoidalProfile
     }
 
     // Flip the sign of the velocity and position if the profile is inverted
-    private fun direct(`in`: State): State {
-        val result = State(`in`.position, `in`.velocity)
+    private fun direct(state: State): State {
+        val result = State(state.position, state.velocity)
         result.position *= direction
         result.velocity *= direction
         return result
@@ -243,7 +251,6 @@ class AsymtrapezoidalProfile
     companion object {
         /**
          * Returns true if the profile inverted.
-         *
          *
          * The profile is inverted if goal position is less than the initial position.
          *
