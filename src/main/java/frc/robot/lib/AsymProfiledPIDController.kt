@@ -348,6 +348,10 @@ class AsymProfiledPIDController @JvmOverloads constructor(
         return calculate(measurement)
     }
 
+    fun calculateOnlyPID(measurement: Double, setpoint: Double): Double {
+        return controller.calculate(measurement, setpoint)
+    }
+
     /**
      * Returns the next output of the PIDController.
      *

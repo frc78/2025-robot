@@ -491,14 +491,19 @@ object Chassis :
 
                     FieldCentricFacingAngleAlignments.withTargetDirection(driveTarget.rotation)
 
+                    val distance = displacement.norm().log("driveToPose distance")
+
                     val distanceOutput =
+                        if(distance >= 0.5) {
                         distanceController.setpoint.velocity +
                             distanceController
                                 .calculate(
-                                    displacement.norm().log("driveToPose distance"),
+                                    distance,
                                     0.0,
-                                )
-                                .log("driveToPose distanceOutput")
+                                )} else {
+                            distanceController.calculateOnlyPID(distance, 0.0)}.log("driveToPose distanceOutput")
+
+                    Logger.recordOutput("driveToPose setpoint position", distanceController.setpoint.position)
 
                     val heading =
                         fieldRelativeSpeeds.toVector()
