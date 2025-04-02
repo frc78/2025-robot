@@ -426,17 +426,16 @@ object Chassis :
     }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d, low_accel: Boolean = false) =
-        driveToPose(
-            { pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)) },
-            low_accel,
-        )
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d) =
+        driveToPose({
+            pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+        })
 
-    fun pathfindToPose(pose: () -> Pose2d, low_accel: Boolean) =
+    fun pathfindToPose(pose: () -> Pose2d) =
         DeferredCommand(
             {
                 if (state.Pose.translation.getDistance(pose().translation) < 1.0) {
-                    driveToPose(pose, low_accel)
+                    driveToPose(pose)
                 } else {
                     AutoBuilder.pathfindToPose(
                         // Stay back 1 foot from the end point
@@ -485,7 +484,7 @@ object Chassis :
 
     fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
-    fun driveToPose(pose: () -> Pose2d, low_accel: Boolean = false): Command =
+    fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
             .andThen(
                 applyRequest {
@@ -578,13 +577,11 @@ object Chassis :
     }
 
     val driveToLeftBranchSlow by command {
-        driveToPoseWithCoralOffset({ closestLeftBranch }, true)
-            .withName("Drive to branch left slow")
+        driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left slow")
     }
 
     val driveToRightBranchSlow by command {
-        driveToPoseWithCoralOffset({ closestRightBranch }, true)
-            .withName("Drive to branch right slow")
+        driveToPoseWithCoralOffset({ closestRightBranch }).withName("Drive to branch right slow")
     }
 
     // Drive to left/right branches spaced slightly backwards
@@ -604,13 +601,13 @@ object Chassis :
 
     val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation }) }
 
-    val driveToBarge by command { driveToPose({ closestBarge }, false) }
-    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }, false) }
-    val driveToBargeRight by command { driveToPose({ closestRightBarge }, false) }
+    val driveToBarge by command { driveToPose({ closestBarge }) }
+    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }) }
+    val driveToBargeRight by command { driveToPose({ closestRightBarge }) }
 
-    val driveToBargeSlow by command { driveToPose({ closestBarge }, true) }
-    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }, true) }
-    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }, true) }
+    val driveToBargeSlow by command { driveToPose({ closestBarge }) }
+    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }) }
+    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }) }
 
     val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) }) }
     val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) }) }

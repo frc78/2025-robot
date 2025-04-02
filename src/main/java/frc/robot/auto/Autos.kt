@@ -124,7 +124,7 @@ object Autos {
     val CenterAlgaeAuto by command {
         Commands.sequence(
             // Drive to right branch, but it's on the far side of the reef so it's swapped
-            Chassis.driveToPoseWithCoralOffset({ Branch.H.pose }, true)
+            Chassis.driveToPoseWithCoralOffset({ Branch.H.pose })
                 .alongWith(
                     Commands.sequence(
                         Pivot.goTo(RobotState.L4),
