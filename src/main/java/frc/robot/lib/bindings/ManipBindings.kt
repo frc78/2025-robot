@@ -76,15 +76,15 @@ private fun CommandXboxController.configureManipButtonLayout() {
                     Commands.waitSeconds(0.2)
                         .alongWith(Commands.waitUntil { rightTriggerAxis < 0.55 })
                 )
-                .andThen(SuperStructure.smartGoTo(RobotState.CoralStation))
+                .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
         )
 
     rightBumper()
-        .onTrue(
-            SuperStructure.smartGoTo(RobotState.CoralStation)
-                .alongWith(Intake.intakeCoralThenHold())
-                .withName("Intake coral from coral station")
+        .whileTrue(
+            //            SuperStructure.smartGoTo(RobotState.NewCoralStation)
+            Intake.intakeCoral.withName("Intake coral from coral station")
         )
+        .onFalse(Intake.holdCoral)
 
     // Algae Stuff
     povUp()
@@ -112,7 +112,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     leftTrigger(0.55)
-        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.CoralStation)))
+        .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation)))
 }
 
 private fun CommandXboxController.configureManipLeftStickLayout() {

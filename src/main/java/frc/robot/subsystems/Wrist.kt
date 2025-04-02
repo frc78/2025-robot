@@ -38,8 +38,8 @@ object Wrist : SubsystemBase("wrist") {
 
     var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
-    private const val ALPHA_GEAR_RATIO = (72 * 72 * 64 * 48) / (14 * 24 * 32 * 16.0)
-    private const val COMP_GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 16.0)
+    private const val ALPHA_GEAR_RATIO = (72 * 72 * 48) / (14 * 24 * 16.0)
+    private const val COMP_GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 24.0)
 
     private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs()
@@ -118,7 +118,7 @@ object Wrist : SubsystemBase("wrist") {
                     FieldGeometry.CORAL_STATIONS,
                     Chassis.state.Pose.translation,
                 )
-                .meters > 0.9.meters
+                .meters >= 0.6.meters
         )
             setpoint = state.wristAngle
     }

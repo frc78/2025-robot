@@ -55,6 +55,8 @@ val Number.seconds: Time
     get() = Seconds.of(this.toDouble())
 val Number.metersPerSecond: LinearVelocity
     get() = MetersPerSecond.of(this.toDouble())
+val Number.inchesPerSecond: LinearVelocity
+    get() = InchesPerSecond.of(this.toDouble())
 val Number.feetPerSecond: LinearVelocity
     get() = FeetPerSecond.of(this.toDouble())
 val Number.volts: Voltage

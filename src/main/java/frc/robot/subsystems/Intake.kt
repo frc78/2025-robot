@@ -16,6 +16,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.IS_COMP
 import frc.robot.lib.amps
@@ -167,9 +168,20 @@ object Intake : SubsystemBase("intake") {
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
-        startEnd({ leader.set(0.6) }, { leader.set(0.035) })
+        startEnd({ leader.set(0.7) }, { leader.set(0.035) })
             .until { hasCoralByCurrent() }
             .withName("Intake coral then hold")
+
+    val overIntakeCoralThenHold by command {
+        Commands.sequence(
+            intakeCoral,
+            Commands.waitUntil { Intake.hasCoralByCurrent() },
+            Commands.waitSeconds(0.2),
+            holdCoral,
+        )
+    }
+    val intakeCoral by command { runOnce { leader.set(0.7) } }
+    val holdCoral by command { runOnce { leader.set(0.035) } }
 
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
