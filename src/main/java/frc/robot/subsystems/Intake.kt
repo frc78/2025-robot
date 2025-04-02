@@ -177,15 +177,11 @@ object Intake : SubsystemBase("intake") {
             intakeCoral,
             Commands.waitUntil { Intake.hasCoralByCurrent() },
             Commands.waitSeconds(0.2),
-            holdCoral
+            holdCoral,
         )
     }
-    val intakeCoral by command {
-        runOnce { leader.set(0.7) }
-    }
-    val holdCoral by command {
-        runOnce { leader.set(0.035) }
-    }
+    val intakeCoral by command { runOnce { leader.set(0.7) } }
+    val holdCoral by command { runOnce { leader.set(0.035) } }
 
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })

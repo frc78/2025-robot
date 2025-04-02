@@ -426,9 +426,11 @@ object Chassis :
     }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun driveToPoseWithCoralOffset(pose: () -> Pose2d, low_accel: Boolean = false) = driveToPose( {
-        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-    }, low_accel)
+    fun driveToPoseWithCoralOffset(pose: () -> Pose2d, low_accel: Boolean = false) =
+        driveToPose(
+            { pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero)) },
+            low_accel,
+        )
 
     fun pathfindToPose(pose: () -> Pose2d, low_accel: Boolean) =
         DeferredCommand(
@@ -457,7 +459,7 @@ object Chassis :
             goal = TrapezoidProfile.State(0.0, 0.0)
         }
 
-    private val posePIDController = PIDController(2.9, 0.0, 0.26) //2.85, 0.0, 0.25 for 4piece auto
+    private val posePIDController = PIDController(2.9, 0.0, 0.26) // 2.85, 0.0, 0.25 for 4piece auto
 
     private fun primeDriveToPose(pose: () -> Pose2d): Command =
         Commands.runOnce({
@@ -491,30 +493,33 @@ object Chassis :
                     val target = pose()
                     val diff = robot.translation - target.translation
 
-//                    distanceFromPoseGoal = diff.norm
-//
-//
-//
-//                    val output =
-//                            if (low_accel) poseController.calculate(diff.norm, poseController.goal,
-//                                TrapezoidProfile.Constraints(4.5, 1.6))
-//                            else
-//                            poseController.calculate(diff.norm, poseController.goal,
-//                                TrapezoidProfile.Constraints(4.5, 4.0))
+                    //                    distanceFromPoseGoal = diff.norm
+                    //
+                    //
+                    //
+                    //                    val output =
+                    //                            if (low_accel) poseController.calculate(diff.norm,
+                    // poseController.goal,
+                    //                                TrapezoidProfile.Constraints(4.5, 1.6))
+                    //                            else
+                    //                            poseController.calculate(diff.norm,
+                    // poseController.goal,
+                    //                                TrapezoidProfile.Constraints(4.5, 4.0))
                     distanceFromPoseGoal = diff.norm
                     val output = posePIDController.calculate(diff.norm)
 
-//                    val angle = diff.angle
-//                    val xSpeed = (poseController.setpoint.velocity + output) * angle.cos
-//                    val ySpeed = (poseController.setpoint.velocity + output) * angle.sin
+                    //                    val angle = diff.angle
+                    //                    val xSpeed = (poseController.setpoint.velocity + output) *
+                    // angle.cos
+                    //                    val ySpeed = (poseController.setpoint.velocity + output) *
+                    // angle.sin
                     val angle = diff.angle
                     val xSpeed = (output) * angle.cos
                     val ySpeed = (output) * angle.sin
 
-                    FieldCentricFacingAngleAlignments.withVelocityX(xSpeed)
-                        .withVelocityY(ySpeed)
+                    FieldCentricFacingAngleAlignments.withVelocityX(xSpeed).withVelocityY(ySpeed)
                 }
-//                .until { isWithinGoal(0.02) /*posePIDController.atGoal()*/ }
+                //                .until { isWithinGoal(0.02) /*posePIDController.atGoal()*/ }
             )
             // Stop movement
             .finallyDo { _ ->
@@ -573,11 +578,13 @@ object Chassis :
     }
 
     val driveToLeftBranchSlow by command {
-        driveToPoseWithCoralOffset({ closestLeftBranch }, true).withName("Drive to branch left slow")
+        driveToPoseWithCoralOffset({ closestLeftBranch }, true)
+            .withName("Drive to branch left slow")
     }
 
     val driveToRightBranchSlow by command {
-        driveToPoseWithCoralOffset({ closestRightBranch }, true).withName("Drive to branch right slow")
+        driveToPoseWithCoralOffset({ closestRightBranch }, true)
+            .withName("Drive to branch right slow")
     }
 
     // Drive to left/right branches spaced slightly backwards
@@ -586,7 +593,7 @@ object Chassis :
     private val spaceBack: Transform2d = Transform2d(0.2.meters, 0.meters, Rotation2d.kZero)
 
     val driveToLeftBranchFar by command {
-            driveToPoseWithCoralOffset({ closestLeftBranch.transformBy(spaceBack) })
+        driveToPoseWithCoralOffset({ closestLeftBranch.transformBy(spaceBack) })
     }
 
     val driveToRightBranchFar by command {
@@ -595,19 +602,21 @@ object Chassis :
 
     val driveToProcessor by command { driveToPose({ closestProcessor }) }
 
-    val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation })}
+    val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation }) }
 
-    val driveToBarge by command { driveToPose({ closestBarge }, false)}
-    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }, false)}
-    val driveToBargeRight by command { driveToPose({ closestRightBarge }, false)}
+    val driveToBarge by command { driveToPose({ closestBarge }, false) }
+    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }, false) }
+    val driveToBargeRight by command { driveToPose({ closestRightBarge }, false) }
 
-    val driveToBargeSlow by command { driveToPose({ closestBarge }, true)}
-    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }, true)}
-    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }, true)}
+    val driveToBargeSlow by command { driveToPose({ closestBarge }, true) }
+    val driveToBargeLeftSlow by command { driveToPose({ closestLeftBarge }, true) }
+    val driveToBargeRightSlow by command { driveToPose({ closestRightBarge }, true) }
 
-    val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) })}
-    val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) })}
-    val driveToBargeFarRight by command { driveToPose({ closestRightBarge.transformBy(spaceBack) })}
+    val driveToBargeFar by command { driveToPose({ closestBarge.transformBy(spaceBack) }) }
+    val driveToBargeFarLeft by command { driveToPose({ closestLeftBarge.transformBy(spaceBack) }) }
+    val driveToBargeFarRight by command {
+        driveToPose({ closestRightBarge.transformBy(spaceBack) })
+    }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
