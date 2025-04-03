@@ -5,9 +5,11 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer
 import edu.wpi.first.wpilibj.LEDPattern
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.lib.Level
+import frc.robot.lib.ScoreSelector
 import frc.robot.lib.command
 
-object LEDSubsystem : SubsystemBase() {
+object LEDSubsystem : SubsystemBase("led") {
     private val led = AddressableLED(0)
     private val buffer = AddressableLEDBuffer(30)
 
@@ -17,33 +19,28 @@ object LEDSubsystem : SubsystemBase() {
         led.setLength(buffer.length)
         led.setData(buffer)
         led.start()
+        defaultCommand = runOnce { setColorForSelectedLevel() }
     }
 
-    val yellow by command {
-        runOnce {
-            LEDPattern.solid(Color.kYellow).applyTo(buffer)
-            led.setData(buffer)
+    fun setColorForSelectedLevel() {
+        when (ScoreSelector.SelectedLevel) {
+            Level.L1 -> setColor(Color.kGreen)
+            Level.L2 -> setColor(Color.kRed)
+            Level.L3 -> setColor(Color.kBlue)
+            Level.L4 -> setColor(Color.kGreen)
         }
     }
 
-    val blue by command {
-        runOnce {
-            LEDPattern.solid(Color.kBlue).applyTo(buffer)
-            led.setData(buffer)
-        }
+    private fun setColor(color: Color) {
+        LEDPattern.solid(color).applyTo(buffer)
+        led.setData(buffer)
     }
 
-    val red by command {
-        runOnce {
-            LEDPattern.solid(Color.kRed).applyTo(buffer)
-            led.setData(buffer)
-        }
-    }
+    val yellow by command { runOnce { setColor(Color.kYellow) } }
 
-    val green by command {
-        runOnce {
-            LEDPattern.solid(Color.kGreen).applyTo(buffer)
-            led.setData(buffer)
-        }
-    }
+    val blue by command { runOnce { setColor(Color.kBlue) } }
+
+    val red by command { runOnce { setColor(Color.kRed) } }
+
+    val green by command { runOnce { setColor(Color.kGreen) } }
 }

@@ -20,7 +20,7 @@ import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.MANUAL.also { Logger.recordMetadata("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 enum class ManipulatorLayout {
     MANUAL,
