@@ -132,7 +132,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notRightBumper = rightBumper().negate()
 
     b().whileTrue(Chassis.driveToProcessor)
-    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation.alongWith(LEDSubsystem.flashWhite))
+    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation.raceWith(LEDSubsystem.flashWhite))
     a().onTrue(
         SuperStructure.smartGoTo(RobotState.NewCoralStation)
             .alongWith(Intake.overIntakeCoralThenHold)
@@ -249,9 +249,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                ),
-                LEDSubsystem.flashPink
-            )
+                ).onlyIf { Intake.detectAlgaeByCurrent() },
+            ).raceWith(LEDSubsystem.flashPink)
         )
     // y and left bumper
     y().and(leftBumper())
@@ -269,8 +268,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                ),
-                LEDSubsystem.flashPink
+                ).raceWith(LEDSubsystem.flashPink)
             )
         )
     // y and right bumper
@@ -289,8 +287,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                ),
-                LEDSubsystem.flashPink
+                ).raceWith(LEDSubsystem.flashPink)
             )
         )
     // y released, retract to algae storage with algae or CoralStation without
