@@ -1,6 +1,7 @@
 package frc.robot.lib
 
 import edu.wpi.first.networktables.NetworkTableInstance
+import frc.robot.subsystems.LEDSubsystem
 import frc.robot.subsystems.RobotState
 import org.littletonrobotics.junction.Logger
 
@@ -28,6 +29,7 @@ object ScoreSelector {
         set(value) {
             field = value
             Logger.recordOutput("selectedLevel", value.name)
+            LEDSubsystem.setColorForSelectedLevel()
         }
 
     var SelectedBranch: Branch = Branch.LEFT

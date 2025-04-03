@@ -80,6 +80,7 @@ object Robot : LoggedRobot() {
 
         // Initializing Subsystems
         SuperStructure
+        LEDSubsystem
         Intake
         Pivot
         Wrist

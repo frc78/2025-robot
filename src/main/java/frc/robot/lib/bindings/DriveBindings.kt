@@ -11,6 +11,7 @@ import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
 import frc.robot.lib.velocityY
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.LEDSubsystem
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
@@ -131,7 +132,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notRightBumper = rightBumper().negate()
 
     b().whileTrue(Chassis.driveToProcessor)
-    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation)
+    a().and(notRightBumper).and(notLeftBumper).whileTrue(Chassis.driveToClosestCenterCoralStation.alongWith(LEDSubsystem.flashWhite))
     a().onTrue(
         SuperStructure.smartGoTo(RobotState.NewCoralStation)
             .alongWith(Intake.overIntakeCoralThenHold)
@@ -157,7 +158,7 @@ private fun CommandXboxController.configureReefAlignments() {
                     SuperStructure.goToScoreCoralWhenClose,
                     Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                     SuperStructure.scoreCoralOnSelectedBranch,
-                )
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         //            ConditionalCommand(
@@ -190,7 +191,7 @@ private fun CommandXboxController.configureReefAlignments() {
                     SuperStructure.goToScoreCoralWhenClose,
                     Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                     SuperStructure.scoreCoralOnSelectedBranch,
-                )
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         //            ConditionalCommand(
@@ -222,7 +223,7 @@ private fun CommandXboxController.configureReefAlignments() {
                 Commands.sequence(
                     Commands.waitUntil { Chassis.isWithinGoal(1.5) },
                     SuperStructure.retrieveAlgaeFromReef,
-                )
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         .onFalse(SuperStructure.retractWithAlgae())
@@ -248,7 +249,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                )
+                ),
+                LEDSubsystem.flashPink
             )
         )
     // y and left bumper
@@ -267,7 +269,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                )
+                ),
+                LEDSubsystem.flashPink
             )
         )
     // y and right bumper
@@ -286,7 +289,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                )
+                ),
+                LEDSubsystem.flashPink
             )
         )
     // y released, retract to algae storage with algae or CoralStation without
