@@ -20,7 +20,7 @@ import kotlin.math.absoluteValue
 import org.littletonrobotics.junction.Logger
 
 private val MANIPULATOR_LAYOUT =
-    ManipulatorLayout.MANUAL.also { Logger.recordMetadata("manip_layout", it.name) }
+    ManipulatorLayout.BUTTONS.also { Logger.recordMetadata("manip_layout", it.name) }
 
 enum class ManipulatorLayout {
     MANUAL,
@@ -42,10 +42,15 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
-    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
-    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
-    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+
+    leftBumper().onTrue(SuperStructure.smartGoTo(RobotState.CoralStation)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    rightBumper().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    leftTrigger().onTrue(SuperStructure.smartGoTo(RobotState.Processor)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    rightTrigger().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
 }
 
 /** Use dpad to select branch and level */
