@@ -3,6 +3,7 @@ package frc.robot.auto
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
@@ -137,6 +138,7 @@ object Autos {
             // Score L4
             goToLevelAndScore(L4),
             SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
+            WaitUntilCommand({SuperStructure.atPosition}).withTimeout(2.5),
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
