@@ -16,6 +16,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.retractWithAlgae
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
+import frc.robot.subsystems.RobotState.*
 
 object Autos {
 
@@ -24,17 +25,17 @@ object Autos {
             SuperStructure.goToScoreCoral(level),
             Commands.waitUntil { SuperStructure.atPosition }.withTimeout(3.0),
             Intake.scoreCoral,
-            //            SuperStructure.smartGoTo(RobotState.CoralStation), // this delays, want to
+            //            SuperStructure.smartGoTo(CoralStation), // this delays, want to
             // be faster
-            Wrist.goTo(RobotState.CoralStation),
-            Elevator.goTo(RobotState.CoralStation),
-            Pivot.goTo(RobotState.CoralStation),
+            Wrist.goTo(CoralStation),
+            Elevator.goTo(CoralStation),
+            Pivot.goTo(CoralStation),
         )
     }
 
     private val goToCoralStationAndGetCoral by command {
         Commands.sequence(
-            SuperStructure.smartGoTo(RobotState.NewCoralStation),
+            SuperStructure.smartGoTo(NewCoralStation),
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
         )
     }
@@ -45,8 +46,8 @@ object Autos {
     val SideCoralFast by command {
         Commands.sequence(
             Intake.holdCoral
-                .alongWith(Wrist.goTo(RobotState.CoralStorage))
-                .alongWith(Pivot.goTo(RobotState.L4)),
+                .alongWith(Wrist.goTo(CoralStorage))
+                .alongWith(Pivot.goTo(L4)),
             *listOf(
                     listOf(Branch.E, Branch.I),
                     listOf(Branch.D, Branch.K),
@@ -69,18 +70,18 @@ object Autos {
                                             )
                                             .meters >= 0.6.meters
                                     },
-                                    Wrist.goTo(RobotState.CoralStorage),
-                                    //                                    Pivot.goTo(RobotState.L4),
+                                    Wrist.goTo(CoralStorage),
+                                    //                                    Pivot.goTo(L4),
                                     //                                    Commands.waitUntil {
                                     // Chassis.isWithinGoal(2.25) },
-                                    SuperStructure.goToScoreCoral(RobotState.L4),
+                                    SuperStructure.goToScoreCoral(L4),
                                     Commands.waitUntil {
                                         alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05))
                                     },
-                                    goToLevelAndScore(RobotState.L4),
+                                    goToLevelAndScore(L4),
                                 )
                             ),
-                        //                        goToLevelAndScore(RobotState.L4),
+                        //                        goToLevelAndScore(L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
@@ -110,10 +111,10 @@ object Autos {
                                             )
                                             .meters > 1.5.meters && Intake.hasBranchCoral
                                     }
-                                    .andThen(Wrist.goTo(RobotState.CoralStorage))
+                                    .andThen(Wrist.goTo(CoralStorage))
                             ),
-                        if (i == 0) goToLevelAndScore(RobotState.L4)
-                        else goToLevelAndScore(RobotState.L4),
+                        if (i == 0) goToLevelAndScore(L4)
+                        else goToLevelAndScore(L4),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
@@ -127,14 +128,15 @@ object Autos {
             Chassis.driveToPoseWithCoralOffset({ Branch.H.pose })
                 .alongWith(
                     Commands.sequence(
-                        Pivot.goTo(RobotState.L4),
+                        Pivot.goTo(L4),
                         Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                        SuperStructure.goToScoreCoral(RobotState.L4),
+                        SuperStructure.goToScoreCoral(L4),
                     )
                 )
                 .withTimeout(2.0),
             // Score L4
-            goToLevelAndScore(RobotState.L4),
+            goToLevelAndScore(L4),
+            SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
@@ -161,7 +163,7 @@ object Autos {
                     .withDeadline(
                         Commands.sequence(
                             Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                            SuperStructure.smartGoTo(RobotState.AlgaeNet),
+                            SuperStructure.smartGoTo(AlgaeNet),
                             Commands.waitUntil {
                                 alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06))
                             },
@@ -178,7 +180,7 @@ object Autos {
                 Commands.sequence(
                     Commands.waitUntil { Chassis.isWithinGoal(0.3) },
                     Commands.sequence(
-                        SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
+                        SuperStructure.smartGoTo(HighAlgaeIntake)
                             .withDeadline(Intake.intakeAlgaeThenHold())
                             .andThen(retractWithAlgae())
                     ),
@@ -190,7 +192,7 @@ object Autos {
                     .withDeadline(
                         Commands.sequence(
                             Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                            SuperStructure.smartGoTo(RobotState.AlgaeNet),
+                            SuperStructure.smartGoTo(AlgaeNet),
                             Commands.waitUntil {
                                 alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06))
                             },
