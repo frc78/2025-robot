@@ -36,6 +36,7 @@ import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.LEDSubsystem
 import frc.robot.subsystems.Pivot
 import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
@@ -89,6 +90,7 @@ object Robot : LoggedRobot() {
         Intake
         Pivot
         Wrist
+        LEDSubsystem
 
         driverController.configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
