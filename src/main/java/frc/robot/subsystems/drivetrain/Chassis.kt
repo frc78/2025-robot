@@ -480,7 +480,8 @@ object Chassis :
                 FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
 
     private var distanceFromPoseGoal = 0.0
-    private var hasPoseTarget = false
+    var hasPoseTarget = false
+    private set
 
     fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
 
