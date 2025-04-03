@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.AddressableLEDBuffer
 import edu.wpi.first.wpilibj.LEDPattern
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
@@ -35,12 +36,12 @@ object LEDSubsystem : SubsystemBase("led") {
         }
 
     val flashForSelectedLevel by command {
-        runOnce {
+        Commands.run ({
             val base = LEDPattern.solid(colorForSelectedLevel)
             val pattern = base.blink(.25.seconds)
             pattern.applyTo(buffer)
             led.setData(buffer)
-        }
+        })
     }
     private fun setColor(color: Color) {
         LEDPattern.solid(color).applyTo(buffer)

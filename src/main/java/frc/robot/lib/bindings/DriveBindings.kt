@@ -158,8 +158,7 @@ private fun CommandXboxController.configureReefAlignments() {
                     SuperStructure.goToScoreCoralWhenClose,
                     Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                     SuperStructure.scoreCoralOnSelectedBranch,
-                ),
-                LEDSubsystem.flashForSelectedLevel
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         //            ConditionalCommand(
@@ -192,8 +191,7 @@ private fun CommandXboxController.configureReefAlignments() {
                     SuperStructure.goToScoreCoralWhenClose,
                     Commands.waitUntil { alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05)) },
                     SuperStructure.scoreCoralOnSelectedBranch,
-                ),
-                LEDSubsystem.flashForSelectedLevel
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         //            ConditionalCommand(
@@ -225,8 +223,7 @@ private fun CommandXboxController.configureReefAlignments() {
                 Commands.sequence(
                     Commands.waitUntil { Chassis.isWithinGoal(1.5) },
                     SuperStructure.retrieveAlgaeFromReef,
-                ),
-                LEDSubsystem.flashForSelectedLevel
+                ).raceWith(LEDSubsystem.flashForSelectedLevel)
             )
         )
         .onFalse(SuperStructure.retractWithAlgae())
