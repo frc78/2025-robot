@@ -36,7 +36,7 @@ object LEDSubsystem : SubsystemBase("led") {
         }
 
     val flashForSelectedLevel by command {
-        Commands.run ({
+        run ({
             val base = LEDPattern.solid(colorForSelectedLevel)
             val pattern = base.blink(.25.seconds)
             pattern.applyTo(buffer)
@@ -57,7 +57,7 @@ object LEDSubsystem : SubsystemBase("led") {
     private fun flashColor(color: Color): Command {
         val base = LEDPattern.solid(color)
         val pattern = base.blink(.25.seconds)
-        return runOnce {
+        return run {
             pattern.applyTo(buffer)
             led.setData(buffer)
         }

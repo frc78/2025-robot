@@ -268,7 +268,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                ).raceWith(LEDSubsystem.flashPink)
+                ).onlyIf { Intake.detectAlgaeByCurrent() }
+                    .raceWith(LEDSubsystem.flashPink)
             )
         )
     // y and right bumper
@@ -287,7 +288,8 @@ private fun CommandXboxController.configureBargeAlignments() {
                     SuperStructure.goToNetWhileAligning,
                     Commands.waitUntil { Chassis.isWithinGoal(0.06) },
                     SuperStructure.autoScoreAlgaeInNet,
-                ).raceWith(LEDSubsystem.flashPink)
+                )
+                    .onlyIf { Intake.detectAlgaeByCurrent() }.raceWith(LEDSubsystem.flashPink)
             )
         )
     // y released, retract to algae storage with algae or CoralStation without
