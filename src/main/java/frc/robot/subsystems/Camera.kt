@@ -21,7 +21,7 @@ class Camera(val name: String, val transform: Transform3d) {
 
     private val estimator =
         PhotonPoseEstimator(
-            Robot.gameField,
+            Robot.reefOnlyField,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             transform,
         )
@@ -47,7 +47,7 @@ class Camera(val name: String, val transform: Transform3d) {
         }
         return visionEst // TODO does this work? It's what the example said
     }
-
+    
     private fun updateStds(pose: EstimatedRobotPose?, targets: List<PhotonTrackedTarget>) {
         if (pose == null) {
             currentStds = singleTagStds

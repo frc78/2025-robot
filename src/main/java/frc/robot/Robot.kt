@@ -11,6 +11,7 @@ import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
@@ -48,12 +49,15 @@ val IS_COMP = "COMP" == System.getenv("frc_bot")
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
+    val reefOnlyField: AprilTagFieldLayout =
+        AprilTagFieldLayout(Filesystem.getDeployDirectory().path + "/2025-andymark-only-reef.json")
     val alliance: DriverStation.Alliance
         get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
 
     val driverController = CommandXboxController(0)
 
     init {
+        gameField.tags
         HAL.report(
             FRCNetComm.tResourceType.kResourceType_Language,
             FRCNetComm.tInstances.kLanguage_Kotlin,
