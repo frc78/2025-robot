@@ -28,7 +28,7 @@ class Camera(val name: String, val transform: Transform3d) {
 
     // TODO guessed values, should tune one day
     private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.01, 0.02, 1.0)
-    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.00, 0.00, 0.1)
+    private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.001, 0.001, 0.1)
     private val outOfRangeStds =
         VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
 
@@ -66,8 +66,19 @@ class Camera(val name: String, val transform: Transform3d) {
         return
         }
 
-        if (validTargets.size == 1 && avgDist < 6) {
-            currentStds = singleTagStds.times(1 + (avgDist.pow(2) / 100)) // was / 15
+        if (validTargets.size == 1 && avgDist <= 6) {
+            // https://docs.google.com/spreadsheets/d/1ZFO4MpFoEiiWntheUQ7t-lM3YqjCReRxJEVVcjHYPbo/edit?usp=sharing
+            // 0,0627 + -0,107x + 0,0451x^2
+            val stdX =
+                0.0627 +
+                    (-0.107 * avgDist) +
+                    (0.0451 * avgDist.pow(2))
+            // 0,015 + -0,0317x + 0,0167x^2
+            val stdY =
+                0.015 +
+                    (-0.0317 * avgDist) +
+                    (0.0167 * avgDist.pow(2))
+            currentStds = VecBuilder.fill(stdX, stdY, 1.0)
             return
         }
 
