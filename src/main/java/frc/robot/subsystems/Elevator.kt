@@ -95,7 +95,6 @@ object Elevator : SubsystemBase("elevator") {
 
                     MotionMagic.withMotionMagicCruiseVelocity(18.0)
                         .withMotionMagicAcceleration(400.0)
-                        .withMotionMagicJerk(1000.0)
                 }
             configurator.apply(leaderMotorConfiguration)
             position.setUpdateFrequency(100.0)
