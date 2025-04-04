@@ -27,7 +27,7 @@ class Camera(val name: String, val transform: Transform3d) {
         )
 
     // TODO guessed values, should tune one day
-    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.01, 0.01, 1.0)
+    private val singleTagStds: Matrix<N3, N1> = VecBuilder.fill(0.01, 0.02, 1.0)
     private val multiTagStds: Matrix<N3, N1> = VecBuilder.fill(0.00, 0.00, 0.1)
     private val outOfRangeStds =
         VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE)
@@ -59,20 +59,19 @@ class Camera(val name: String, val transform: Transform3d) {
         val totalDistance =
             validTargets.sumOf { it.translation.getDistance(pose.estimatedPose.translation) }
 
-        if (validTargets.isEmpty()) {
-            currentStds = singleTagStds
-            return
-        }
         val avgDist = totalDistance / validTargets.size
 
-        if (validTargets.size > 1) currentStds = multiTagStds
-        val outOfRange =
-            validTargets.size == 1 && avgDist > 2 || validTargets.size == 2 && avgDist > 5
-        if (outOfRange) {
-            currentStds = outOfRangeStds
+        if (validTargets.size > 1 && avgDist <= 6) {
+            currentStds = multiTagStds
+        return
+        }
+
+        if (validTargets.size == 1 && avgDist < 6) {
+            currentStds = singleTagStds.times(1 + (avgDist.pow(2) / 100)) // was / 15
             return
         }
-        // We need to improve standard deviation calculations
-        currentStds.times(1 + (avgDist.pow(2) / 100)) // was / 15
+
+        currentStds = outOfRangeStds
+        return
     }
 }
