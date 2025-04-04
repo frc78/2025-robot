@@ -138,7 +138,7 @@ object Autos {
             // Score L4
             goToLevelAndScore(L4),
             SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
-            WaitUntilCommand({SuperStructure.atPosition}).withTimeout(2.5),
+            WaitUntilCommand { SuperStructure.atPosition }.withTimeout(0.7),
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
@@ -151,7 +151,7 @@ object Autos {
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.driveToPose({ face.pose })
+        Chassis.driveToPose { face.pose }
             .withDeadline(
                 // Get algae
                 Commands.sequence(

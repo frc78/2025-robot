@@ -109,7 +109,7 @@ object Intake : SubsystemBase("intake") {
         if (algaeSpikeStartTime != -1.0) {
             // if a spike was previously detected...
             if (thresholdMet) {
-                if (currentTime - algaeSpikeStartTime >= 0.3) {
+                if (currentTime - algaeSpikeStartTime >= 0.1) {
                     // if spiked for >= 0.3 seconds return true
                     return true
                 }
@@ -146,6 +146,7 @@ object Intake : SubsystemBase("intake") {
         Logger.recordOutput("intake/supply_current", supplyCurrent)
         Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
         Logger.recordOutput("intake/has_algae", detectAlgaeByCurrent())
+        Logger.recordOutput("intake/speed", leader.get())
     }
 
     val manualIntake by command { startEnd({ leader.set(1.0) }, { leader.set(0.0) }) }
@@ -160,7 +161,7 @@ object Intake : SubsystemBase("intake") {
 
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
-    val scoreAlgae by command { outtakeAlgae({if (Elevator.position.meters <= 0.2) 0.5 else 1.0}).withTimeout(0.5.seconds) }
+    val scoreAlgae by command { outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.5 else 1.0 }.withTimeout(0.5.seconds) }
 
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
