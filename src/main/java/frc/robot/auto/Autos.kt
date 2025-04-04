@@ -76,6 +76,7 @@ object Autos {
                                     //                                    Commands.waitUntil {
                                     // Chassis.isWithinGoal(2.25) },
                                     SuperStructure.goToScoreCoral(L4),
+                                    Wrist.goTo(CoralStorage),
                                     Commands.waitUntil {
                                         alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05))
                                     },
