@@ -157,11 +157,14 @@ object Intake : SubsystemBase("intake") {
         startEnd({ leader.set(-0.5) }, { leader.set(0.0) }).withName("outtakeCoral")
     }
 
-    private fun outtakeAlgae(speed: () -> Double) = startEnd({ leader.set(speed()) }, { leader.set(0.0) }).withName("outtakeAlgae")
+    private fun outtakeAlgae(speed: () -> Double) =
+        startEnd({ leader.set(speed()) }, { leader.set(0.0) }).withName("outtakeAlgae")
 
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
-    val scoreAlgae by command { outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.5.seconds) }
+    val scoreAlgae by command {
+        outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.5.seconds)
+    }
 
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
