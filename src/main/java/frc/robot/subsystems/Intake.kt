@@ -8,12 +8,12 @@ import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.math.filter.LinearFilter
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
@@ -51,12 +51,11 @@ object Intake : SubsystemBase("intake") {
     private val canRangeOffset
         get() = canRangeOffsetEntry.getDouble(19.0).centimeters
 
-    private val CORAL_CURRENT_THRESHOLD =
-        15.amps // Current spike threshold for detecting when we have a coral
+    /* Current spike threshold for detecting when we have a coral*/
+    private val CORAL_CURRENT_THRESHOLD = 15.amps
 
-    private val ALGAE_CURRENT_THRESHOLD =
-        (-25).amps // Current spike threshold for detecting when we have an algae
-    private var algaeSpikeStartTime = -1.0
+    /* Current spike threshold for detecting when we have an algae*/
+    private val ALGAE_CURRENT_THRESHOLD = (-25).amps
 
     private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
@@ -70,6 +69,7 @@ object Intake : SubsystemBase("intake") {
                     CurrentLimits.SupplyCurrentLimit = 20.0
                     MotorOutput =
                         if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
+                    OpenLoopRamps.VoltageOpenLoopRampPeriod = 0.5
                 }
             )
         }
@@ -85,45 +85,22 @@ object Intake : SubsystemBase("intake") {
     val hasBranchCoral: Boolean
         get() = canRange.isDetected.value
 
-    val supplyCurrent: Current
-        get() = leader.supplyCurrent.value
-
     val torqueCurrent: Current
         get() = leader.torqueCurrent.value
+
+    private val torqueCurrentFilter = LinearFilter.singlePoleIIR(0.1, 0.02)
 
     /**
      * Return true if the intake motor is experiencing current draw greater than the given
      * threshold.
      */
     fun hasCoralByCurrent(): Boolean {
-        // return true if current is spiked and coral is detected by CANRange
         return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) &&
             coralDetectedDebounce.calculate(hasBranchCoral)
     }
 
-    fun detectAlgaeByCurrent(): Boolean {
-        // NOTE: Algae intake current is negative
-        val thresholdMet: Boolean = leader.torqueCurrent.value <= ALGAE_CURRENT_THRESHOLD
-        val currentTime = Timer.getTimestamp() // gets clock time in seconds
-
-        if (algaeSpikeStartTime != -1.0) {
-            // if a spike was previously detected...
-            if (thresholdMet) {
-                if (currentTime - algaeSpikeStartTime >= 0.1) {
-                    // if spiked for >= 0.3 seconds return true
-                    return true
-                }
-            } else {
-                // if not spiked currently, reset start time
-                algaeSpikeStartTime = -1.0
-            }
-        } else if (thresholdMet) {
-            // if spike is newly detected, note start time of spike
-            algaeSpikeStartTime = currentTime
-        }
-
-        return false
-    }
+    val hasAlgaeByCurrent
+        get() = torqueCurrentFilter.lastValue() <= ALGAE_CURRENT_THRESHOLD.amps
 
     /** Returns the distance from the center of the intake to the center of the coral. */
     val coralLocation: Distance
@@ -141,12 +118,10 @@ object Intake : SubsystemBase("intake") {
 
     override fun periodic() {
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
-        Logger.recordOutput("intake/coral_position", canRange.distance.value)
         Logger.recordOutput("intake/coral_location", coralLocation)
-        Logger.recordOutput("intake/supply_current", supplyCurrent)
-        Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
-        Logger.recordOutput("intake/has_algae", detectAlgaeByCurrent())
+        Logger.recordOutput("intake/has_algae", hasAlgaeByCurrent)
         Logger.recordOutput("intake/speed", leader.get())
+        torqueCurrentFilter.calculate(torqueCurrent.amps)
     }
 
     val manualIntake by command { startEnd({ leader.set(1.0) }, { leader.set(0.0) }) }
@@ -163,9 +138,9 @@ object Intake : SubsystemBase("intake") {
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
     val scoreAlgae by command { outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.5.seconds) }
 
+    // Debouncer to allow coral to be fully in before we use the distance measurement
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
-    // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
         startEnd({ leader.set(0.7) }, { leader.set(0.035) })
             .until { hasCoralByCurrent() }
@@ -174,7 +149,7 @@ object Intake : SubsystemBase("intake") {
     val overIntakeCoralThenHold by command {
         Commands.sequence(
             intakeCoral,
-            Commands.waitUntil { Intake.hasCoralByCurrent() },
+            Commands.waitUntil { hasCoralByCurrent() },
             Commands.waitSeconds(0.2),
             holdCoral,
         )
@@ -184,7 +159,7 @@ object Intake : SubsystemBase("intake") {
 
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
-            .until { detectAlgaeByCurrent() }
+            .until { hasAlgaeByCurrent }
             .withName("Intake algae then hold")
 
     private val sim =
