@@ -97,9 +97,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightBumper()
-        .whileTrue(
-            Intake.intakeCoral.withName("Intake coral from coral station")
-        )
+        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
         .onFalse(Intake.holdCoral)
 
     // Algae Stuff
