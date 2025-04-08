@@ -163,6 +163,12 @@ object SuperStructure {
             .andThen(retractWithAlgae())
     }
 
+    val retrieveHighAlgaeFromReef by command {
+        smartGoTo(RobotState.HighAlgaeIntake)
+            .withDeadline(Intake.intakeAlgaeThenHold())
+            .andThen(retractWithAlgae())
+    }
+
     val autoScoreAlgaeInNet by command {
         smartGoTo(RobotState.AlgaeNet)
             .andWait { atPosition }

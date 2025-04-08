@@ -35,7 +35,15 @@ import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
-import frc.robot.subsystems.*
+import frc.robot.subsystems.Climber
+import frc.robot.subsystems.Elevator
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.LEDSubsystem
+import frc.robot.subsystems.Pivot
+import frc.robot.subsystems.RobotState
+import frc.robot.subsystems.SuperStructure
+import frc.robot.subsystems.Vision
+import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -43,7 +51,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 
 // Might have to be manually set when testing on SkibJr
-val IS_TEST = "TEST" == System.getenv("frc_bot")
 val IS_COMP = "COMP" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
