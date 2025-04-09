@@ -42,15 +42,27 @@ fun CommandXboxController.configureManipulatorBindings() {
 
 // Use buttons to manually go to levels
 private fun CommandXboxController.configureManipManualLayout() {
-    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    y().onTrue(SuperStructure.goToScoreCoral(RobotState.L4))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    x().onTrue(SuperStructure.goToScoreCoral(RobotState.L3))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    b().onTrue(SuperStructure.goToScoreCoral(RobotState.L2))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
 
-    leftBumper().onTrue(SuperStructure.smartGoTo(RobotState.CoralStation)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    rightBumper().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    leftTrigger().onTrue(SuperStructure.smartGoTo(RobotState.Processor)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    rightTrigger().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)).onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    leftBumper()
+        .onTrue(SuperStructure.smartGoTo(RobotState.CoralStation))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    rightBumper()
+        .onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    leftTrigger()
+        .onTrue(SuperStructure.smartGoTo(RobotState.Processor))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
+    rightTrigger()
+        .onTrue(SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup))
+        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
 }
 
 /** Use dpad to select branch and level */
@@ -85,10 +97,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightBumper()
-        .whileTrue(
-            //            SuperStructure.smartGoTo(RobotState.NewCoralStation)
-            Intake.intakeCoral.withName("Intake coral from coral station")
-        )
+        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
         .onFalse(Intake.holdCoral)
 
     // Algae Stuff
@@ -97,14 +106,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
             SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
                 .andThen(SuperStructure.retractWithAlgae())
-            //                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
     povDown()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
                 .andThen(SuperStructure.retractWithAlgae())
-            //                .andThen(SuperStructure.smartGoTo(RobotState.PreScore))
         )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
@@ -180,9 +187,4 @@ fun CommandJoystick.configureManipTestBindings() {
     // Intake
     button(10).whileTrue(Intake.manualIntake)
     button(9).whileTrue(Intake.manualOuttake)
-
-    //    button(7).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-    //    button(8).whileTrue(Chassis.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-    //    button(9).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kForward))
-    //    button(10).whileTrue(Chassis.sysIdDynamic(SysIdRoutine.Direction.kReverse))
 }
