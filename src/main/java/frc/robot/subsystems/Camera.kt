@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import frc.robot.Robot
+import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -78,6 +79,8 @@ class Camera(val name: String, val transform: Transform3d) {
                 0.015 +
                     (-0.0317 * avgDist) +
                     (0.0167 * avgDist.pow(2))
+            Logger.recordOutput("$name stdX", stdX)
+            Logger.recordOutput("$name stdY", stdY)
             currentStds = VecBuilder.fill(stdX, stdY, 1.0)
             return
         }
