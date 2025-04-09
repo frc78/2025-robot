@@ -8,6 +8,7 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -97,8 +98,17 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightBumper()
-        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
-        .onFalse(Intake.holdCoral)
+        .onTrue(Intake.intakeCoralThenHold())
+        .whileTrue(SuperStructure.reachToIntake())
+        .onFalse(
+            Elevator.goTo(RobotState.CoralStation).andWait { Elevator.atPosition }
+                .andThen(Commands.parallel(
+                    Pivot.goTo(RobotState.CoralStation),
+                    Wrist.goTo(RobotState.CoralStation)
+                ))
+        )
+//        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
+//        .onFalse(Intake.holdCoral)
 
     // Algae Stuff
     povUp()
