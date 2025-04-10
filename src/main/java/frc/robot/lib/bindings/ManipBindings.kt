@@ -4,11 +4,8 @@ import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import frc.robot.lib.Branch
-import frc.robot.lib.Level
-import frc.robot.lib.ScoreSelector
+import frc.robot.lib.*
 import frc.robot.lib.ScoreSelector.SelectedBranch
-import frc.robot.lib.andWait
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -99,14 +96,22 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     rightBumper()
         .onTrue(Intake.intakeCoralThenHold())
-        .whileTrue(SuperStructure.reachToIntake())
+        .whileTrue(SuperStructure.reachToIntake.repeatedly().until{Intake.hasCoralByCurrent()}
+            .andThen(
+                Elevator.goTo(RobotState.CoralStation).andWait { Elevator.position < 3.inches }
+                    .andThen(Commands.parallel(
+                        Pivot.goTo(RobotState.CoralStation),
+                        Wrist.goTo(RobotState.CoralStation)
+                    ))
+        ))
         .onFalse(
-            Elevator.goTo(RobotState.CoralStation).andWait { Elevator.atPosition }
+            Elevator.goTo(RobotState.CoralStation).andWait { Elevator.position < 3.inches }
                 .andThen(Commands.parallel(
                     Pivot.goTo(RobotState.CoralStation),
                     Wrist.goTo(RobotState.CoralStation)
                 ))
         )
+
 //        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
 //        .onFalse(Intake.holdCoral)
 

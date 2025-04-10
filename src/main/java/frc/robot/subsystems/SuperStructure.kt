@@ -2,13 +2,16 @@ package frc.robot.subsystems
 
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.*
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.atan
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
@@ -20,7 +23,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     L3(92.6.degrees, 17.25.inches, 36.degrees),
     L4(92.5.degrees, 46.inches, 29.25.degrees),
     CoralStation(62.92.degrees, 0.25.inches, 176.degrees),
-    NewCoralStation(69.1.degrees, 0.1.inches, 185.8.degrees), // pivot 68.2
+    NewCoralStation(67.1.degrees, 0.1.inches, 185.8.degrees), // pivot 69.1
     AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
     Processor(23.degrees, 0.25.inches, 113.625.degrees),
     HighAlgaeIntake(100.2.degrees, 19.33.inches, 13.25.degrees),
@@ -171,38 +174,50 @@ object SuperStructure {
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
 
-    // TODO measure all of these
-    private val ELEVATOR_LENGTH = 1.0.meters
-    private val PIVOT_TO_CENTER = 0.25.meters
-    private val CLAW_HORIZONTAL = 0.15.meters
-    private val PIVOT_BIAS = 2.0.degrees
-    private val INTAKE_HEIGHT = 0.8.meters
+    // TODO confirm functionality!
+    private val ELEVATOR_LENGTH: Distance = 0.71.meters //28.5.inches //0003407122.inches
+    private val PIVOT_TO_CENTER: Distance = 9.5.inches
+    private val CLAW_HORIZONTAL: Distance = 0.38.meters//15.551181.inches
+    private val PIVOT_BIAS: Angle = 0.0.degrees //4.8.degrees
+    private val INTAKE_HEIGHT: Distance =
+        (ELEVATOR_LENGTH + RobotState.NewCoralStation.elevatorHeight) * sin(RobotState.NewCoralStation.pivotAngle.radians - PIVOT_BIAS.radians)
 
-    fun reachToIntake(): Command {
+    val reachToIntake by command {
+        DeferredCommand({
+            // Horizontal distance from Pivot joint to desired location of Wrist joint
+            val baseDist: Distance =
+                FieldGeometry.distanceToClosestLine(
+                    FieldGeometry.CORAL_STATIONS,
+                    Chassis.state.Pose.translation
+                ).meters + PIVOT_TO_CENTER - CLAW_HORIZONTAL
 
-        // Horizontal distance from Pivot joint to desired location of Wrist joint
-        val baseDist: Distance =
-            FieldGeometry.distanceToClosestLine(
-                FieldGeometry.CORAL_STATIONS,
-                Chassis.state.Pose.translation).meters + PIVOT_TO_CENTER - CLAW_HORIZONTAL
+            // Trig calculation on target height and distance away, then account for Pivot bias (zeroed below horizontal)
+            val targetPivotAngle: Angle =
+                atan(INTAKE_HEIGHT.inches / baseDist.inches).radians + PIVOT_BIAS
 
-        // Trig calculation on target height and distance away, then account for Pivot bias (zeroed below horizontal)
-        val targetPivotAngle: Angle =
-            atan(INTAKE_HEIGHT.meters / baseDist.meters).degrees + PIVOT_BIAS
+            // Pythagorean theorem, then subtract retracted height of elevator to give the necessary extension
+            val targetElevatorHeight: Distance =
+                sqrt(baseDist.inches.pow(2) + INTAKE_HEIGHT.inches.pow(2)).inches - ELEVATOR_LENGTH
 
-        // Pythagorean theorem, then subtract retracted height of elevator to give the necessary extension
-        val targetElevatorHeight: Distance =
-            sqrt(baseDist.meters.pow(2) + INTAKE_HEIGHT.meters.pow(2)).meters - ELEVATOR_LENGTH
+            // Needs to decrease by the amount the Pivot angle decreases relative to the base preset
+            val targetWristAngle: Angle =
+                RobotState.CoralStation.wristAngle - (RobotState.CoralStation.pivotAngle - targetPivotAngle)
 
-        // Needs to decrease by the amount the Pivot angle decreases relative to the base preset
-        val targetWristAngle: Angle =
-            RobotState.CoralStation.wristAngle - (RobotState.CoralStation.pivotAngle - targetPivotAngle)
+//            SmartDashboard.putNumber("Raw Station Dist", )
+            SmartDashboard.putNumber("height value in", INTAKE_HEIGHT.inches)
+            SmartDashboard.putNumber("base dist m", baseDist.meters)
+            SmartDashboard.putNumber("tgt pivot deg", targetPivotAngle.degrees)
+            SmartDashboard.putNumber("tgt elevator in", targetElevatorHeight.inches)
+            SmartDashboard.putNumber("tgt wrist deg", targetWristAngle.degrees)
 
-        return Commands.parallel(
-            Pivot.goToRaw(targetPivotAngle),
-            Elevator.goToRaw(targetElevatorHeight),
-            Wrist.goToRaw(targetWristAngle)
-        )
+            Pivot.goToRaw(targetPivotAngle)
+                .andWait { Pivot.atPosition }
+                .andThen(
+                    Elevator.goToRaw(targetElevatorHeight)
+                        .alongWith(Wrist.goToRaw(targetWristAngle)))
+            // TODO make conditional command to idle if BASE - PIVOT_TO_FRONT_FRAME > 18"
+//            Commands.idle()
+        }, setOf(Pivot, Wrist, Elevator))
     }
 
 }
