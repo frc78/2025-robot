@@ -4,6 +4,7 @@ import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
+import frc.robot.commands.scoreCoralWhenClose
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
@@ -62,25 +63,26 @@ object Autos {
                         Chassis.driveToPoseWithCoralOffset({
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
                             })
-                            .withDeadline(
-                                Commands.sequence(
-                                    // flip wrist and move pivot when away from coral station with
-                                    // coral
-                                    Commands.waitUntil {
-                                        FieldGeometry.distanceToClosestLine(
-                                                FieldGeometry.CORAL_STATIONS,
-                                                Chassis.state.Pose.translation,
-                                            )
-                                            .meters >= 0.6.meters
-                                    },
-                                    Wrist.goTo(CoralStorage),
-                                    SuperStructure.goToScoreCoral(L4),
-                                    Commands.waitUntil {
-                                        alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05))
-                                    },
-                                    goToLevelAndScore(L4),
-                                )
-                            ),
+//                            .alongWith(
+//                                Commands.sequence(
+//                                    // flip wrist and move pivot when away from coral station with
+//                                    // coral
+//                                    Commands.waitUntil {
+//                                        FieldGeometry.distanceToClosestLine(
+//                                                FieldGeometry.CORAL_STATIONS,
+//                                                Chassis.state.Pose.translation,
+//                                            )
+//                                            .meters >= 0.6.meters
+//                                    },
+//                                    Wrist.goTo(CoralStorage),
+////                                    SuperStructure.goToScoreCoral(L4),
+////                                    Commands.waitUntil {
+////                                        alignmentDebouncer.calculate(Chassis.isWithinGoal(0.05))
+////                                    },
+////                                    goToLevelAndScore(L4),
+//                                )
+//                            )
+                            .withDeadline(scoreCoralWhenClose),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
