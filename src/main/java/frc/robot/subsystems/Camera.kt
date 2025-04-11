@@ -7,9 +7,9 @@ import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import frc.robot.Robot
-import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
+import org.littletonrobotics.junction.Logger
 import org.photonvision.EstimatedRobotPose
 import org.photonvision.PhotonCamera
 import org.photonvision.PhotonPoseEstimator
@@ -56,6 +56,7 @@ class Camera(val name: String, val transform: Transform3d) {
         }
 
         val validTargets =
+
             targets.mapNotNull { estimator.fieldTags.getTagPose(it.fiducialId).getOrNull() }
         val totalDistance =
             validTargets.sumOf { it.translation.getDistance(pose.estimatedPose.translation) }
@@ -64,21 +65,15 @@ class Camera(val name: String, val transform: Transform3d) {
 
         if (validTargets.size > 1 && avgDist <= 6) {
             currentStds = multiTagStds
-        return
+            return
         }
 
         if (validTargets.size == 1 && avgDist <= 6) {
             // https://docs.google.com/spreadsheets/d/1ZFO4MpFoEiiWntheUQ7t-lM3YqjCReRxJEVVcjHYPbo/edit?usp=sharing
             // 0,0627 + -0,107x + 0,0451x^2
-            val stdX =
-                0.0627 +
-                    (-0.107 * avgDist) +
-                    (0.0451 * avgDist.pow(2))
+            val stdX = 0.0627 + (-0.107 * avgDist) + (0.0451 * avgDist.pow(2))
             // 0,015 + -0,0317x + 0,0167x^2
-            val stdY =
-                0.015 +
-                    (-0.0317 * avgDist) +
-                    (0.0167 * avgDist.pow(2))
+            val stdY = 0.015 + (-0.0317 * avgDist) + (0.0167 * avgDist.pow(2))
             Logger.recordOutput("$name stdX", stdX)
             Logger.recordOutput("$name stdY", stdY)
             currentStds = VecBuilder.fill(stdX, stdY, 1.0)
