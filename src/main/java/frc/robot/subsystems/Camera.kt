@@ -1,12 +1,15 @@
 package frc.robot.subsystems
 
+import com.ctre.phoenix6.Utils
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
+import edu.wpi.first.wpilibj.Timer
 import frc.robot.Robot
+import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.pow
 import org.photonvision.EstimatedRobotPose
@@ -36,14 +39,20 @@ class Camera(val name: String, val transform: Transform3d) {
         private set
 
     init {
-        estimator.setMultiTagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY)
+        estimator.setMultiTagFallbackStrategy(
+            PhotonPoseEstimator.PoseStrategy.PNP_DISTANCE_TRIG_SOLVE
+        )
     }
 
     fun getEstimatedGlobalPose(): EstimatedRobotPose? {
+        estimator.addHeadingData(
+            Chassis.state.Timestamp - (Utils.getCurrentTimeSeconds() - Timer.getFPGATimestamp()),
+            Chassis.state.Pose.rotation,
+        )
         var visionEst: EstimatedRobotPose? = null
-        cam.allUnreadResults.forEach {
-            visionEst = estimator.update(it).getOrNull()
-            updateStds(visionEst, it.getTargets())
+        cam.allUnreadResults.forEach { result ->
+            visionEst =
+                estimator.update(result).getOrNull()?.also { updateStds(it, result.targets) }
         }
         return visionEst // TODO does this work? It's what the example said
     }
@@ -65,14 +74,14 @@ class Camera(val name: String, val transform: Transform3d) {
         }
         val avgDist = totalDistance / validTargets.size
 
-        if (validTargets.size > 1) currentStds = multiTagStds
-        val outOfRange =
-            validTargets.size == 1 && avgDist > 2 || validTargets.size == 2 && avgDist > 5
+        currentStds = if (validTargets.size > 1) multiTagStds else singleTagStds
+
+        val outOfRange = validTargets.size == 1 && avgDist > 2
         if (outOfRange) {
             currentStds = outOfRangeStds
             return
         }
         // We need to improve standard deviation calculations
-        currentStds.times(1 + (avgDist.pow(2) / 100)) // was / 15
+        currentStds *= (1 + (avgDist.pow(2) / 100)) // was / 15
     }
 }

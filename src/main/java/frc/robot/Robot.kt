@@ -107,7 +107,6 @@ object Robot : LoggedRobot() {
             .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
 
         // Move wrist over when leaving coral station area with a coral
-        // Running only in teleop to avoid interrupting auto
         RobotModeTriggers.teleop()
             .and {
                 FieldGeometry.distanceToClosestLine(
@@ -119,6 +118,27 @@ object Robot : LoggedRobot() {
             .onTrue(
                 Commands.either(
                     Wrist.goToWithoutRequiring(RobotState.CoralStorage),
+                    Commands.none(),
+                ) {
+                    Intake.hasBranchCoral
+                }
+            )
+
+        // Move wrist and pivot when leaving coral station in auto
+        RobotModeTriggers.autonomous()
+            .and {
+                FieldGeometry.distanceToClosestLine(
+                        FieldGeometry.CORAL_STATIONS,
+                        Chassis.state.Pose.translation,
+                    )
+                    .meters > 0.6.meters
+            }
+            .onTrue(
+                Commands.either(
+                    Commands.sequence(
+                        Wrist.goToWithoutRequiring(RobotState.CoralStorage),
+                        Pivot.goToWithoutRequiring(RobotState.L4),
+                    ),
                     Commands.none(),
                 ) {
                     Intake.hasBranchCoral
