@@ -29,6 +29,7 @@ private enum class DriveLayout {
     SNAPPING,
     MANUAL_SEQUENCING,
     AUTOMATIC_SEQUENCING,
+    ALIGN_TESTING,
 }
 
 fun CommandXboxController.configureDriverBindings() {
@@ -41,7 +42,29 @@ fun CommandXboxController.configureDriverBindings() {
         DriveLayout.SNAPPING -> configureDriveSnappingLayout()
         DriveLayout.MANUAL_SEQUENCING -> configureDriveManualSequencingLayout()
         DriveLayout.AUTOMATIC_SEQUENCING -> configureDriveAutomaticSequencingLayout()
+        DriveLayout.ALIGN_TESTING -> configureAutoAlignTestingLayout()
     }
+}
+
+fun CommandXboxController.configureAutoAlignTestingLayout() {
+
+    val notLeftBumper = leftBumper().negate()
+    val notRightBumper = rightBumper().negate()
+
+    // only y
+    y().and(notLeftBumper).and(notRightBumper).whileTrue(Chassis.driveToBarge)
+    // y and left bumper
+    y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
+    // y and right bumper
+    y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
+    val hasCoral = Trigger { Intake.hasBranchCoral }
+    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
+
+    rightBumper().and(notLeftBumper).whileTrue(Chassis.driveToRightBranch)
+
+    leftBumper().and(notRightBumper).whileTrue(Chassis.driveToLeftBranch)
+
+    leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
 }
 
 // Basic driving
@@ -118,7 +141,26 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
 
-    b().whileTrue(Chassis.driveToProcessor)
+    // Auto score algae in processor
+    b().whileTrue(
+            Chassis.driveToProcessor
+                .alongWith(
+                    Commands.waitUntil { Chassis.isWithinGoal(1.0) }
+                        .andThen(SuperStructure.smartGoTo(RobotState.Processor))
+                )
+                .andThen(Intake.dropAlgae)
+                .andThen(Chassis.backAwayFromProcessor)
+                .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
+        )
+        .onFalse(
+            ConditionalCommand(
+                SuperStructure.smartGoTo(RobotState.AlgaeStorage),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation),
+            ) {
+                Intake.detectAlgaeByCurrent()
+            }
+        )
+
     a().and(notRightBumper)
         .and(notLeftBumper)
         .whileTrue(Chassis.driveToClosestCenterCoralStation.raceWith(LEDSubsystem.flashWhite))

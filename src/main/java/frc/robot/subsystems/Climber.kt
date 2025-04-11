@@ -4,6 +4,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.command
 import frc.robot.lib.rotations
@@ -45,6 +46,10 @@ object Climber : SubsystemBase("climber") {
     }
 
     val retract by command { runOnce { setpoint = 0.rotations }.withName("Retract foot") }
+
+    init {
+        SmartDashboard.putData(retract)
+    }
 
     val extend by command { runOnce { setpoint = extendedPosition }.withName("Extend Foot") }
 }

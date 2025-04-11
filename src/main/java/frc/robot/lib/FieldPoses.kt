@@ -11,6 +11,7 @@ import frc.robot.Robot
 import frc.robot.Robot.alliance
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.abs
 
 /** Poses that the robot can auto-align to */
 object FieldPoses {
@@ -171,15 +172,19 @@ object FieldPoses {
 
     //    private val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.2.meters,
     // Rotation2d.fromDegrees(203.0)) // TODO need to test still
-    private val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.0.meters, Rotation2d.k180deg)
+    private val PROCESSOR_TO_BOT = Transform2d(0.5.meters, 0.0.meters, Rotation2d.k180deg)
 
     private val PROCESSOR_POSES =
         intArrayOf(3, 16).map {
             Robot.gameField.getTagPose(it).get().toPose2d().transformBy(PROCESSOR_TO_BOT)
         }
 
+    /**
+     * Closest processor based on x-position on field. This makes the closest processor the one that
+     * is on the same half of the field as the robot
+     */
     val closestProcessor: Pose2d
-        get() = Chassis.state.Pose.nearest(PROCESSOR_POSES)
+        get() = PROCESSOR_POSES.minBy { abs(it.x - Chassis.state.Pose.x) }
 
     // Offset from the april tag coordinate to where the robot needs to be to score/align
     private val BARGE_TO_BOT = Transform2d(0.62.meters, 0.0.meters, Rotation2d.kZero) // 0.5922
