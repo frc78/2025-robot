@@ -10,11 +10,13 @@ import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
+import com.pathplanner.lib.path.ConstraintsZone
+import com.pathplanner.lib.path.GoalEndState
+import com.pathplanner.lib.path.PathConstraints
+import com.pathplanner.lib.path.PathPlannerPath
 import com.pathplanner.lib.util.DriveFeedforwards
-import com.pathplanner.lib.util.PathPlannerLogging
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.controller.PIDController
-import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -24,7 +26,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
@@ -56,13 +57,15 @@ import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
 import frc.robot.lib.command
 import frc.robot.lib.inches
-import frc.robot.lib.kilogramSquareMeters
 import frc.robot.lib.meters
 import frc.robot.lib.metersPerSecond
+import frc.robot.lib.metersPerSecondPerSecond
+import frc.robot.lib.poundSquareInches
 import frc.robot.lib.pounds
 import frc.robot.lib.radians
 import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.rotationsPerSecond
+import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
@@ -110,15 +113,6 @@ object Chassis :
         CommandScheduler.getInstance().registerSubsystem(this)
         if (Utils.isSimulation()) {
             startSimThread()
-        }
-
-        PathPlannerLogging.setLogTargetPoseCallback {
-            Logger.recordOutput("pathfind_to_pose_target", it)
-        }
-
-        @Suppress("SpreadOperator")
-        PathPlannerLogging.setLogActivePathCallback {
-            Logger.recordOutput("pathfind_to_pose_path", *it.toTypedArray())
         }
     }
 
@@ -188,14 +182,14 @@ object Chassis :
             val config =
                 RobotConfig(
                     116.pounds,
-                    3.123.kilogramSquareMeters,
+                    23009.poundSquareInches,
                     ModuleConfig(
                         2.inches,
                         4.48.metersPerSecond,
                         1.2,
                         DCMotor.getKrakenX60Foc(1),
                         7.13,
-                        80.amps,
+                        50.amps,
                         1,
                     ),
                     Translation2d(frontLeft.LocationX, frontLeft.LocationY),
@@ -204,25 +198,19 @@ object Chassis :
                     Translation2d(backRight.LocationX, backRight.LocationY),
                 )
             AutoBuilder.configure(
-                { state.Pose }, // Supplier of current robot pose
-                this::resetPose, // Consumer for seeding pose against auto
-                { state.Speeds }, // Supplier of current robot speeds
-                // Consumer of ChassisSpeeds and feedforwards to drive the robot
-                { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
-                    setControl(
-                        pathApplyRobotSpeeds
-                            .withSpeeds(speeds)
-                            .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
-                            .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
-                    )
+                /* poseSupplier = */ { state.Pose },
+                /* resetPose = */ this::resetPose,
+                /* robotRelativeSpeedsSupplier = */ { state.Speeds },
+                /* output = */ { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
+                    setControl(pathApplyRobotSpeeds.withSpeeds(speeds))
                 },
-                PPHolonomicDriveController( // PID constants for translation
-                    PIDConstants(20.0, 0.0, 0.0), // PID constants for rotation
-                    PIDConstants(7.0, 0.0, 0.0),
+                /* controller = */ PPHolonomicDriveController(
+                    /* translationConstants = */ PIDConstants(5.0, 0.0, 0.1),
+                    /* rotationConstants = */ PIDConstants(10.0, 0.0, 0.0),
                 ),
-                config,
-                { Robot.alliance == Alliance.Red },
-                this, // Subsystem for requirements
+                /* robotConfig = */ config,
+                /* shouldFlipPath = */ { Robot.alliance == Alliance.Red },
+                /* ...driveRequirements = */ this, // Subsystem for requirements
             )
         } catch (ex: IOException) {
             DriverStation.reportError(
@@ -422,10 +410,20 @@ object Chassis :
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
-    private val poseController =
-        ProfiledPIDController(0.05, 0.0, 0.01, TrapezoidProfile.Constraints(4.54, 4.15)).apply {
-            goal = TrapezoidProfile.State(0.0, 0.0)
-        }
+    /** Drives to a pose such that the coral is at x=0 */
+    fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) = pathplanToPose {
+        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+    }
+
+    var targetPose: Pose2d? = null
+        private set
+
+    fun isWithinGoal(distance: Double) =
+        targetPose?.let { state.Pose.translation.getDistance(it.translation) <= distance } != false
+
+    val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
+
+    fun isStableWithinGoal(distance: Double) = alignmentDebouncer.calculate(isWithinGoal(distance))
 
     private val posePIDController = PIDController(2.9, 0.0, 0.26) // 2.85, 0.0, 0.25 for 4piece auto
 
@@ -435,7 +433,6 @@ object Chassis :
             val diff = target.minus(state.Pose)
             val distance = diff.translation.norm
             distanceFromPoseGoal = distance
-            poseController.reset(distance, 0.0)
             posePIDController.reset()
 
             Logger.recordOutput("DriveToPose target", target)
@@ -443,20 +440,9 @@ object Chassis :
             hasPoseTarget = true
         })
 
-    private val isAtPIDGoal: Boolean
-        get() =
-            poseController.atGoal() &&
-                FieldCentricFacingAngleAlignments.HeadingController.atSetpoint()
-
     private var distanceFromPoseGoal = 0.0
     var hasPoseTarget = false
         private set
-
-    fun isWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
-
-    private val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
-
-    fun isStableWithinGoal(distance: Double) = alignmentDebouncer.calculate(isWithinGoal(distance))
 
     fun driveToPose(pose: () -> Pose2d): Command =
         primeDriveToPose(pose)
@@ -482,27 +468,95 @@ object Chassis :
                 hasPoseTarget = false
             }
 
+    /**
+     * Drives to a pose using pathplanner. The robot will always approach the target pose in the x
+     * direction.
+     *
+     * @param approachBackward If true, the robot will approach the target pose in the -x direction.
+     * @param pose The target pose to drive to.
+     */
+    fun pathplanToPose(approachBackward: Boolean = true, pose: () -> Pose2d): Command = defer {
+        val currentPose = state.Pose
+        val targetPose = pose()
+        // Approach the target from 1 meter back
+        val approachPoint =
+            targetPose.transformBy(
+                Transform2d(
+                    if (approachBackward) 1.0 else -1.0,
+                    0.0,
+                    if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                )
+            )
+        val waypoints =
+            PathPlannerPath.waypointsFromPoses(
+                Pose2d(
+                    currentPose.translation,
+                    // Start the path in the direction of the approach point
+                    (approachPoint.translation - currentPose.translation).angle,
+                ),
+                targetPose.transformBy(
+                    Transform2d(
+                        0.0,
+                        0.0,
+                        if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                    )
+                ),
+            )
+
+        val path =
+            PathPlannerPath(
+                /* waypoints = */ waypoints,
+                /* holonomicRotations = */ emptyList(),
+                /* pointTowardsZones = */ emptyList(),
+                /* constraintZones = */ listOf(
+                    // between 90% and 100%, slow down to 0.5 meters per second
+                    ConstraintsZone(0.9, 1.0, PathConstraints(1.0, 5.0, 10.0, 100.0, 12.0))
+                ),
+                /* eventMarkers = */ emptyList(),
+                /* globalConstraints = */ PathConstraints(
+                    4.metersPerSecond,
+                    4.metersPerSecondPerSecond,
+                    1.67.rotationsPerSecond,
+                    3.rotationsPerSecondPerSecond,
+                    12.volts,
+                ),
+                /* idealStartingState = */ null,
+                /* goalEndState = */ GoalEndState(0.metersPerSecond, targetPose.rotation),
+                /* reversed = */ false,
+            )
+        path.preventFlipping = true
+        this.targetPose = targetPose
+        AutoBuilder.followPath(path).finallyDo { _ -> this.targetPose = null }.andThen()
+    }
+
     val driveToClosestReef by command {
-        driveToPose({
+        pathplanToPose {
             closestReef.transformBy(Transform2d((-2).inches, 0.inches, Rotation2d.kZero))
-        })
+        }
     }
 
     val driveToLeftBranch by command {
-        driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPoseWithCoralOffset({ closestRightBranch }).withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch left")
     }
 
-    val driveToProcessor by command { driveToPose({ closestProcessor }) }
+    val driveToProcessor by command { pathplanToPose(false) { closestProcessor } }
+    val backAwayFromProcessor by command {
+        pathplanToPose {
+            closestProcessor.transformBy(Transform2d((-.5).meters, 0.meters, Rotation2d.kZero))
+        }
+    }
 
-    val driveToClosestCenterCoralStation by command { driveToPose({ closestCoralStation }) }
+    val driveToClosestCenterCoralStation by command {
+        pathplanToPose(false) { closestCoralStation }
+    }
 
-    val driveToBarge by command { driveToPose({ closestBarge }) }
-    val driveToBargeLeft by command { driveToPose({ closestLeftBarge }) }
-    val driveToBargeRight by command { driveToPose({ closestRightBarge }) }
+    val driveToBarge by command { pathplanToPose { closestBarge } }
+    val driveToBargeLeft by command { pathplanToPose { closestLeftBarge } }
+    val driveToBargeRight by command { pathplanToPose { closestRightBarge } }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
