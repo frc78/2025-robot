@@ -83,9 +83,12 @@ class Camera(val name: String, val transform: Transform3d) {
             val stdX = 0.0627 + (-0.107 * avgDist) + (0.0451 * avgDist.pow(2))
             // 0,015 + -0,0317x + 0,0167x^2
             val stdY = 0.015 + (-0.0317 * avgDist) + (0.0167 * avgDist.pow(2))
-            Logger.recordOutput("$name stdX", stdX)
-            Logger.recordOutput("$name stdY", stdY)
+
             currentStds = VecBuilder.fill(stdX, stdY, 1.0)
+            currentStds += targets.first().poseAmbiguity * 2
+
+            Logger.recordOutput("$name stdX", currentStds.get(0, 0))
+            Logger.recordOutput("$name stdY", currentStds.get(1, 0))
             return
         }
 
