@@ -133,6 +133,7 @@ object Pivot : SubsystemBase("pivot") {
         get() = (angle - setpoint).abs(Degrees) < 1.5
 
     fun goTo(state: RobotState) = runOnce { setpoint = state.pivotAngle }
+
     fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.pivotAngle })
 
     val angle: Angle

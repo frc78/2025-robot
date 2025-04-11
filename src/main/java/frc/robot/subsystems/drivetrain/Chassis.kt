@@ -483,7 +483,9 @@ object Chassis :
             }
 
     val driveToClosestReef by command {
-        driveToPose({ closestReef.transformBy(Transform2d((-2).inches, 0.inches, Rotation2d.kZero)) })
+        driveToPose({
+            closestReef.transformBy(Transform2d((-2).inches, 0.inches, Rotation2d.kZero))
+        })
     }
 
     val driveToLeftBranch by command {
