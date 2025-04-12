@@ -21,7 +21,6 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.retractWithAlgae
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
-import frc.robot.subsystems.drivetrain.Chassis.alignmentDebouncer
 
 object Autos {
 
