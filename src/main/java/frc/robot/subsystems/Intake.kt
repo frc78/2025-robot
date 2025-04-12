@@ -170,7 +170,7 @@ object Intake : SubsystemBase("intake") {
 
     // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
-        startEnd({ leader.set(0.7) }, { leader.set(0.035) })
+        startEnd({ leader.set(0.7) }, { leader.set(0.07) })
             .until { hasCoralByCurrent() }
             .withName("Intake coral then hold")
 
@@ -183,7 +183,7 @@ object Intake : SubsystemBase("intake") {
         )
     }
     val intakeCoral by command { runOnce { leader.set(0.7) } }
-    val holdCoral by command { runOnce { leader.set(0.1) } }
+    val holdCoral by command { runOnce { leader.set(0.07) } }
 
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
