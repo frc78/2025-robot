@@ -11,6 +11,7 @@ import com.pathplanner.lib.config.PIDConstants
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.ConstraintsZone
+import com.pathplanner.lib.path.EventMarker
 import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
@@ -418,34 +419,42 @@ object Chassis :
     var targetPose: Pose2d? = null
         private set
 
-    fun isWithinGoal(distance: Double) =
-        targetPose?.let { state.Pose.translation.getDistance(it.translation) <= distance } != false
+    /** Returns true if robot is within distance of a path planner drive sequence */
+    private fun isPathPlannerWithinGoal(distance: Double) =
+        targetPose?.let { state.Pose.translation.getDistance(it.translation) <= distance } == true
 
-    val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
-
-    fun isStableWithinGoal(distance: Double) = alignmentDebouncer.calculate(isWithinGoal(distance))
+    private val alignmentDebouncer = Debouncer(0.05, Debouncer.DebounceType.kRising)
 
     private val posePIDController = PIDController(2.9, 0.0, 0.26) // 2.85, 0.0, 0.25 for 4piece auto
 
-    private fun primeDriveToPose(pose: () -> Pose2d): Command =
-        Commands.runOnce({
-            val target = pose()
-            val diff = target.minus(state.Pose)
-            val distance = diff.translation.norm
-            distanceFromPoseGoal = distance
-            posePIDController.reset()
-
-            Logger.recordOutput("DriveToPose target", target)
-            FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
-            hasPoseTarget = true
-        })
-
+    /** Distance from goal pose when using PID driving */
     private var distanceFromPoseGoal = 0.0
     var hasPoseTarget = false
         private set
 
+    /** Returns true if the robot is within distance when using PID drive to pose */
+    private fun isPIDWithinGoal(distance: Double) = hasPoseTarget && distanceFromPoseGoal < distance
+
+    /** Returns true if robot is with goal, either from PID or path planning driving */
+    fun isWithinGoal(distance: Double) =
+        isPIDWithinGoal(distance) || isPathPlannerWithinGoal(distance)
+
+    /** Returns true if the robot is with its goal for a debounced period of time */
+    fun isStableWithinGoal(distance: Double) = alignmentDebouncer.calculate(isWithinGoal(distance))
+
+    /** Drives to a pose using a PID controller */
     fun driveToPose(pose: () -> Pose2d): Command =
-        primeDriveToPose(pose)
+        runOnce {
+                val target = pose()
+                val diff = target.minus(state.Pose)
+                val distance = diff.translation.norm
+                distanceFromPoseGoal = distance
+                posePIDController.reset()
+
+                Logger.recordOutput("DriveToPose target", target)
+                FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
+                hasPoseTarget = true
+            }
             .andThen(
                 applyRequest {
                     val robot = Chassis.state.Pose
@@ -478,12 +487,16 @@ object Chassis :
     fun pathplanToPose(approachBackward: Boolean = true, pose: () -> Pose2d): Command = defer {
         val currentPose = state.Pose
         val targetPose = pose()
-        // Approach the target from 1 meter back
+        // Approach the target from 0.5 meter back
         val approachPoint =
             targetPose.transformBy(
                 Transform2d(
-                    if (approachBackward) 1.0 else -1.0,
+                    // If approaching the target 'backward', approach from .5 meters in front of the
+                    // robot, else, .5 meters behind the robot
+                    if (approachBackward) .5 else -0.5,
                     0.0,
+                    // If we're approaching the target 'backward', then the direction of travel
+                    // should be 180º, i.e the back of the robot should be leading the path
                     if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
                 )
             )
@@ -494,10 +507,13 @@ object Chassis :
                     // Start the path in the direction of the approach point
                     (approachPoint.translation - currentPose.translation).angle,
                 ),
+                approachPoint,
                 targetPose.transformBy(
                     Transform2d(
                         0.0,
                         0.0,
+                        // Similar to approachPoint, lead with the front or back of robot as
+                        // necessary
                         if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
                     )
                 ),
@@ -509,10 +525,13 @@ object Chassis :
                 /* holonomicRotations = */ emptyList(),
                 /* pointTowardsZones = */ emptyList(),
                 /* constraintZones = */ listOf(
-                    // between 90% and 100%, slow down to 0.5 meters per second
-                    ConstraintsZone(0.9, 1.0, PathConstraints(1.0, 5.0, 10.0, 100.0, 12.0))
+                    // Between approach point and final target, limit velocity to 0.5 meters per
+                    // second.
+                    // The other gains are arbitrarily high, since it likely doesn't matter what
+                    // those values are
+                    ConstraintsZone(1.0, 2.0, PathConstraints(0.5, 5.0, 10.0, 100.0, 12.0))
                 ),
-                /* eventMarkers = */ emptyList(),
+                /* eventMarkers = */ listOf(EventMarker("atApproachPoint", 0.8)),
                 /* globalConstraints = */ PathConstraints(
                     4.metersPerSecond,
                     4.metersPerSecondPerSecond,
@@ -520,39 +539,39 @@ object Chassis :
                     3.rotationsPerSecondPerSecond,
                     12.volts,
                 ),
-                /* idealStartingState = */ null,
+                /* idealStartingState = */ null, // Unused in on-the-fly paths. Docs say use null
                 /* goalEndState = */ GoalEndState(0.metersPerSecond, targetPose.rotation),
                 /* reversed = */ false,
             )
         path.preventFlipping = true
         this.targetPose = targetPose
-        AutoBuilder.followPath(path).finallyDo { _ -> this.targetPose = null }.andThen()
+        AutoBuilder.followPath(path).finallyDo { _ -> this.targetPose = null }
     }
 
+    // Drive to the center of the closest reef face, for picking up algae
     val driveToClosestReef by command {
         pathplanToPose {
+            // Move into reef face by 2 inches more than default
             closestReef.transformBy(Transform2d((-2).inches, 0.inches, Rotation2d.kZero))
         }
     }
 
     val driveToLeftBranch by command {
-        driveToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
+        pathplanToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
 
     val driveToRightBranch by command {
-        driveToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch left")
+        pathplanToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch left")
     }
 
     val driveToProcessor by command { pathplanToPose(false) { closestProcessor } }
     val backAwayFromProcessor by command {
-        pathplanToPose {
+        driveToPose {
             closestProcessor.transformBy(Transform2d((-.5).meters, 0.meters, Rotation2d.kZero))
         }
     }
 
-    val driveToClosestCenterCoralStation by command {
-        pathplanToPose(false) { closestCoralStation }
-    }
+    val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
     val driveToBarge by command { pathplanToPose { closestBarge } }
     val driveToBargeLeft by command { pathplanToPose { closestLeftBarge } }
