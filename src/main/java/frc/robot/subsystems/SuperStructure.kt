@@ -138,7 +138,7 @@ object SuperStructure {
             goToSelectedLevel,
             Commands.waitUntil { atPosition },
             Intake.scoreCoral,
-            smartGoTo(RobotState.CoralStation),
+            smartGoTo(RobotState.Stow),
         )
     }
 
