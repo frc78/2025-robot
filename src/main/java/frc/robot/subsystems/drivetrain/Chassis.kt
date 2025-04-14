@@ -57,6 +57,7 @@ import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
+import frc.robot.lib.Level
 import frc.robot.lib.Level.L1
 import frc.robot.lib.Level.L2
 import frc.robot.lib.Level.L3
@@ -427,12 +428,13 @@ object Chassis :
     }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) = pathplanToPose {
-        pose().let {
-            it.transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-                .transformBy(bestReefToBotTransform(it))
+    fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) =
+        pathplanToPose({ SelectedLevel != Level.L1 }) {
+            pose().let {
+                it.transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+                    .transformBy(bestReefToBotTransform(it))
+            }
         }
-    }
 
     var targetPose: Pose2d? = null
         private set
@@ -480,7 +482,7 @@ object Chassis :
                     val diff = robot.translation - target.translation
 
                     distanceFromPoseGoal = diff.norm
-                    val output = posePIDController.calculate(diff.norm)
+                    val output = posePIDController.calculate(diff.norm, 0.0)
 
                     val angle = diff.angle
                     val xSpeed = (output) * angle.cos
@@ -521,7 +523,7 @@ object Chassis :
      * @param pose The target pose to drive to.
      */
     fun pathplanToPose(
-        approachBackward: Boolean = true,
+        approachBackward: () -> Boolean = { true },
         approachDistance: Distance = 0.5.meters,
         pose: () -> Pose2d,
     ): Command = defer {
@@ -533,11 +535,11 @@ object Chassis :
                 Transform2d(
                     // If approaching the target 'backward', approach from .5 meters in front of the
                     // robot, else, .5 meters behind the robot
-                    if (approachBackward) approachDistance else -approachDistance,
+                    if (approachBackward()) approachDistance else -approachDistance,
                     0.meters,
                     // If we're approaching the target 'backward', then the direction of travel
                     // should be 180º, i.e the back of the robot should be leading the path
-                    if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                    if (approachBackward()) Rotation2d.k180deg else Rotation2d.kZero,
                 )
             )
         val waypoints =
@@ -550,11 +552,14 @@ object Chassis :
                 approachPoint,
                 targetPose.transformBy(
                     Transform2d(
+                        // If approaching the target 'backward', approach from .5 meters in front of
+                        // the
+                        // robot, else, .5 meters behind the robot
+                        if (approachBackward()) .5 else -0.5,
                         0.0,
-                        0.0,
-                        // Similar to approachPoint, lead with the front or back of robot as
-                        // necessary
-                        if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                        // If we're approaching the target 'backward', then the direction of travel
+                        // should be 180º, i.e the back of the robot should be leading the path
+                        if (approachBackward()) Rotation2d.k180deg else Rotation2d.kZero,
                     )
                 ),
             )
@@ -609,7 +614,7 @@ object Chassis :
     }
 
     val driveToProcessor by command {
-        pathplanToPose(false, approachDistance = .75.meters) { closestProcessor }
+        pathplanToPose({ false }, approachDistance = .75.meters) { closestProcessor }
     }
     val backAwayFromProcessor by command {
         driveToPose {
@@ -628,6 +633,10 @@ object Chassis :
     }
     val driveToBargeRight by command {
         pathplanToPose(approachDistance = bargeApproachDistance) { closestRightBarge }
+    }
+
+    val backAwayFromReef by command {
+        driveToPose { closestReef.transformBy(Transform2d(1.meters, 0.meters, Rotation2d.k180deg)) }
     }
 
     fun snapAngleToReef(

@@ -18,7 +18,7 @@ object FieldPoses {
     val REEF_TO_BRANCH_RIGHT = Transform2d(0.meters, (12.94 / 2).inches, Rotation2d.kZero)
     val REEF_TO_ROBOT_FRONT_TRANSFORM = Transform2d(.50.meters, 0.0.meters, Rotation2d.kPi)
     val REEF_TO_ROBOT_BACK_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
-    val ALGAE_TO_ROBOT_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
+    val ALGAE_TO_ROBOT_TRANSFORM = Transform2d(.70.meters, 0.0.meters, Rotation2d.kZero)
     private val CORAL_TO_BOT_TRANSFORM = Transform2d(.515.meters, 0.meters, Rotation2d.k180deg)
 
     private val BLUE_REEF_POSES =
@@ -54,14 +54,11 @@ object FieldPoses {
 
     private val algaePoses = BLUE_ALGAE_POSES + RED_ALGAE_POSES
 
-    val closestAlgae
+    val closestAlgae: Pose2d
         get() = Chassis.state.Pose.nearest(algaePoses)
 
     val closestAlgaeIsHigh
-        get() = closestReef in HIGH_ALGAE_REEF_POSES
-
-    private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
-    private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
+        get() = closestAlgae in HIGH_ALGAE_REEF_POSES
 
     private val BLUE_CORAL_STATION_LOCATIONS =
         intArrayOf(12, 13).map {
@@ -126,12 +123,6 @@ object FieldPoses {
             return Chassis.state.Pose.nearest(allianceCoralStations)
         }
 
-    val closestLeftCoralStation
-        get() = closestCoralStation.transformBy(CORAL_STATION_LEFT)
-
-    val closestRightCoralStation
-        get() = closestCoralStation.transformBy(CORAL_STATION_RIGHT)
-
     enum class ReefFace {
         AB,
         CD,
@@ -140,13 +131,13 @@ object FieldPoses {
         IJ,
         KL;
 
-        val leftBranch
+        val leftBranch: Pose2d
             get() = branchPoses[ordinal * 2]
 
-        val rightBranch
+        val rightBranch: Pose2d
             get() = branchPoses[ordinal * 2 + 1]
 
-        val pose = algaePoses[ordinal]
+        val pose: Pose2d = algaePoses[ordinal]
     }
 
     enum class Branch(val reefFace: ReefFace, val left: Boolean) {
@@ -163,7 +154,7 @@ object FieldPoses {
         K(ReefFace.KL, true),
         L(ReefFace.KL, false);
 
-        val pose
+        val pose: Pose2d
             get() = if (left) reefFace.leftBranch else reefFace.rightBranch
     }
 

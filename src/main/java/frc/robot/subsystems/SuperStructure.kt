@@ -139,12 +139,7 @@ object SuperStructure {
             .withName("Go to $state pivot first")
 
     val scoreCoralOnSelectedBranch by command {
-        Commands.sequence(
-            goToSelectedLevel,
-            Commands.waitUntil { atPosition },
-            Intake.scoreCoral,
-            smartGoTo(RobotState.Stow),
-        )
+        Commands.sequence(goToSelectedLevel, Commands.waitUntil { atPosition }, Intake.scoreCoral)
     }
 
     private val goToCalculatedAlgaeHeight by command {

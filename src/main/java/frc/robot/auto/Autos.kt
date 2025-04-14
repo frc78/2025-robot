@@ -15,7 +15,6 @@ import frc.robot.subsystems.RobotState.AlgaeNet
 import frc.robot.subsystems.RobotState.CoralStation
 import frc.robot.subsystems.RobotState.CoralStorage
 import frc.robot.subsystems.RobotState.L4
-import frc.robot.subsystems.RobotState.NewCoralStation
 import frc.robot.subsystems.RobotState.Stow
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.retractWithAlgae
@@ -36,10 +35,13 @@ object Autos {
     }
 
     private val goToCoralStationAndGetCoral by command {
-        Commands.sequence(
-            SuperStructure.smartGoTo(NewCoralStation),
-            Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
-        )
+        Intake.intakeCoralThenHold()
+            .deadlineFor(
+                Chassis.driveToClosestCenterCoralStation.alongWith(
+                    Commands.waitUntil { SuperStructure.atPosition }
+                        .andThen(SuperStructure.smartGoTo(CoralStation))
+                )
+            )
     }
 
     @Suppress("SpreadOperator")
@@ -48,16 +50,18 @@ object Autos {
             Intake.holdCoral.alongWith(Wrist.goTo(CoralStorage)).alongWith(Pivot.goTo(L4)),
             *listOf(
                     listOf(Branch.E, Branch.I),
+                    listOf(Branch.A, Branch.B),
                     listOf(Branch.D, Branch.K),
                     listOf(Branch.C, Branch.L),
-                    listOf(Branch.A, Branch.B),
                 )
                 .map { branches ->
                     Commands.sequence(
-                        Chassis.driveToPoseWithCoralOffset({
+                        Chassis.driveToPoseWithCoralOffset {
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
-                            })
-                            .withDeadline(scoreCoralWhenClose),
+                            }
+                            .withDeadline(
+                                scoreCoralWhenClose.andThen(SuperStructure.smartGoTo(CoralStorage))
+                            ),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }

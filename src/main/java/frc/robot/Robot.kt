@@ -29,6 +29,9 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.FieldGeometry
+import frc.robot.lib.FieldPoses
+import frc.robot.lib.Level
+import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
@@ -120,7 +123,8 @@ object Robot : LoggedRobot() {
                     Wrist.goToWithoutRequiring(RobotState.CoralStorage),
                     Commands.none(),
                 ) {
-                    Intake.hasBranchCoral
+                    // Don't flip if scoring on L1
+                    Intake.hasBranchCoral && SelectedLevel != Level.L1
                 }
             )
 
@@ -212,6 +216,7 @@ object Robot : LoggedRobot() {
         if (isReal()) {
             Vision.update()
         }
+        Logger.recordOutput("closestAlgaeIsHigh", FieldPoses.closestAlgaeIsHigh)
     }
 
     override fun simulationPeriodic() {

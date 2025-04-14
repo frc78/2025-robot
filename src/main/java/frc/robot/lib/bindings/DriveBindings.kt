@@ -8,6 +8,9 @@ import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.scoreCoralWhenClose
+import frc.robot.lib.Level
+import frc.robot.lib.ScoreSelector.SelectedLevel
+import frc.robot.lib.andWait
 import frc.robot.lib.command
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
@@ -176,8 +179,13 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(hasCoral)
         .whileTrue(
             Chassis.driveToRightBranch
-                .alongWith(scoreCoralWhenClose)
-                .raceWith(LEDSubsystem.flashForSelectedLevel)
+                .raceWith(scoreCoralWhenClose, LEDSubsystem.flashForSelectedLevel)
+                .andThen(
+                    Chassis.backAwayFromReef
+                        .andWait { Chassis.isWithinGoal(0.05) }
+                        .onlyIf { SelectedLevel == Level.L1 }
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStorage))
         )
         .onFalse(
             ConditionalCommand(
@@ -193,8 +201,13 @@ private fun CommandXboxController.configureReefAlignments() {
         .and(hasCoral)
         .whileTrue(
             Chassis.driveToLeftBranch
-                .alongWith(scoreCoralWhenClose)
-                .raceWith(LEDSubsystem.flashForSelectedLevel)
+                .raceWith(scoreCoralWhenClose, LEDSubsystem.flashForSelectedLevel)
+                .andThen(
+                    Chassis.backAwayFromReef
+                        .until { Chassis.isWithinGoal(0.05) }
+                        .onlyIf { SelectedLevel == Level.L1 }
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStorage))
         )
         .onFalse(
             ConditionalCommand(
