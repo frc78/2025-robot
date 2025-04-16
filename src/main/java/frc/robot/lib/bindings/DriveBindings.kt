@@ -182,7 +182,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation), // todo smoother retraction?
             ) {
                 Intake.hasBranchCoral
             }
@@ -199,7 +199,7 @@ private fun CommandXboxController.configureReefAlignments() {
         .onFalse(
             ConditionalCommand(
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
-                SuperStructure.smartGoTo(RobotState.CoralStorage),
+                SuperStructure.smartGoTo(RobotState.NewCoralStation), // todo smoother retraction?
             ) {
                 Intake.hasBranchCoral
             }
