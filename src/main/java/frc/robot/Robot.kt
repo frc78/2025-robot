@@ -160,6 +160,7 @@ object Robot : LoggedRobot() {
         SendableChooser<Command>().apply {
             addOption("Beast Mode 😎", Autos.SideCoralFast)
             addOption("Ball Up Top", Autos.CenterAlgaeAuto)
+            addOption("JITB Killer", Autos.JackInTheBotKiller)
             SmartDashboard.putData("Auto Mode", this)
         }
 

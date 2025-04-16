@@ -2,10 +2,12 @@ package frc.robot.auto
 
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand
+import edu.wpi.first.wpilibj2.command.Commands.runOnce
 import frc.robot.commands.scoreCoralWhenClose
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
+import frc.robot.lib.Level
+import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.command
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -15,7 +17,6 @@ import frc.robot.subsystems.RobotState.AlgaeNet
 import frc.robot.subsystems.RobotState.CoralStation
 import frc.robot.subsystems.RobotState.CoralStorage
 import frc.robot.subsystems.RobotState.L4
-import frc.robot.subsystems.RobotState.Stow
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.SuperStructure.retractWithAlgae
 import frc.robot.subsystems.Wrist
@@ -39,7 +40,7 @@ object Autos {
             .deadlineFor(
                 Chassis.driveToClosestCenterCoralStation.alongWith(
                     Commands.waitUntil { SuperStructure.atPosition }
-                        .andThen(SuperStructure.smartGoTo(CoralStation))
+                        .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
                 )
             )
     }
@@ -47,6 +48,7 @@ object Autos {
     @Suppress("SpreadOperator")
     val SideCoralFast by command {
         Commands.sequence(
+            runOnce({ SelectedLevel = Level.L4 }),
             Intake.holdCoral.alongWith(Wrist.goTo(CoralStorage)).alongWith(Pivot.goTo(L4)),
             *listOf(
                     listOf(Branch.E, Branch.I),
@@ -56,7 +58,7 @@ object Autos {
                 )
                 .map { branches ->
                     Commands.sequence(
-                        Chassis.driveToPoseWithCoralOffset {
+                        Chassis.pathplanToPoseWithCoralOffset {
                                 Chassis.state.Pose.nearest(branches.map { it.pose })
                             }
                             .withDeadline(
@@ -80,15 +82,34 @@ object Autos {
                         SuperStructure.goToScoreCoral(L4),
                     )
                 )
-                .withTimeout(2.0),
+                .until { Chassis.isWithinGoal(0.05) },
             // Score L4
             goToLevelAndScore(L4),
-            SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
-            WaitUntilCommand { SuperStructure.atPosition }.withTimeout(0.7),
+            SuperStructure.smartGoTo(CoralStorage), // Added for safety, lets see if it works!
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
-            // Pathfind to EF since it's around the reef
-            goToCoralStationAndGetCoral,
+            getAlgaeAndScore(FieldPoses.ReefFace.EF),
+        )
+    }
+
+    val JackInTheBotKiller by command {
+        Commands.sequence(
+            // Drive to right branch, but it's on the far side of the reef so it's swapped
+            Chassis.driveToPoseWithCoralOffset { Branch.H.pose }
+                .alongWith(
+                    Commands.sequence(
+                        Pivot.goTo(L4),
+                        Commands.waitUntil { Chassis.isWithinGoal(1.5) },
+                        SuperStructure.goToScoreCoral(L4),
+                    )
+                )
+                .until { Chassis.isWithinGoal(0.05) },
+            // Score L4
+            goToLevelAndScore(L4),
+            SuperStructure.smartGoTo(CoralStorage), // Added for safety, lets see if it works!
+            getAlgaeAndScore(FieldPoses.ReefFace.GH),
+            getHighAlgaeAndScore(FieldPoses.ReefFace.GH, true),
+            getAlgaeAndScore(FieldPoses.ReefFace.EF, true),
         )
     }
 
@@ -102,17 +123,18 @@ object Autos {
             .andThen(SuperStructure.autoScoreAlgaeInNet)
     }
 
-    private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.pathplanToPose { face.pose }
+    private fun getAlgaeAndScore(face: FieldPoses.ReefFace, opponent: Boolean = false) =
+        Chassis.pathplanToPose { if (opponent) face.opponentPose else face.pose }
             .withDeadline(
                 // Get algae
-                Commands.waitUntil { Chassis.isWithinGoal(1.5) }
+                // It will be going to coralStorage, after which we can go to pose
+                Commands.waitUntil { SuperStructure.atPosition }
                     .andThen(SuperStructure.retrieveAlgaeFromReef)
             )
             .andThen(scoreAlgaeInBarge)
 
-    private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.pathplanToPose { face.pose }
+    private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace, opponent: Boolean = false) =
+        Chassis.pathplanToPose { if (opponent) face.opponentPose else face.pose }
             .withDeadline(
                 // Get algae
                 Commands.sequence(
