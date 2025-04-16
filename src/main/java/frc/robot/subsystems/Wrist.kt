@@ -124,9 +124,7 @@ object Wrist : SubsystemBase("wrist") {
     }
 
     // Does not have coral station safety check, be careful!
-    fun goToRaw(angle: Angle): Command = runOnce {
-        setpoint = angle
-    }
+    fun goToRaw(angle: Angle): Command = runOnce { setpoint = angle }
 
     val angle: Angle
         get() = leader.position.value

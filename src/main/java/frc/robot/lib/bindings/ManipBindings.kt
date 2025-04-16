@@ -96,20 +96,30 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     rightBumper()
         .onTrue(Intake.intakeCoralThenHold())
-        .whileTrue(SuperStructure.reachToIntake.repeatedly().until{Intake.hasCoralByCurrent()}
-            .andThen(
-                Elevator.goTo(RobotState.NewCoralStation).andWait { Elevator.position < 3.inches }
-                    .andThen(Commands.parallel(
-                        Pivot.goTo(RobotState.NewCoralStation),
-                        Wrist.goTo(RobotState.NewCoralStation)
-                    ))
-        ))
+        .whileTrue(
+            SuperStructure.reachToIntake
+                .repeatedly()
+                .until { Intake.hasCoralByCurrent() }
+                .andThen(
+                    Elevator.goTo(RobotState.NewCoralStation)
+                        .andWait { Elevator.position < 3.inches }
+                        .andThen(
+                            Commands.parallel(
+                                Pivot.goTo(RobotState.NewCoralStation),
+                                Wrist.goTo(RobotState.NewCoralStation),
+                            )
+                        )
+                )
+        )
         .onFalse(
-            Elevator.goTo(RobotState.NewCoralStation).andWait { Elevator.position < 3.inches }
-                .andThen(Commands.parallel(
-                    Pivot.goTo(RobotState.NewCoralStation),
-                    Wrist.goTo(RobotState.NewCoralStation)
-                ))
+            Elevator.goTo(RobotState.NewCoralStation)
+                .andWait { Elevator.position < 3.inches }
+                .andThen(
+                    Commands.parallel(
+                        Pivot.goTo(RobotState.NewCoralStation),
+                        Wrist.goTo(RobotState.NewCoralStation),
+                    )
+                )
         )
 
     // Algae Stuff
