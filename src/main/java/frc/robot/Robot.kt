@@ -55,9 +55,9 @@ val IS_COMP = "COMP" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
     val reefOnlyField: AprilTagFieldLayout =
-        AprilTagFieldLayout(Filesystem.getDeployDirectory().path + "/2025-andymark-only-reef.json")
+        AprilTagFieldLayout(Filesystem.getDeployDirectory().path + "/2025-welded-only-reef.json")
     val alliance: DriverStation.Alliance
         get() = DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
 
