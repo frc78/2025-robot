@@ -421,19 +421,17 @@ object Chassis :
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
-        pose().let {
-            it.transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-                .transformBy(bestReefToBotTransform(it))
-        }
+        pose()
+            .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+            .transformBy(bestReefToBotTransform())
     }
 
     /** Drives to a pose such that the coral is at x=0 */
     fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) =
         pathplanToPose({ SelectedLevel != Level.L1 }) {
-            pose().let {
-                it.transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-                    .transformBy(bestReefToBotTransform(it))
-            }
+            pose()
+                .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+                .transformBy(bestReefToBotTransform())
         }
 
     var targetPose: Pose2d? = null
@@ -552,10 +550,7 @@ object Chassis :
                 approachPoint,
                 targetPose.transformBy(
                     Transform2d(
-                        // If approaching the target 'backward', approach from .5 meters in front of
-                        // the
-                        // robot, else, .5 meters behind the robot
-                        if (approachBackward()) .5 else -0.5,
+                        0.0,
                         0.0,
                         // If we're approaching the target 'backward', then the direction of travel
                         // should be 180º, i.e the back of the robot should be leading the path
@@ -596,7 +591,7 @@ object Chassis :
      * on and where the closest rotation point is. L1 and L2 can only score off the front, but L3
      * and L4 are free to score off the front or back
      */
-    private fun bestReefToBotTransform(target: Pose2d): Transform2d {
+    private fun bestReefToBotTransform(): Transform2d {
         return when (SelectedLevel) {
             L1 -> REEF_TO_ROBOT_FRONT_TRANSFORM
             L2,
@@ -617,14 +612,14 @@ object Chassis :
         pathplanToPose({ false }, approachDistance = .75.meters) { closestProcessor }
     }
     val backAwayFromProcessor by command {
-        driveToPose {
+        pathplanToPose(approachDistance = 0.meters) {
             closestProcessor.transformBy(Transform2d((-.5).meters, 0.meters, Rotation2d.kZero))
         }
     }
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    private val bargeApproachDistance = 0.75.meters
+    private val bargeApproachDistance = 0.5.meters
     val driveToBarge by command {
         pathplanToPose(approachDistance = bargeApproachDistance) { closestBarge }
     }
@@ -636,7 +631,9 @@ object Chassis :
     }
 
     val backAwayFromReef by command {
-        driveToPose { closestReef.transformBy(Transform2d(1.meters, 0.meters, Rotation2d.k180deg)) }
+        pathplanToPose(approachDistance = 0.meters) {
+            closestReef.transformBy(Transform2d(1.meters, 0.meters, Rotation2d.k180deg))
+        }
     }
 
     fun snapAngleToReef(
