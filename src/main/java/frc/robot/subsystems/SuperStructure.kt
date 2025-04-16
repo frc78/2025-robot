@@ -174,11 +174,15 @@ object SuperStructure {
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
 
-    // TODO confirm functionality!
+    // TODO confirm accuracy on real field, tune as needed
+    // todo Make superstructure move simultaneously on deploy, keep sequencing on retract
+    // todo Introduce limitation so it won't extend past 18"
+    //      - extend to max whenever pressed further out?
+    //      - or don't extend on press at all unless within ~18"?
     private val ELEVATOR_LENGTH: Distance = 0.71.meters //28.5.inches //0003407122.inches
     private val PIVOT_TO_CENTER: Distance = 9.5.inches
     private val CLAW_HORIZONTAL: Distance = 0.38.meters//15.551181.inches
-    private val PIVOT_BIAS: Angle = 0.0.degrees //4.8.degrees
+    private val PIVOT_BIAS: Angle = 0.0.degrees //4.8.degrees // 0.8!! if needed
     private val INTAKE_HEIGHT: Distance =
         (ELEVATOR_LENGTH + RobotState.NewCoralStation.elevatorHeight) * sin(RobotState.NewCoralStation.pivotAngle.radians - PIVOT_BIAS.radians)
 
