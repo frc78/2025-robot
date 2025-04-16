@@ -217,7 +217,7 @@ object Intake : SubsystemBase("intake") {
             FieldGeometry.distanceToClosestLine(
                 FieldGeometry.CORAL_STATIONS,
                 Chassis.state.Pose.translation,
-            ) < 0.1 && sim.angularVelocity > 0.rotationsPerSecond
+            ) < 0.5 && sim.angularVelocity > 0.rotationsPerSecond
         ) {
             canRangeSim.setDistance(0.19)
         }
