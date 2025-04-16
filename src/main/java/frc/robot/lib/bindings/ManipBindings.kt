@@ -77,16 +77,13 @@ private fun CommandXboxController.configureManipDpadLayout() {
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureManipButtonLayout() {
-
     // Coral Stuff
     a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
     b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
     x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
     y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
-
     start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
     back().onTrue(SuperStructure.smartGoTo(RobotState.FullyClimbed).alongWith(Climber.extend))
-
     rightTrigger(0.55)
         .onTrue(
             Intake.outtakeCoral
@@ -97,7 +94,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 )
                 .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
         )
-
     rightBumper()
         .onTrue(Intake.intakeCoralThenHold())
         .whileTrue(
@@ -125,7 +121,6 @@ private fun CommandXboxController.configureManipButtonLayout() {
                     )
                 )
         )
-
     // Algae Stuff
     povUp()
         .onTrue(
@@ -141,14 +136,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
-
     leftBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
-
     leftTrigger(0.55)
         .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation)))
 }
