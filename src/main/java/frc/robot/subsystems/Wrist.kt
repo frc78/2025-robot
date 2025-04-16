@@ -44,7 +44,7 @@ object Wrist : SubsystemBase("wrist") {
     private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Coast)
-            .withInverted(InvertedValue.CounterClockwise_Positive)
+            .withInverted(InvertedValue.Clockwise_Positive)
 
     private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs()
@@ -85,16 +85,16 @@ object Wrist : SubsystemBase("wrist") {
     private val motionMagic =
         DynamicMotionMagicVoltage(
             0.degrees,
-            10.rotationsPerSecond,
-            30.rotationsPerSecondPerSecond,
-            100.rotationsPerSecondCubed,
+            1.rotationsPerSecond,
+            3.rotationsPerSecondPerSecond,
+            0.rotationsPerSecondCubed,
         )
 
     private val leader = TalonFX(13, "*").apply { configurator.apply(standardConfig) }
 
     private val shouldLimitReverseMotion: Boolean
         get() {
-            return Pivot.angle < 20.degrees
+            return Pivot.angle < 20.degrees && angle > 90.degrees
         }
 
     val atPosition
@@ -122,6 +122,9 @@ object Wrist : SubsystemBase("wrist") {
         )
             setpoint = state.wristAngle
     }
+
+    // Does not have coral station safety check, be careful!
+    fun goToRaw(angle: Angle): Command = runOnce { setpoint = angle }
 
     val angle: Angle
         get() = leader.position.value
@@ -195,9 +198,9 @@ object Wrist : SubsystemBase("wrist") {
         // Command the wrist to move to the setpoint
         motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
         if (Intake.detectAlgaeByCurrent()) {
-            motionMagic.withVelocity(3.0).withAcceleration(6.0).withJerk(30.0)
+            motionMagic.withAcceleration(6.0)
         } else {
-            motionMagic.withVelocity(10.0).withAcceleration(30.0).withJerk(100.0)
+            motionMagic.withAcceleration(30.0)
         }
         leader.setControl(motionMagic)
     }

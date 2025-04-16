@@ -8,6 +8,8 @@ import frc.robot.lib.Branch
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector
 import frc.robot.lib.ScoreSelector.SelectedBranch
+import frc.robot.lib.andWait
+import frc.robot.lib.inches
 import frc.robot.subsystems.Climber
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -97,9 +99,37 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
 
     rightBumper()
-        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
-        .onFalse(Intake.holdCoral)
+        .onTrue(Intake.intakeCoralThenHold())
+        .whileTrue(
+            SuperStructure.reachToIntake
+                .repeatedly()
+                .until { Intake.hasCoralByCurrent() }
+                .andThen(
+                    Elevator.goTo(RobotState.NewCoralStation)
+                        .andWait { Elevator.position < 3.inches }
+                        .andThen(
+                            Commands.parallel(
+                                Pivot.goTo(RobotState.NewCoralStation),
+                                Wrist.goTo(RobotState.NewCoralStation),
+                            )
+                        )
+                )
+        )
+        .onFalse(
+            Elevator.goTo(RobotState.NewCoralStation)
+                .andWait { Elevator.position < 3.inches }
+                .andThen(
+                    Commands.parallel(
+                        Pivot.goTo(RobotState.NewCoralStation),
+                        Wrist.goTo(RobotState.NewCoralStation),
+                    )
+                )
+        )
 
+    configManipButtonLayoutAlgae()
+}
+
+private fun CommandXboxController.configManipButtonLayoutAlgae() {
     // Algae Stuff
     povUp()
         .onTrue(
@@ -115,14 +145,12 @@ private fun CommandXboxController.configureManipButtonLayout() {
         )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
-
     leftBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
                 .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
-
     leftTrigger(0.55)
         .onTrue(Intake.scoreAlgae.andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation)))
 }

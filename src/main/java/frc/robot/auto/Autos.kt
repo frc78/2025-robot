@@ -1,13 +1,11 @@
 package frc.robot.auto
 
-import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import frc.robot.commands.scoreCoralWhenClose
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
-import frc.robot.lib.andWait
 import frc.robot.lib.command
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
@@ -43,8 +41,6 @@ object Autos {
             Intake.intakeCoralThenHold().deadlineFor(Chassis.driveToClosestCenterCoralStation),
         )
     }
-
-    private val alignmentDebouncer = Debouncer(0.1, Debouncer.DebounceType.kRising) // was 0.5
 
     @Suppress("SpreadOperator")
     val SideCoralFast by command {
@@ -94,19 +90,16 @@ object Autos {
 
     private val scoreAlgaeInBarge by command {
         // Drive to barge
-        Chassis.driveToBargeRight.withDeadline(
-            Commands.sequence(
-                Commands.waitUntil { Chassis.isWithinGoal(1.5) },
-                SuperStructure.smartGoTo(AlgaeNet).andWait {
-                    alignmentDebouncer.calculate(Chassis.isWithinGoal(0.06))
-                },
-                SuperStructure.autoScoreAlgaeInNet,
+        Chassis.driveToBargeRight
+            .alongWith(
+                Commands.waitUntil { Chassis.isWithinGoal(1.5) }
+                    .andThen(SuperStructure.smartGoTo(AlgaeNet))
             )
-        )
+            .andThen(SuperStructure.autoScoreAlgaeInNet)
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.driveToPose { face.pose }
+        Chassis.pathplanToPose { face.pose }
             .withDeadline(
                 // Get algae
                 Commands.waitUntil { Chassis.isWithinGoal(1.5) }
@@ -115,7 +108,7 @@ object Autos {
             .andThen(scoreAlgaeInBarge)
 
     private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.driveToPose { face.pose }
+        Chassis.pathplanToPose { face.pose }
             .withDeadline(
                 // Get algae
                 Commands.sequence(

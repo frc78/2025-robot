@@ -4,6 +4,9 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
+import edu.wpi.first.wpilibj2.command.DeferredCommand
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.Level
 import frc.robot.lib.ScoreSelector.SelectedLevel
@@ -11,30 +14,32 @@ import frc.robot.lib.andWait
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
+import frc.robot.lib.meters
+import frc.robot.lib.radians
 import frc.robot.subsystems.drivetrain.Chassis
+import kotlin.math.atan
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** @property pivotAngle: Angle of the pivot from horizontal */
 enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val wristAngle: Angle) {
     Stow(40.degrees, 0.25.inches, 22.5.degrees),
     AlgaeStorage(60.degrees, 0.25.inches, 22.5.degrees),
-    L1(40.degrees, 0.25.inches, 186.75.degrees),
-    L2(93.5.degrees, 0.25.inches, 38.degrees),
-    L3(92.6.degrees, 17.25.inches, 38.degrees),
+    L1(38.degrees, 0.25.inches, 186.75.degrees),
+    L2(93.5.degrees, 0.25.inches, 37.degrees),
+    L3(92.6.degrees, 17.25.inches, 36.degrees),
     L4(92.5.degrees, 46.inches, 29.25.degrees),
     CoralStation(62.92.degrees, 0.25.inches, 176.degrees),
-    NewCoralStation(69.1.degrees, 0.1.inches, 185.8.degrees), // pivot 68.2
-    AlgaeGroundPickup(30.degrees, 0.25.inches, 181.35.degrees),
-    Processor(23.degrees, 0.25.inches, 113.625.degrees),
+    NewCoralStation(67.1.degrees, 0.1.inches, 185.8.degrees), // pivot 68.2
+    AlgaeGroundPickup(26.degrees, 0.25.inches, 181.35.degrees),
+    Processor(10.7.degrees, 0.25.inches, 86.4.degrees),
     HighAlgaeIntake(100.2.degrees, 19.33.inches, 13.25.degrees),
     LowAlgaeIntake(104.degrees, 0.25.inches, 19.2125.degrees),
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
-    CoralStorage(
-        62.92.degrees,
-        0.25.inches,
-        Wrist.lowerLimit,
-    ), // same as coral station but with wrist over
+    CoralStorage(62.92.degrees, 0.25.inches, Wrist.lowerLimit),
 }
 
 object SuperStructure {
@@ -138,7 +143,7 @@ object SuperStructure {
             goToSelectedLevel,
             Commands.waitUntil { atPosition },
             Intake.scoreCoral,
-            smartGoTo(RobotState.CoralStation),
+            smartGoTo(RobotState.Stow),
         )
     }
 
@@ -175,5 +180,80 @@ object SuperStructure {
             .andThen(Intake.scoreAlgae)
             .andThen(smartGoTo(RobotState.NewCoralStation))
             .onlyIf { Intake.detectAlgaeByCurrent() }
+    }
+
+    private val ELEVATOR_LENGTH: Distance = 0.71.meters // 28.5.inches //0003407122.inches
+    private val PIVOT_TO_CENTER: Distance = 9.5.inches
+    private val CLAW_HORIZONTAL: Distance = 0.38.meters // 15.551181.inches
+    private val PIVOT_BIAS: Angle = 0.0.degrees // 4.8.degrees // 0.8!! if needed
+    private val INTAKE_HEIGHT: Distance =
+        (ELEVATOR_LENGTH + RobotState.NewCoralStation.elevatorHeight) *
+            sin(RobotState.NewCoralStation.pivotAngle.radians - PIVOT_BIAS.radians)
+
+    val reachToIntake by command {
+        DeferredCommand(
+            {
+                // Horizontal distance from Pivot joint to desired location of Wrist joint
+                val baseDist: Distance =
+                    FieldGeometry.distanceToClosestLine(
+                            FieldGeometry.CORAL_STATIONS,
+                            Chassis.state.Pose.translation,
+                        )
+                        .meters + PIVOT_TO_CENTER - CLAW_HORIZONTAL
+
+                // Trig calculation on target height and distance away, then account for Pivot bias
+                // (zeroed below horizontal)
+                val targetPivotAngle: Angle =
+                    atan(INTAKE_HEIGHT.inches / baseDist.inches).radians + PIVOT_BIAS
+
+                // Pythagorean theorem, then subtract retracted height of elevator to give the
+                // necessary extension
+                val targetElevatorHeight: Distance =
+                    sqrt(baseDist.inches.pow(2) + INTAKE_HEIGHT.inches.pow(2)).inches -
+                        ELEVATOR_LENGTH
+
+                // Needs to decrease by the amount the Pivot angle decreases relative to the base
+                // preset
+                val targetWristAngle: Angle =
+                    RobotState.CoralStation.wristAngle -
+                        (RobotState.CoralStation.pivotAngle - targetPivotAngle)
+
+                // Distance from frame to coral station; should not extend if > 18in
+                val frameToStation: Distance =
+                    FieldGeometry.distanceToClosestLine(
+                            FieldGeometry.CORAL_STATIONS,
+                            Chassis.state.Pose.translation,
+                        )
+                        .meters - 14.inches
+
+                //            SmartDashboard.putNumber("Raw Station Dist", )
+                //            SmartDashboard.putNumber("height value in", INTAKE_HEIGHT.inches)
+                //            SmartDashboard.putNumber("base dist m", baseDist.meters)
+                //            SmartDashboard.putNumber("tgt pivot deg", targetPivotAngle.degrees)
+                //            SmartDashboard.putNumber("tgt elevator in",
+                // targetElevatorHeight.inches)
+                //            SmartDashboard.putNumber("tgt wrist deg", targetWristAngle.degrees)
+
+                // Waiting for Pivot not necessary at shorter (legal) distances
+                //            Pivot.goToRaw(targetPivotAngle)
+                //                .andWait { Pivot.atPosition }
+                //                .andThen(
+                //                    Elevator.goToRaw(targetElevatorHeight)
+                //                        .alongWith(Wrist.goToRaw(targetWristAngle)))
+
+                // Extend if it doesn't violate extension rule
+                ConditionalCommand(
+                    Commands.parallel(
+                        Pivot.goToRaw(targetPivotAngle),
+                        Elevator.goToRaw(targetElevatorHeight),
+                        Wrist.goToRaw(targetWristAngle),
+                    ),
+                    Commands.idle(),
+                ) {
+                    frameToStation <= 18.inches
+                }
+            },
+            setOf(Pivot, Wrist, Elevator),
+        )
     }
 }

@@ -114,6 +114,8 @@ object Elevator : SubsystemBase("elevator") {
 
     fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.elevatorHeight })
 
+    fun goToRaw(height: Distance): Command = runOnce { setpoint = height }
+
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
 
