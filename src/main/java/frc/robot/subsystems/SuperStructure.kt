@@ -5,6 +5,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.DeferredCommand
 import frc.robot.lib.*
 import frc.robot.lib.ScoreSelector.SelectedLevel
@@ -175,10 +176,7 @@ object SuperStructure {
     }
 
     // TODO confirm accuracy on real field, tune as needed
-    // todo Make superstructure move simultaneously on deploy, keep sequencing on retract
     // todo Introduce limitation so it won't extend past 18"
-    //      - extend to max whenever pressed further out?
-    //      - or don't extend on press at all unless within ~18"?
     private val ELEVATOR_LENGTH: Distance = 0.71.meters //28.5.inches //0003407122.inches
     private val PIVOT_TO_CENTER: Distance = 9.5.inches
     private val CLAW_HORIZONTAL: Distance = 0.38.meters//15.551181.inches
@@ -207,20 +205,36 @@ object SuperStructure {
             val targetWristAngle: Angle =
                 RobotState.CoralStation.wristAngle - (RobotState.CoralStation.pivotAngle - targetPivotAngle)
 
-//            SmartDashboard.putNumber("Raw Station Dist", )
-            SmartDashboard.putNumber("height value in", INTAKE_HEIGHT.inches)
-            SmartDashboard.putNumber("base dist m", baseDist.meters)
-            SmartDashboard.putNumber("tgt pivot deg", targetPivotAngle.degrees)
-            SmartDashboard.putNumber("tgt elevator in", targetElevatorHeight.inches)
-            SmartDashboard.putNumber("tgt wrist deg", targetWristAngle.degrees)
+            // Distance from frame to coral station; should not extend if > 18in
+            val frameToStation: Distance =
+                FieldGeometry.distanceToClosestLine(
+                    FieldGeometry.CORAL_STATIONS,
+                    Chassis.state.Pose.translation
+                ).meters - 14.inches
 
-            Pivot.goToRaw(targetPivotAngle)
-                .andWait { Pivot.atPosition }
-                .andThen(
-                    Elevator.goToRaw(targetElevatorHeight)
-                        .alongWith(Wrist.goToRaw(targetWristAngle)))
-            // TODO make conditional command to idle if BASE - PIVOT_TO_FRONT_FRAME > 18"
-//            Commands.idle()
+//            SmartDashboard.putNumber("Raw Station Dist", )
+//            SmartDashboard.putNumber("height value in", INTAKE_HEIGHT.inches)
+//            SmartDashboard.putNumber("base dist m", baseDist.meters)
+//            SmartDashboard.putNumber("tgt pivot deg", targetPivotAngle.degrees)
+//            SmartDashboard.putNumber("tgt elevator in", targetElevatorHeight.inches)
+//            SmartDashboard.putNumber("tgt wrist deg", targetWristAngle.degrees)
+
+            // Waiting for Pivot not necessary at shorter (legal) distances
+//            Pivot.goToRaw(targetPivotAngle)
+//                .andWait { Pivot.atPosition }
+//                .andThen(
+//                    Elevator.goToRaw(targetElevatorHeight)
+//                        .alongWith(Wrist.goToRaw(targetWristAngle)))
+
+            // Extend if it doesn't violate extension rule
+            ConditionalCommand(
+                Commands.parallel(
+                    Pivot.goToRaw(targetPivotAngle),
+                    Elevator.goToRaw(targetElevatorHeight),
+                    Wrist.goToRaw(targetWristAngle)
+                ),
+                Commands.idle())
+                {frameToStation <= 18.inches}
         }, setOf(Pivot, Wrist, Elevator))
     }
 

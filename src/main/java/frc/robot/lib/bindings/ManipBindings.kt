@@ -98,22 +98,19 @@ private fun CommandXboxController.configureManipButtonLayout() {
         .onTrue(Intake.intakeCoralThenHold())
         .whileTrue(SuperStructure.reachToIntake.repeatedly().until{Intake.hasCoralByCurrent()}
             .andThen(
-                Elevator.goTo(RobotState.CoralStation).andWait { Elevator.position < 3.inches }
+                Elevator.goTo(RobotState.NewCoralStation).andWait { Elevator.position < 3.inches }
                     .andThen(Commands.parallel(
-                        Pivot.goTo(RobotState.CoralStation),
-                        Wrist.goTo(RobotState.CoralStation)
+                        Pivot.goTo(RobotState.NewCoralStation),
+                        Wrist.goTo(RobotState.NewCoralStation)
                     ))
         ))
         .onFalse(
-            Elevator.goTo(RobotState.CoralStation).andWait { Elevator.position < 3.inches }
+            Elevator.goTo(RobotState.NewCoralStation).andWait { Elevator.position < 3.inches }
                 .andThen(Commands.parallel(
-                    Pivot.goTo(RobotState.CoralStation),
-                    Wrist.goTo(RobotState.CoralStation)
+                    Pivot.goTo(RobotState.NewCoralStation),
+                    Wrist.goTo(RobotState.NewCoralStation)
                 ))
         )
-
-//        .whileTrue(Intake.intakeCoral.withName("Intake coral from coral station"))
-//        .onFalse(Intake.holdCoral)
 
     // Algae Stuff
     povUp()
