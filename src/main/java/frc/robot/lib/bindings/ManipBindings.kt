@@ -1,6 +1,7 @@
 package frc.robot.lib.bindings
 
 import edu.wpi.first.wpilibj.XboxController
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -77,13 +78,16 @@ private fun CommandXboxController.configureManipDpadLayout() {
 
 /** Use buttons to select branch and level */
 private fun CommandXboxController.configureManipButtonLayout() {
+
     // Coral Stuff
     a().onTrue(SuperStructure.goToScoreCoral(RobotState.L1))
     b().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L2 }))
     x().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L3 }))
     y().onTrue(Commands.runOnce({ ScoreSelector.SelectedLevel = Level.L4 }))
+
     start().onTrue(SuperStructure.smartGoTo(RobotState.ReadyToClimb))
     back().onTrue(SuperStructure.smartGoTo(RobotState.FullyClimbed).alongWith(Climber.extend))
+
     rightTrigger(0.55)
         .onTrue(
             Intake.outtakeCoral
@@ -94,6 +98,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
                 )
                 .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
         )
+
     rightBumper()
         .onTrue(Intake.intakeCoralThenHold())
         .whileTrue(
@@ -121,6 +126,11 @@ private fun CommandXboxController.configureManipButtonLayout() {
                     )
                 )
         )
+
+    configManipButtonLayoutAlgae()
+}
+
+private fun CommandXboxController.configManipButtonLayoutAlgae() {
     // Algae Stuff
     povUp()
         .onTrue(
