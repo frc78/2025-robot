@@ -19,13 +19,16 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.IS_COMP
+import frc.robot.lib.FieldGeometry
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
 import frc.robot.lib.kilogramSquareMeters
 import frc.robot.lib.meters
 import frc.robot.lib.poundSquareInches
+import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.seconds
+import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
 object Intake : SubsystemBase("intake") {
@@ -203,10 +206,24 @@ object Intake : SubsystemBase("intake") {
         )
 
     private val simState by lazy { leader.simState }
+    private val canRangeSim by lazy { canRange.simState.apply { setDistance(0.19) } }
 
     override fun simulationPeriodic() {
         sim.inputVoltage = simState.motorVoltage
         sim.update(0.02)
         simState.setRotorVelocity(sim.angularVelocity)
+
+        if (
+            FieldGeometry.distanceToClosestLine(
+                FieldGeometry.CORAL_STATIONS,
+                Chassis.state.Pose.translation,
+            ) < 0.1 && sim.angularVelocity > 0.rotationsPerSecond
+        ) {
+            canRangeSim.setDistance(0.19)
+        }
+
+        if (sim.angularVelocity < 0.rotationsPerSecond) {
+            canRangeSim.setDistance(0.5)
+        }
     }
 }
