@@ -482,7 +482,11 @@ object Chassis :
                 hasPoseTarget = false
             }
 
-    val driveToClosestReef by command { driveToPose({ closestReef }) }
+    val driveToClosestReef by command {
+        driveToPose({
+            closestReef.transformBy(Transform2d((-2).inches, 0.inches, Rotation2d.kZero))
+        })
+    }
 
     val driveToLeftBranch by command {
         driveToPoseWithCoralOffset({ closestLeftBranch }).withName("Drive to branch left")

@@ -136,6 +136,8 @@ object Pivot : SubsystemBase("pivot") {
 
     fun goToRaw(angle: Angle) = runOnce { setpoint = angle }
 
+    fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.pivotAngle })
+
     val angle: Angle
         get() = leader.position.value
 
