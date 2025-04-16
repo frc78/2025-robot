@@ -19,7 +19,7 @@ object FieldPoses {
     val REEF_TO_ROBOT_FRONT_TRANSFORM = Transform2d(.50.meters, 0.0.meters, Rotation2d.kPi)
     val REEF_TO_ROBOT_BACK_TRANSFORM = Transform2d(.72.meters, 0.0.meters, Rotation2d.kZero)
     val ALGAE_TO_ROBOT_TRANSFORM = Transform2d(.70.meters, 0.0.meters, Rotation2d.kZero)
-    private val CORAL_TO_BOT_TRANSFORM = Transform2d(.515.meters, 0.meters, Rotation2d.k180deg)
+    private val CORAL_TO_BOT_TRANSFORM = Transform2d(.1.meters, 0.meters, Rotation2d.k180deg)
 
     private val BLUE_REEF_POSES =
         intArrayOf(18, 17, 22, 21, 20, 19).map { Robot.gameField.getTagPose(it).get().toPose2d() }
@@ -137,7 +137,19 @@ object FieldPoses {
         val rightBranch: Pose2d
             get() = branchPoses[ordinal * 2 + 1]
 
-        val pose: Pose2d = algaePoses[ordinal]
+        val pose: Pose2d
+            get() =
+                when (DriverStation.getAlliance().get()) {
+                    Blue -> BLUE_ALGAE_POSES[ordinal]
+                    else -> RED_ALGAE_POSES[ordinal]
+                }
+
+        val opponentPose: Pose2d
+            get() =
+                when (DriverStation.getAlliance().get()) {
+                    Red -> BLUE_ALGAE_POSES[ordinal]
+                    else -> RED_ALGAE_POSES[ordinal]
+                }
     }
 
     enum class Branch(val reefFace: ReefFace, val left: Boolean) {
@@ -201,8 +213,20 @@ object FieldPoses {
         get() = Chassis.state.Pose.nearest(bargePoses)
 
     val closestLeftBarge
-        get() = closestBarge.transformBy(BARGE_TO_BARGE_LEFT)
+        get() =
+            closestBarge.let {
+                it.transformBy(
+                    if (it == RED_BARGE_POSES[1] || it == BLUE_BARGE_POSES[0]) BARGE_TO_BARGE_RIGHT
+                    else BARGE_TO_BARGE_LEFT
+                )
+            }
 
     val closestRightBarge
-        get() = closestBarge.transformBy(BARGE_TO_BARGE_RIGHT)
+        get() =
+            closestBarge.let {
+                it.transformBy(
+                    if (it == RED_BARGE_POSES[1] || it == BLUE_BARGE_POSES[0]) BARGE_TO_BARGE_LEFT
+                    else BARGE_TO_BARGE_RIGHT
+                )
+            }
 }
