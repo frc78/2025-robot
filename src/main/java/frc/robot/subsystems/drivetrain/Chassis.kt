@@ -486,7 +486,7 @@ object Chassis :
             // those values are
             ConstraintsZone(1.0, 2.0, PathConstraints(0.5, 5.0, 10.0, 100.0, 12.0))
         )
-    private val pathEventMarkers = listOf(EventMarker("atApproachPoint", 0.8))
+    private val pathEventMarkers = listOf(EventMarker("atApproachPoint", 1.0))
     private val pathConstraints =
         PathConstraints(
             4.metersPerSecond,
