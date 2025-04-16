@@ -146,7 +146,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     b().whileTrue(
             Chassis.driveToProcessor
                 .andThen(Intake.dropAlgae)
-                .andThen(Chassis.backAwayFromProcessor)
+                .andThen(Chassis.backAwayFromProcessor.until { Chassis.isWithinGoal(0.05) })
                 .andThen(SuperStructure.smartGoTo(RobotState.Stow).asProxy())
         )
         // Once at approach point, move to processor position
@@ -232,6 +232,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                 Commands.waitUntil { Chassis.isWithinGoal(0.06) && SuperStructure.atPosition }
                     .andThen(Intake.scoreAlgae)
             )
+            .andThen(SuperStructure.smartGoTo(RobotState.Stow))
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
     // only y
