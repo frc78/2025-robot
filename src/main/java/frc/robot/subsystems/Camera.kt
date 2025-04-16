@@ -75,9 +75,8 @@ class Camera(val name: String, val transform: Transform3d) {
         val avgDist = totalDistance / validTargets.size
 
         currentStds = if (validTargets.size > 1) multiTagStds else singleTagStds
-
-        val outOfRange = validTargets.size == 1 && avgDist > 2
-        if (outOfRange) {
+        
+        if (validTargets.size == 1 && avgDist > 2 && !Robot.isDisabled) {
             currentStds = outOfRangeStds
             return
         }
