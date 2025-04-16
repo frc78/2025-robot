@@ -165,6 +165,7 @@ object Intake : SubsystemBase("intake") {
     val scoreAlgae by command {
         outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.5.seconds)
     }
+    val dropAlgae by command { outtakeAlgae { 0.1 }.withTimeout(0.1) }
 
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
