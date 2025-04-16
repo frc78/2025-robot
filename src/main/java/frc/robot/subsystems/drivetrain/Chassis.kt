@@ -28,6 +28,7 @@ import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
@@ -477,6 +478,24 @@ object Chassis :
                 hasPoseTarget = false
             }
 
+    private val pathConstraintZones =
+        listOf(
+            // Between approach point and final target, limit velocity to 0.5 meters per
+            // second.
+            // The other gains are arbitrarily high, since it likely doesn't matter what
+            // those values are
+            ConstraintsZone(1.0, 2.0, PathConstraints(0.5, 5.0, 10.0, 100.0, 12.0))
+        )
+    private val pathEventMarkers = listOf(EventMarker("atApproachPoint", 0.8))
+    private val pathConstraints =
+        PathConstraints(
+            4.metersPerSecond,
+            4.metersPerSecondPerSecond,
+            1.67.rotationsPerSecond,
+            3.rotationsPerSecondPerSecond,
+            12.volts,
+        )
+
     /**
      * Drives to a pose using pathplanner. The robot will always approach the target pose in the x
      * direction.
@@ -484,7 +503,11 @@ object Chassis :
      * @param approachBackward If true, the robot will approach the target pose in the -x direction.
      * @param pose The target pose to drive to.
      */
-    fun pathplanToPose(approachBackward: Boolean = true, pose: () -> Pose2d): Command = defer {
+    fun pathplanToPose(
+        approachBackward: Boolean = true,
+        approachDistance: Distance = 0.5.meters,
+        pose: () -> Pose2d,
+    ): Command = defer {
         val currentPose = state.Pose
         val targetPose = pose()
         // Approach the target from 0.5 meter back
@@ -493,8 +516,8 @@ object Chassis :
                 Transform2d(
                     // If approaching the target 'backward', approach from .5 meters in front of the
                     // robot, else, .5 meters behind the robot
-                    if (approachBackward) .5 else -0.5,
-                    0.0,
+                    if (approachBackward) approachDistance else -approachDistance,
+                    0.meters,
                     // If we're approaching the target 'backward', then the direction of travel
                     // should be 180º, i.e the back of the robot should be leading the path
                     if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
@@ -524,21 +547,9 @@ object Chassis :
                 /* waypoints = */ waypoints,
                 /* holonomicRotations = */ emptyList(),
                 /* pointTowardsZones = */ emptyList(),
-                /* constraintZones = */ listOf(
-                    // Between approach point and final target, limit velocity to 0.5 meters per
-                    // second.
-                    // The other gains are arbitrarily high, since it likely doesn't matter what
-                    // those values are
-                    ConstraintsZone(1.0, 2.0, PathConstraints(0.5, 5.0, 10.0, 100.0, 12.0))
-                ),
-                /* eventMarkers = */ listOf(EventMarker("atApproachPoint", 0.8)),
-                /* globalConstraints = */ PathConstraints(
-                    4.metersPerSecond,
-                    4.metersPerSecondPerSecond,
-                    1.67.rotationsPerSecond,
-                    3.rotationsPerSecondPerSecond,
-                    12.volts,
-                ),
+                /* constraintZones = */ pathConstraintZones,
+                /* eventMarkers = */ pathEventMarkers,
+                /* globalConstraints = */ pathConstraints,
                 /* idealStartingState = */ null, // Unused in on-the-fly paths. Docs say use null
                 /* goalEndState = */ GoalEndState(0.metersPerSecond, targetPose.rotation),
                 /* reversed = */ false,
@@ -564,7 +575,9 @@ object Chassis :
         pathplanToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch left")
     }
 
-    val driveToProcessor by command { pathplanToPose(false) { closestProcessor } }
+    val driveToProcessor by command {
+        pathplanToPose(false, approachDistance = .75.meters) { closestProcessor }
+    }
     val backAwayFromProcessor by command {
         driveToPose {
             closestProcessor.transformBy(Transform2d((-.5).meters, 0.meters, Rotation2d.kZero))
@@ -573,9 +586,16 @@ object Chassis :
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    val driveToBarge by command { pathplanToPose { closestBarge } }
-    val driveToBargeLeft by command { pathplanToPose { closestLeftBarge } }
-    val driveToBargeRight by command { pathplanToPose { closestRightBarge } }
+    private val bargeApproachDistance = 0.75.meters
+    val driveToBarge by command {
+        pathplanToPose(approachDistance = bargeApproachDistance) { closestBarge }
+    }
+    val driveToBargeLeft by command {
+        pathplanToPose(approachDistance = bargeApproachDistance) { closestLeftBarge }
+    }
+    val driveToBargeRight by command {
+        pathplanToPose(approachDistance = bargeApproachDistance) { closestRightBarge }
+    }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
