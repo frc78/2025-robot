@@ -6,7 +6,15 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.DeferredCommand
-import frc.robot.lib.*
+import frc.robot.lib.degrees
+import frc.robot.lib.inches
+import frc.robot.lib.andWait
+import frc.robot.lib.command
+import frc.robot.lib.meters
+import frc.robot.lib.radians
+import frc.robot.lib.Level
+import frc.robot.lib.FieldGeometry
+import frc.robot.lib.FieldPoses
 import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.subsystems.drivetrain.Chassis
 import kotlin.math.atan
@@ -174,8 +182,6 @@ object SuperStructure {
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
 
-    // TODO confirm accuracy on real field, tune as needed
-    // todo Introduce limitation so it won't extend past 18"
     private val ELEVATOR_LENGTH: Distance = 0.71.meters // 28.5.inches //0003407122.inches
     private val PIVOT_TO_CENTER: Distance = 9.5.inches
     private val CLAW_HORIZONTAL: Distance = 0.38.meters // 15.551181.inches
