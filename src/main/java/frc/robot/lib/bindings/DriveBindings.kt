@@ -8,6 +8,9 @@ import edu.wpi.first.wpilibj2.command.ConditionalCommand
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.scoreCoralWhenClose
+import frc.robot.lib.Level
+import frc.robot.lib.ScoreSelector.SelectedLevel
+import frc.robot.lib.andWait
 import frc.robot.lib.command
 import frc.robot.lib.velocityRot
 import frc.robot.lib.velocityX
@@ -108,7 +111,7 @@ private fun CommandXboxController.configureDriveSnappingLayout() {
     rightBumper().and(notLeftBumper).and(notA).and(notY).whileTrue(Chassis.driveToRightBranch)
 
     // both left and right bumper
-    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
+    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestAlgae)
 
     a().whileTrue(
         Chassis.snapAngleToCoralStation {
@@ -168,16 +171,20 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 private fun CommandXboxController.configureReefAlignments() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
-    val hasCoral = Trigger { Intake.hasBranchCoral }
-    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
 
     rightBumper()
         .and(notLeftBumper)
-        .and(hasCoral)
         .whileTrue(
             Chassis.driveToRightBranch
                 .alongWith(scoreCoralWhenClose)
                 .raceWith(LEDSubsystem.flashForSelectedLevel)
+                .andThen(
+                    Chassis.backAwayFromReef
+                        .andWait { Chassis.isWithinGoal(0.05) }
+                        .onlyIf { SelectedLevel == Level.L1 }
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStorage))
+                .onlyIf { Intake.hasBranchCoral }
         )
         .onFalse(
             ConditionalCommand(
@@ -190,11 +197,17 @@ private fun CommandXboxController.configureReefAlignments() {
 
     leftBumper()
         .and(notRightBumper)
-        .and(hasCoral)
         .whileTrue(
             Chassis.driveToLeftBranch
                 .alongWith(scoreCoralWhenClose)
                 .raceWith(LEDSubsystem.flashForSelectedLevel)
+                .andThen(
+                    Chassis.backAwayFromReef
+                        .until { Chassis.isWithinGoal(0.05) }
+                        .onlyIf { SelectedLevel == Level.L1 }
+                )
+                .andThen(SuperStructure.smartGoTo(RobotState.CoralStorage))
+                .onlyIf { Intake.hasBranchCoral }
         )
         .onFalse(
             ConditionalCommand(
@@ -207,9 +220,8 @@ private fun CommandXboxController.configureReefAlignments() {
 
     leftBumper()
         .and(rightBumper())
-        .and(hasNoCoral)
         .whileTrue(
-            Chassis.driveToClosestReef
+            Chassis.driveToClosestAlgae
                 .alongWith(
                     Commands.sequence(
                         Commands.waitUntil { Chassis.isWithinGoal(1.5) },
@@ -217,6 +229,7 @@ private fun CommandXboxController.configureReefAlignments() {
                     )
                 )
                 .raceWith(LEDSubsystem.flashForSelectedLevel)
+                .onlyIf { !Intake.hasBranchCoral }
         )
         .onFalse(SuperStructure.retractWithAlgae())
 }

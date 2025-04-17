@@ -46,8 +46,10 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.TunerConstants
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
+import frc.robot.lib.FieldPoses.REEF_TO_ROBOT_BACK_TRANSFORM
+import frc.robot.lib.FieldPoses.REEF_TO_ROBOT_FRONT_TRANSFORM
+import frc.robot.lib.FieldPoses.closestAlgae
 import frc.robot.lib.FieldPoses.closestBarge
-import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
 import frc.robot.lib.FieldPoses.closestLeftBarge
 import frc.robot.lib.FieldPoses.closestLeftBranch
@@ -55,6 +57,12 @@ import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
 import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.FieldPoses.closestRightBranch
+import frc.robot.lib.Level
+import frc.robot.lib.Level.L1
+import frc.robot.lib.Level.L2
+import frc.robot.lib.Level.L3
+import frc.robot.lib.Level.L4
+import frc.robot.lib.ScoreSelector.SelectedLevel
 import frc.robot.lib.SysIdSwerveTranslationTorqueCurrentFOC
 import frc.robot.lib.amps
 import frc.robot.lib.command
@@ -96,8 +104,11 @@ object Chassis :
     Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
-    private val closestReefPub = table.getStructTopic("closest_reef", Pose2d.struct).publish()
-    private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
+    private val closestAlgaePub = table.getStructTopic("closest_algae", Pose2d.struct).publish()
+    private val closestLeftBranchPub =
+        table.getStructTopic("closest_left_branch", Pose2d.struct).publish()
+    private val closestRightBranchPub =
+        table.getStructTopic("closest_right_branch", Pose2d.struct).publish()
     private val closestCoralStationPub =
         table.getStructTopic("closest_coral", Pose2d.struct).publish()
     private val closestProcessorPub =
@@ -397,8 +408,9 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
-        closestReefPub.set(closestReef)
-        closestBranchPub.set(closestBranch)
+        closestAlgaePub.set(closestAlgae)
+        closestLeftBranchPub.set(closestLeftBranch)
+        closestRightBranchPub.set(closestRightBranch)
         closestCoralStationPub.set(closestCoralStation)
         closestProcessorPub.set(closestProcessor)
 
@@ -409,13 +421,18 @@ object Chassis :
 
     /** Drives to a pose such that the coral is at x=0 */
     fun driveToPoseWithCoralOffset(pose: () -> Pose2d) = driveToPose {
-        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+        pose()
+            .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+            .transformBy(bestReefToBotTransform())
     }
 
     /** Drives to a pose such that the coral is at x=0 */
-    fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) = pathplanToPose {
-        pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
-    }
+    fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) =
+        pathplanToPose({ SelectedLevel != Level.L1 }) {
+            pose()
+                .transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
+                .transformBy(bestReefToBotTransform())
+        }
 
     var targetPose: Pose2d? = null
         private set
@@ -463,7 +480,7 @@ object Chassis :
                     val diff = robot.translation - target.translation
 
                     distanceFromPoseGoal = diff.norm
-                    val output = posePIDController.calculate(diff.norm)
+                    val output = posePIDController.calculate(diff.norm, 0.0)
 
                     val angle = diff.angle
                     val xSpeed = (output) * angle.cos
@@ -504,7 +521,7 @@ object Chassis :
      * @param pose The target pose to drive to.
      */
     fun pathplanToPose(
-        approachBackward: Boolean = true,
+        approachBackward: () -> Boolean = { true },
         approachDistance: Distance = 0.5.meters,
         pose: () -> Pose2d,
     ): Command = defer {
@@ -516,11 +533,11 @@ object Chassis :
                 Transform2d(
                     // If approaching the target 'backward', approach from .5 meters in front of the
                     // robot, else, .5 meters behind the robot
-                    if (approachBackward) approachDistance else -approachDistance,
+                    if (approachBackward()) approachDistance else -approachDistance,
                     0.meters,
                     // If we're approaching the target 'backward', then the direction of travel
                     // should be 180º, i.e the back of the robot should be leading the path
-                    if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                    if (approachBackward()) Rotation2d.k180deg else Rotation2d.kZero,
                 )
             )
         val waypoints =
@@ -535,9 +552,9 @@ object Chassis :
                     Transform2d(
                         0.0,
                         0.0,
-                        // Similar to approachPoint, lead with the front or back of robot as
-                        // necessary
-                        if (approachBackward) Rotation2d.k180deg else Rotation2d.kZero,
+                        // If we're approaching the target 'backward', then the direction of travel
+                        // should be 180º, i.e the back of the robot should be leading the path
+                        if (approachBackward()) Rotation2d.k180deg else Rotation2d.kZero,
                     )
                 ),
             )
@@ -567,6 +584,22 @@ object Chassis :
         }
     }
 
+    val driveToClosestAlgae by command { driveToPose { closestAlgae } }
+
+    /**
+     * Returns a transform from the reef/branch to the robot depending on which level we're scoring
+     * on and where the closest rotation point is. L1 and L2 can only score off the front, but L3
+     * and L4 are free to score off the front or back
+     */
+    private fun bestReefToBotTransform(): Transform2d {
+        return when (SelectedLevel) {
+            L1 -> REEF_TO_ROBOT_FRONT_TRANSFORM
+            L2,
+            L3,
+            L4 -> REEF_TO_ROBOT_BACK_TRANSFORM
+        }
+    }
+
     val driveToLeftBranch by command {
         pathplanToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
     }
@@ -576,17 +609,17 @@ object Chassis :
     }
 
     val driveToProcessor by command {
-        pathplanToPose(false, approachDistance = .75.meters) { closestProcessor }
+        pathplanToPose({ false }, approachDistance = .75.meters) { closestProcessor }
     }
     val backAwayFromProcessor by command {
-        driveToPose {
+        pathplanToPose(approachDistance = 0.meters) {
             closestProcessor.transformBy(Transform2d((-.5).meters, 0.meters, Rotation2d.kZero))
         }
     }
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    private val bargeApproachDistance = 0.75.meters
+    private val bargeApproachDistance = 0.5.meters
     val driveToBarge by command {
         pathplanToPose(approachDistance = bargeApproachDistance) { closestBarge }
     }
@@ -595,6 +628,12 @@ object Chassis :
     }
     val driveToBargeRight by command {
         pathplanToPose(approachDistance = bargeApproachDistance) { closestRightBarge }
+    }
+
+    val backAwayFromReef by command {
+        pathplanToPose(approachDistance = 0.meters) {
+            closestReef.transformBy(Transform2d(1.meters, 0.meters, Rotation2d.k180deg))
+        }
     }
 
     fun snapAngleToReef(
