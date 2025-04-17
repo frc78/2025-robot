@@ -172,7 +172,7 @@ object FieldPoses {
 
     //    private val PROCESSOR_TO_BOT = Transform2d(0.9.meters, 0.2.meters,
     // Rotation2d.fromDegrees(203.0)) // TODO need to test still
-    private val PROCESSOR_TO_BOT = Transform2d(0.5.meters, 0.0.meters, Rotation2d.k180deg)
+    private val PROCESSOR_TO_BOT = Transform2d(0.75.meters, 0.0.meters, Rotation2d.k180deg)
 
     private val PROCESSOR_POSES =
         intArrayOf(3, 16).map {
