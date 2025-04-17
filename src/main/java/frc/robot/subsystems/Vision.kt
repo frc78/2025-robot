@@ -11,6 +11,7 @@ import frc.robot.Robot
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.drivetrain.Chassis
+import org.photonvision.PhotonPoseEstimator
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
 import org.photonvision.simulation.VisionSystemSim
@@ -94,5 +95,9 @@ object Vision {
         cams.forEach { visionSim.addCamera(PhotonCameraSim(it.cam, camProps), it.transform) }
 
         Notifier { visionSim.update(Chassis.state.Pose) }.startPeriodic(0.020)
+    }
+
+    fun setMultitagFallbackStrategy(strategy: PhotonPoseEstimator.PoseStrategy) {
+        cams.forEach{it.estimator.setMultiTagFallbackStrategy(strategy)}
     }
 }

@@ -22,7 +22,7 @@ class Camera(val name: String, val transform: Transform3d) {
     val robotToCamera2d =
         Transform2d(transform.translation.toTranslation2d(), transform.rotation.toRotation2d())
 
-    private val estimator =
+    val estimator =
         PhotonPoseEstimator(
             Robot.reefOnlyField,
             PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
@@ -75,7 +75,7 @@ class Camera(val name: String, val transform: Transform3d) {
         val avgDist = totalDistance / validTargets.size
 
         currentStds = if (validTargets.size > 1) multiTagStds else singleTagStds
-        
+
         if (validTargets.size == 1 && avgDist > 2 && !Robot.isDisabled) {
             currentStds = outOfRangeStds
             return

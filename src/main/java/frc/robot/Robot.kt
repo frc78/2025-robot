@@ -9,6 +9,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.estimator.PoseEstimator
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
@@ -49,6 +50,7 @@ import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
+import org.photonvision.PhotonPoseEstimator
 
 // Might have to be manually set when testing on SkibJr
 val IS_COMP = "COMP" == System.getenv("frc_bot")
@@ -245,5 +247,13 @@ object Robot : LoggedRobot() {
     override fun autonomousInit() {
         CommandScheduler.getInstance().cancelAll()
         autoChooser.selected?.let { CommandScheduler.getInstance().schedule(it) }
+    }
+
+    override fun disabledInit() {
+        Vision.setMultitagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY)
+    }
+
+    override fun disabledExit() {
+        Vision.setMultitagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.PNP_DISTANCE_TRIG_SOLVE)
     }
 }
