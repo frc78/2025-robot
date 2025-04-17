@@ -1,5 +1,7 @@
 package frc.robot.auto
 
+import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Commands.runOnce
@@ -107,8 +109,8 @@ object Autos {
             // Score L4
             goToLevelAndScore(L4),
             SuperStructure.smartGoTo(CoralStorage), // Added for safety, lets see if it works!
-            getAlgaeAndScore(FieldPoses.ReefFace.GH),
-            getHighAlgaeAndScore(FieldPoses.ReefFace.GH, true),
+            AutoBuilder.followPath(PathPlannerPath.fromPathFile("JITBKiller")),
+            getAlgaeAndScore(FieldPoses.ReefFace.GH, true),
             getAlgaeAndScore(FieldPoses.ReefFace.EF, true),
         )
     }
