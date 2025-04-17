@@ -576,7 +576,7 @@ object Chassis :
     }
 
     val driveToProcessor by command {
-        pathplanToPose(false, approachDistance = .75.meters) { closestProcessor }
+        pathplanToPose(false, approachDistance = 1.0.meters) { closestProcessor }
     }
     val backAwayFromProcessor by command {
         driveToPose {

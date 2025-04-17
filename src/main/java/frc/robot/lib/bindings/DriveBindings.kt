@@ -232,7 +232,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                 Commands.waitUntil { Chassis.isWithinGoal(0.06) && SuperStructure.atPosition }
                     .andThen(Intake.scoreAlgae)
             )
-            .andThen(SuperStructure.smartGoTo(RobotState.Stow))
+            .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
             .onlyIf { Intake.detectAlgaeByCurrent() }
     }
     // only y
