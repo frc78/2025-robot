@@ -9,7 +9,6 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.math.estimator.PoseEstimator
 import edu.wpi.first.wpilibj.DataLogManager
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
@@ -158,6 +157,8 @@ object Robot : LoggedRobot() {
         SendableChooser<Command>().apply {
             addOption("Beast Mode 😎", Autos.SideCoralFast)
             addOption("Ball Up Top", Autos.CenterAlgaeAuto)
+            addOption("OP 9 Coral Optimized", Autos.OPSideCoral)
+            setDefaultOption("Beast Mode Default", Autos.SideCoralFast)
             SmartDashboard.putData("Auto Mode", this)
         }
 

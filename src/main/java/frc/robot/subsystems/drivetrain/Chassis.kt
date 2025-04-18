@@ -568,11 +568,13 @@ object Chassis :
     }
 
     val driveToLeftBranch by command {
-        pathplanToPoseWithCoralOffset { closestLeftBranch }.withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestLeftBranch } // use drive with coral offset!!!
+            .withName("Drive to branch left") // use pathplanToPose for pathplanner
     }
 
     val driveToRightBranch by command {
-        pathplanToPoseWithCoralOffset { closestRightBranch }.withName("Drive to branch left")
+        driveToPoseWithCoralOffset { closestRightBranch } // use drive with coral offset!!!
+            .withName("Drive to branch left") // use pathplanToPose for pathplanner
     }
 
     val driveToProcessor by command {

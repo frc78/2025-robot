@@ -65,6 +65,34 @@ object Autos {
         )
     }
 
+    @Suppress("SpreadOperator")
+    val OPSideCoral by command {
+        Commands.sequence(
+            Intake.holdCoral.alongWith(Wrist.goTo(CoralStorage)).alongWith(Pivot.goTo(L4)),
+            *listOf(
+                    listOf(Branch.F, Branch.I),
+                    listOf(Branch.C, Branch.L),
+                    listOf(Branch.D, Branch.K),
+                    listOf(Branch.E, Branch.J),
+                )
+                .mapIndexed { index, branches ->
+                    Commands.sequence(
+                        (if (index == 3)
+                            Chassis.pathplanToPose {
+                                Chassis.state.Pose.nearest(branches.map { it.pose })
+                            }
+                        else
+                            Chassis.driveToPoseWithCoralOffset({
+                                    Chassis.state.Pose.nearest(branches.map { it.pose })
+                                })
+                    ).withDeadline(scoreCoralWhenClose),
+                        goToCoralStationAndGetCoral.withTimeout(5.0),
+                    )
+                }
+                .toTypedArray(),
+        )
+    }
+
     val CenterAlgaeAuto by command {
         Commands.sequence(
             // Drive to right branch, but it's on the far side of the reef so it's swapped
@@ -99,7 +127,7 @@ object Autos {
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.pathplanToPose { face.pose }
+        Chassis.driveToPose { face.pose } // changed to not pathplan to save time
             .withDeadline(
                 // Get algae
                 Commands.waitUntil { Chassis.isWithinGoal(1.5) }

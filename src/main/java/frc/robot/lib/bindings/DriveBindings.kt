@@ -258,7 +258,9 @@ private fun CommandXboxController.configureBargeAlignments() {
     y().onFalse(
         ConditionalCommand(
             SuperStructure.smartGoTo(RobotState.AlgaeStorage),
-            SuperStructure.smartGoTo(RobotState.Stow),
+            SuperStructure.smartGoTo(
+                RobotState.NewCoralStation
+            ), // spencer changed from stow thurs afternoon to avoid catching on barge
         ) {
             Intake.detectAlgaeByCurrent()
         }

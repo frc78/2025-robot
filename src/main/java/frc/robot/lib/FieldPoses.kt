@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.DriverStation.Alliance.Blue
 import edu.wpi.first.wpilibj.DriverStation.Alliance.Red
 import frc.robot.Robot
@@ -71,13 +70,13 @@ object FieldPoses {
 
     private val allianceReefPoses
         get() =
-            if (Robot.alliance == Alliance.Blue) {
+            if (alliance == Blue) {
                 BLUE_REEF_POSES
             } else RED_REEF_POSES
 
     private val branchPoses
         get() =
-            if (Robot.alliance == Alliance.Blue) {
+            if (alliance == Blue) {
                 BLUE_BRANCH_POSES
             } else RED_BRANCH_POSES
 

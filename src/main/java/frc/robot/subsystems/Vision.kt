@@ -98,6 +98,6 @@ object Vision {
     }
 
     fun setMultitagFallbackStrategy(strategy: PhotonPoseEstimator.PoseStrategy) {
-        cams.forEach{it.estimator.setMultiTagFallbackStrategy(strategy)}
+        cams.forEach { it.estimator.setMultiTagFallbackStrategy(strategy) }
     }
 }
