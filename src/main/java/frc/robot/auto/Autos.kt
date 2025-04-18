@@ -7,6 +7,7 @@ import frc.robot.commands.scoreCoralWhenClose
 import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
+import frc.robot.lib.inches
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -108,7 +109,7 @@ object Autos {
             // Score L4
             goToLevelAndScore(L4),
             SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
-//            WaitUntilCommand { SuperStructure.atPosition }.withTimeout(0.7),
+            WaitUntilCommand { Elevator.position < 15.inches }.withTimeout(0.5),
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
@@ -119,11 +120,11 @@ object Autos {
     private val scoreAlgaeInBarge by command {
         // Drive to barge
         Chassis.autoModeDriveToBarge
-            .alongWith(
+            .withDeadline(
                 Commands.waitUntil { Chassis.isWithinGoal(1.5) }
                     .andThen(SuperStructure.smartGoTo(AlgaeNet))
+                    .andThen(SuperStructure.autoScoreAlgaeInNet)
             )
-            .andThen(SuperStructure.autoScoreAlgaeInNet)
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =

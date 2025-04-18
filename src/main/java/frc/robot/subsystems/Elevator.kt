@@ -198,6 +198,7 @@ object Elevator : SubsystemBase("elevator") {
 
     override fun periodic() {
         Logger.recordOutput("elevator/position", position.inches)
+        Logger.recordOutput("elevator/setpoint", setpoint.inches)
         Logger.recordOutput("elevator/stowed", isStowed)
         Logger.recordOutput("elevator/at_position", atPosition)
         leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations()))
