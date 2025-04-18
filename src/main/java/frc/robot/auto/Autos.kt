@@ -108,7 +108,7 @@ object Autos {
             // Score L4
             goToLevelAndScore(L4),
             SuperStructure.smartGoTo(Stow), // Added for safety, lets see if it works!
-            WaitUntilCommand { SuperStructure.atPosition }.withTimeout(0.7),
+//            WaitUntilCommand { SuperStructure.atPosition }.withTimeout(0.7),
             getAlgaeAndScore(FieldPoses.ReefFace.GH),
             getHighAlgaeAndScore(FieldPoses.ReefFace.IJ),
             // Pathfind to EF since it's around the reef
@@ -118,7 +118,7 @@ object Autos {
 
     private val scoreAlgaeInBarge by command {
         // Drive to barge
-        Chassis.driveToBargeRight
+        Chassis.autoModeDriveToBarge
             .alongWith(
                 Commands.waitUntil { Chassis.isWithinGoal(1.5) }
                     .andThen(SuperStructure.smartGoTo(AlgaeNet))
@@ -136,11 +136,11 @@ object Autos {
             .andThen(scoreAlgaeInBarge)
 
     private fun getHighAlgaeAndScore(face: FieldPoses.ReefFace) =
-        Chassis.pathplanToPose { face.pose }
+        Chassis.driveToPose { face.pose }
             .withDeadline(
                 // Get algae
                 Commands.sequence(
-                    Commands.waitUntil { Chassis.isWithinGoal(0.3) },
+                    Commands.waitUntil { Chassis.isWithinGoal(0.4) },
                     Commands.sequence(
                         SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
                             .withDeadline(Intake.intakeAlgaeThenHold())
