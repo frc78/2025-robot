@@ -1,5 +1,7 @@
 package frc.robot.auto
 
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand
@@ -8,6 +10,7 @@ import frc.robot.lib.FieldPoses
 import frc.robot.lib.FieldPoses.Branch
 import frc.robot.lib.command
 import frc.robot.lib.inches
+import frc.robot.lib.meters
 import frc.robot.subsystems.Elevator
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Pivot
@@ -79,9 +82,8 @@ object Autos {
                 .mapIndexed { index, branches ->
                     Commands.sequence(
                         (if (index == 3)
-                            Chassis.pathplanToPose {
-                                Chassis.state.Pose.nearest(branches.map { it.pose })
-                            }
+                            Chassis.pathplanToPose(approachDistance = 0.1.meters) {
+                                Chassis.state.Pose.nearest(branches.map { it.pose }).transformBy(Transform2d(0.0.inches, -Intake.coralLocation, Rotation2d.kZero)) }
                         else
                             Chassis.driveToPoseWithCoralOffset({
                                     Chassis.state.Pose.nearest(branches.map { it.pose })

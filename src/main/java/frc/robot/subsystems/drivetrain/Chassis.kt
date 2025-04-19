@@ -588,7 +588,7 @@ object Chassis :
 
     val driveToClosestCenterCoralStation by command { driveToPose { closestCoralStation } }
 
-    private val bargeApproachDistance = 0.75.meters
+    private val bargeApproachDistance = 1.75.meters
     val driveToBarge by command {
         pathplanToPose(approachDistance = bargeApproachDistance) { closestBarge }
     }
