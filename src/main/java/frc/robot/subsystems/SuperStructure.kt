@@ -91,20 +91,12 @@ object SuperStructure {
     fun goToScoreCoral(state: RobotState): Command =
         when (state) {
             RobotState.L2 ->
-                // Move wrist and elevator first, wait for wrist before moving pivot
-//                Pivot.goTo(state)
-//                    .alongWith(Wrist.goTo(state))
-//                    .andWait { Pivot.angle > 75.degrees }
-//                    .andThen(Elevator.goTo(state))
+                // Move elevator first, then wait for wrist before moving pivot
                 Elevator.goTo(state)
                     .andThen(Wrist.goTo(state).andWait { Wrist.angle < 140.degrees })
                     .andThen(Pivot.goTo(state))
 
             RobotState.L3 ->
-//                Pivot.goTo(state)
-//                    .alongWith(Wrist.goTo(state))
-//                    .andWait { Pivot.angle > 75.degrees }
-//                    .andThen(Elevator.goTo(state))
                 Commands.parallel(Wrist.goTo(state), Elevator.goTo(state), Pivot.goTo(state))
 
             RobotState.L4 ->

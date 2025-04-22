@@ -84,8 +84,8 @@ object Pivot : SubsystemBase("pivot") {
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     private val COMP_BOT_FEEDBACK_CONFIGS =
-        FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO) // USE EXTERNAL ENCODER
-//        FeedbackConfigs().withRotorToSensorRatio(GEAR_RATIO) // NO EXTERNAL ENCODER
+        FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
+
     private val ALPHA_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withSensorToMechanismRatio(GEAR_RATIO)
 

@@ -82,13 +82,21 @@ object Autos {
                 .mapIndexed { index, branches ->
                     Commands.sequence(
                         (if (index == 3)
-                            Chassis.pathplanToPose(approachDistance = 0.1.meters) {
-                                Chassis.state.Pose.nearest(branches.map { it.pose }).transformBy(Transform2d(0.0.inches, -Intake.coralLocation, Rotation2d.kZero)) }
-                        else
-                            Chassis.driveToPoseWithCoralOffset({
+                                Chassis.pathplanToPose(approachDistance = 0.1.meters) {
                                     Chassis.state.Pose.nearest(branches.map { it.pose })
-                                })
-                    ).withDeadline(scoreCoralWhenClose),
+                                        .transformBy(
+                                            Transform2d(
+                                                0.0.inches,
+                                                -Intake.coralLocation,
+                                                Rotation2d.kZero,
+                                            )
+                                        )
+                                }
+                            else
+                                Chassis.driveToPoseWithCoralOffset({
+                                    Chassis.state.Pose.nearest(branches.map { it.pose })
+                                }))
+                            .withDeadline(scoreCoralWhenClose),
                         goToCoralStationAndGetCoral.withTimeout(5.0),
                     )
                 }
@@ -121,12 +129,11 @@ object Autos {
 
     private val scoreAlgaeInBarge by command {
         // Drive to barge
-        Chassis.autoModeDriveToBarge
-            .withDeadline(
-                Commands.waitUntil { Chassis.isWithinGoal(1.5) }
-                    .andThen(SuperStructure.smartGoTo(AlgaeNet))
-                    .andThen(SuperStructure.autoScoreAlgaeInNet)
-            )
+        Chassis.autoModeDriveToBarge.withDeadline(
+            Commands.waitUntil { Chassis.isWithinGoal(1.5) }
+                .andThen(SuperStructure.smartGoTo(AlgaeNet))
+                .andThen(SuperStructure.autoScoreAlgaeInNet)
+        )
     }
 
     private fun getAlgaeAndScore(face: FieldPoses.ReefFace) =

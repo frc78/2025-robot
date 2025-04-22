@@ -599,9 +599,7 @@ object Chassis :
         pathplanToPose(approachDistance = bargeApproachDistance) { closestRightBarge }
     }
 
-    val autoModeDriveToBarge by command {
-        driveToPose { closestRightBarge }
-    }
+    val autoModeDriveToBarge by command { driveToPose { closestRightBarge } }
 
     fun snapAngleToReef(
         block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
