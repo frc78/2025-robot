@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.IS_COMP
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.command
 import frc.robot.lib.degrees
@@ -38,7 +37,6 @@ object Wrist : SubsystemBase("wrist") {
 
     var lowerLimit = 11.25.degrees
     private var upperLimit = 197.degrees
-    private const val ALPHA_GEAR_RATIO = (72 * 72 * 48) / (14 * 24 * 16.0)
     private const val COMP_GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 24.0)
 
     private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
@@ -53,10 +51,9 @@ object Wrist : SubsystemBase("wrist") {
 
     private val standardConfig =
         TalonFXConfiguration().apply {
-            Feedback.SensorToMechanismRatio = if (IS_COMP) COMP_GEAR_RATIO else ALPHA_GEAR_RATIO
+            Feedback.SensorToMechanismRatio = COMP_GEAR_RATIO
 
-            MotorOutput =
-                if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
+            MotorOutput = COMP_BOT_MOTOR_OUTPUT_CONFIG
 
             SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
                 .withReverseSoftLimitEnable(true)

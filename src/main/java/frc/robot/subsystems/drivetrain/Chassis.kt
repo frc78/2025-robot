@@ -36,16 +36,17 @@ import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.IS_COMP
 import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
-import frc.robot.generated.TunerConstants
-import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain
+import frc.robot.generated.CompBotTunerConstants.BackLeft
+import frc.robot.generated.CompBotTunerConstants.BackRight
+import frc.robot.generated.CompBotTunerConstants.DrivetrainConstants
+import frc.robot.generated.CompBotTunerConstants.FrontLeft
+import frc.robot.generated.CompBotTunerConstants.FrontRight
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
@@ -72,19 +73,9 @@ import frc.robot.lib.seconds
 import frc.robot.lib.volts
 import frc.robot.lib.voltsPerSecond
 import frc.robot.subsystems.Intake
-import java.io.IOException
-import java.text.ParseException
 import kotlin.math.PI
 import kotlin.math.hypot
 import org.littletonrobotics.junction.Logger
-
-private val drivetrainConstants =
-    if (IS_COMP) CompBotTunerConstants.DrivetrainConstants else TunerConstants.DrivetrainConstants
-private val frontLeft = if (IS_COMP) CompBotTunerConstants.FrontLeft else TunerConstants.FrontLeft
-private val frontRight =
-    if (IS_COMP) CompBotTunerConstants.FrontRight else TunerConstants.FrontRight
-private val backLeft = if (IS_COMP) CompBotTunerConstants.BackLeft else TunerConstants.BackLeft
-private val backRight = if (IS_COMP) CompBotTunerConstants.BackRight else TunerConstants.BackRight
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements Subsystem so it can easily
@@ -92,7 +83,7 @@ private val backRight = if (IS_COMP) CompBotTunerConstants.BackRight else TunerC
  */
 @Suppress("UnusedPrivateProperty", "TooManyFunctions")
 object Chassis :
-    TunerSwerveDrivetrain(drivetrainConstants, 0.0, frontLeft, frontRight, backLeft, backRight),
+    CompBotTunerConstants.CompBotTunerSwerveDrivetrain(DrivetrainConstants, 0.0, FrontLeft, FrontRight, BackLeft, BackRight),
     Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
@@ -110,9 +101,6 @@ object Chassis :
         table.getStructTopic("closest_barge_right", Pose2d.struct).publish()
 
     init {
-        // This would normally be called by SubsystemBase, but since we cannot extend that class,
-        // we call manually
-        CommandScheduler.getInstance().registerSubsystem(this)
         if (Utils.isSimulation()) {
             startSimThread()
         }
@@ -194,19 +182,21 @@ object Chassis :
                         50.amps,
                         1,
                     ),
-                    Translation2d(frontLeft.LocationX, frontLeft.LocationY),
-                    Translation2d(frontRight.LocationX, frontRight.LocationY),
-                    Translation2d(backLeft.LocationX, backLeft.LocationY),
-                    Translation2d(backRight.LocationX, backRight.LocationY),
+                    Translation2d(FrontLeft.LocationX, FrontLeft.LocationY),
+                    Translation2d(FrontRight.LocationX, FrontRight.LocationY),
+                    Translation2d(BackLeft.LocationX, BackLeft.LocationY),
+                    Translation2d(BackRight.LocationX, BackRight.LocationY),
                 )
             AutoBuilder.configure(
                 /* poseSupplier = */ { state.Pose },
                 /* resetPose = */ this::resetPose,
                 /* robotRelativeSpeedsSupplier = */ { state.Speeds },
-                /* output = */ { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
+                /* output = */
+                { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
                     setControl(pathApplyRobotSpeeds.withSpeeds(speeds))
                 },
-                /* controller = */ PPHolonomicDriveController(
+                /* controller = */
+                PPHolonomicDriveController(
                     /* translationConstants = */ PIDConstants(5.0, 0.0, 0.1),
                     /* rotationConstants = */ PIDConstants(10.0, 0.0, 0.0),
                 ),
@@ -214,12 +204,7 @@ object Chassis :
                 /* shouldFlipPath = */ { Robot.alliance == Alliance.Red },
                 /* ...driveRequirements = */ this, // Subsystem for requirements
             )
-        } catch (ex: IOException) {
-            DriverStation.reportError(
-                "Failed to load PathPlanner config and configure AutoBuilder",
-                ex.stackTrace,
-            )
-        } catch (ex: ParseException) {
+        } catch (ex: Exception) {
             DriverStation.reportError(
                 "Failed to load PathPlanner config and configure AutoBuilder",
                 ex.stackTrace,
@@ -229,12 +214,12 @@ object Chassis :
 
     override fun addVisionMeasurement(
         visionRobotPoseMeters: Pose2d,
-        timestampSeconds: Double,
+        fpgaTimestampSeconds: Double,
         visionMeasurementStdDevs: Matrix<N3, N1>,
     ) {
         super.addVisionMeasurement(
             visionRobotPoseMeters,
-            Utils.fpgaToCurrentTime(timestampSeconds),
+            Utils.fpgaToCurrentTime(fpgaTimestampSeconds),
             visionMeasurementStdDevs,
         )
     }
@@ -245,10 +230,10 @@ object Chassis :
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
                 5.0.volts,
-                2.seconds,
-            ) // Use default timeout (10 s)
-            // Log state with SignalLogger class
+                2.seconds, // Use default timeout (10 s)
+            )
             { state: SysIdRoutineLog.State ->
+                // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
             Mechanism(
@@ -264,10 +249,10 @@ object Chassis :
             SysIdRoutine.Config(
                 6.voltsPerSecond, // Use default ramp rate (1 A/s)
                 10.0.volts,
-                4.seconds,
-            ) // Use default timeout (10 s)
-            // Log state with SignalLogger class
+                4.seconds, // Use default timeout (10 s)
+            )
             { state: SysIdRoutineLog.State ->
+                // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
             Mechanism(
@@ -287,10 +272,10 @@ object Chassis :
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
                 7.0.volts,
-                null,
-            ) // Use default timeout (10 s)
-            // Log state with SignalLogger class
+                null // Use default timeout (10 s)
+            )
             { state: SysIdRoutineLog.State ->
+                // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdSteer_State", state.toString())
             },
             Mechanism(
@@ -312,10 +297,10 @@ object Chassis :
                 /* This is in radians per second², but SysId only supports "volts per second" */
                 (PI / 6).voltsPerSecond,
                 PI.volts,
-                null,
-            ) // Use default timeout (10 s)
-            // Log state with SignalLogger class
+                null, // Use default timeout (10 s)
+            )
             { state: SysIdRoutineLog.State ->
+                // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdRotation_State", state.toString())
             },
             Mechanism(
@@ -339,11 +324,11 @@ object Chassis :
      * @param requestSupplier Function returning the request to apply
      * @return Command to run
      */
-    private fun applyRequest(requestSupplier: () -> SwerveRequest): Command {
-        return run { setControl(requestSupplier()) }
-    }
+    private fun applyRequest(requestSupplier: () -> SwerveRequest) = this.run { setControl(requestSupplier()) }
 
-    val zeroHeading: Command = Commands.runOnce({ resetRotation(Chassis.operatorForwardDirection) })
+    val zeroHeading by command {
+        Commands.runOnce({ resetRotation(Chassis.operatorForwardDirection) })
+    }
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine specified by
@@ -412,7 +397,7 @@ object Chassis :
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }
 
-    /** Drives to a pose such that the coral is at x=0 */
+    /** Pathplan to a pose such that the coral is at x=0 */
     fun pathplanToPoseWithCoralOffset(pose: () -> Pose2d) = pathplanToPose {
         pose().transformBy(Transform2d(0.inches, -Intake.coralLocation, Rotation2d.kZero))
     }

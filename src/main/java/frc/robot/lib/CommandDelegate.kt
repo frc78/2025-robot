@@ -1,5 +1,6 @@
 package frc.robot.lib
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -15,19 +16,25 @@ import kotlin.reflect.KProperty
  * factory function as a normal function, expecting it to do something to the mechanism.
  *
  * Since commands are more akin to properties of a subsystem, it makes sense to make them a
- * property, however they still need to be created each time they're accessed. This delegate allows
+ * property. However, they still need to be created each time they're accessed. This delegate allows
  * for that.
  *
  * While it is not necessary to use this delegate, it is highly recommended ot avoid common pitfalls
  * and make reviewing code easier.
  *
- * To use this delegate, simply declare a command like so:
+ * To use this delegate, declare a command like so:
  *
  * val subsystemCommand by command { runOnce { /* code */ } }
  */
 class CommandDelegate(private val command: () -> Command) : ReadOnlyProperty<Any?, Command> {
     override fun getValue(thisRef: Any?, property: KProperty<*>): Command {
-        return command()
+        val command = command()
+        // Set the name of the command to the property name if it has a default name
+        if (command.name == command.javaClass.simpleName.substringAfter('.')) {
+            command.name = property.name
+        }
+        SmartDashboard.putData(command)
+        return command
     }
 }
 

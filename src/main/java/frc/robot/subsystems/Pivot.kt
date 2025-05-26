@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.IS_COMP
 import frc.robot.lib.command
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
@@ -101,10 +100,9 @@ object Pivot : SubsystemBase("pivot") {
                         .withForwardSoftLimitThreshold(UPPER_LIMIT)
                         .withReverseSoftLimitThreshold(LOWER_LIMIT)
 
-                    Feedback =
-                        if (IS_COMP) COMP_BOT_FEEDBACK_CONFIGS else ALPHA_BOT_FEEDBACK_CONFIGS
+                    Feedback = COMP_BOT_FEEDBACK_CONFIGS
                     // Set feedforward and feedback gains
-                    Slot0 = if (IS_COMP) COMP_BOT_ELEVATOR_DOWN_GAINS else ALPHA_BOT_SLOT0_CONFIGS
+                    Slot0 = COMP_BOT_ELEVATOR_DOWN_GAINS
                     Slot1 = COMP_BOT_ELEVATOR_UP_GAINS
                     MotionMagic.MotionMagicCruiseVelocity = .25
                     MotionMagic.MotionMagicAcceleration = 1.0 // .5

@@ -51,9 +51,6 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.photonvision.PhotonPoseEstimator
 
-// Might have to be manually set when testing on SkibJr
-val IS_COMP = "COMP" == System.getenv("frc_bot")
-
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded)
@@ -73,7 +70,6 @@ object Robot : LoggedRobot() {
             WPILibVersion.Version,
         )
         DriverStation.silenceJoystickConnectionWarning(true)
-        Logger.recordMetadata("IS_COMP", "$IS_COMP")
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kRev)

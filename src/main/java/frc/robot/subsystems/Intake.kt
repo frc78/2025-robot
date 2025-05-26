@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.IS_COMP
 import frc.robot.lib.amps
 import frc.robot.lib.centimeters
 import frc.robot.lib.command
@@ -58,8 +57,6 @@ object Intake : SubsystemBase("intake") {
         (-25).amps // Current spike threshold for detecting when we have an algae
     private var algaeSpikeStartTime = -1.0
 
-    private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
-        MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
     private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
@@ -69,7 +66,7 @@ object Intake : SubsystemBase("intake") {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
                     MotorOutput =
-                        if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
+                        COMP_BOT_MOTOR_OUTPUT_CONFIG
                 }
             )
         }

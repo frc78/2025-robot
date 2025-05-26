@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.IS_COMP
 import frc.robot.lib.command
 import frc.robot.lib.inches
 import frc.robot.lib.kilograms
@@ -71,7 +70,7 @@ object Elevator : SubsystemBase("elevator") {
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
-    val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
+    val MAX_HEIGHT = 54.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -89,7 +88,7 @@ object Elevator : SubsystemBase("elevator") {
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
-                    Slot0 = if (IS_COMP) COMP_BOT_CONFIGS else ALPHA_BOT_CONFIGS
+                    Slot0 =COMP_BOT_CONFIGS
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
