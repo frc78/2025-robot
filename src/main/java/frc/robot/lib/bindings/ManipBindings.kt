@@ -89,7 +89,7 @@ private fun CommandXboxController.configureManipButtonLayout() {
 
     rightTrigger(0.55)
         .onTrue(
-            Intake.outtakeCoral
+            Intake.manualOuttakeCoral
                 .withDeadline(
                     // Wait until 0.2 seconds have passed and the trigger is released
                     Commands.waitSeconds(0.2)

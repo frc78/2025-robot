@@ -157,6 +157,10 @@ object Intake : SubsystemBase("intake") {
         startEnd({ leader.set(-0.5) }, { leader.set(0.0) }).withName("outtakeCoral")
     }
 
+    val manualOuttakeCoral by command {
+        startEnd({ leader.set(-0.8) }, { leader.set(0.0) }).withName("outtakeCoral")
+    }
+
     private fun outtakeAlgae(speed: () -> Double) =
         startEnd({ leader.set(speed()) }, { leader.set(0.0) }).withName("outtakeAlgae")
 
