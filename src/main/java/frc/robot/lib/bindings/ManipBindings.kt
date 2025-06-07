@@ -130,19 +130,22 @@ private fun CommandXboxController.configureManipButtonLayout() {
 }
 
 private fun CommandXboxController.configManipButtonLayoutAlgae() {
+    // Manual pivot adjustment in case intake alignment is bad
+    povUp().whileTrue(Pivot.moveUp)
+    povDown().whileTrue(Pivot.moveDown)
     // Algae Stuff
-    povUp()
-        .onTrue(
-            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-                .andThen(SuperStructure.retractWithAlgae())
-        )
-    povDown()
-        .onTrue(
-            SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
-                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
-                .andThen(SuperStructure.retractWithAlgae())
-        )
+//    povUp()
+//        .onTrue(
+//            SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
+//                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+//                .andThen(SuperStructure.retractWithAlgae())
+//        )
+//    povDown()
+//        .onTrue(
+//            SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
+//                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+//                .andThen(SuperStructure.retractWithAlgae())
+//        )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
     povLeft().onTrue(SuperStructure.smartGoTo(RobotState.Processor))
     leftBumper()
