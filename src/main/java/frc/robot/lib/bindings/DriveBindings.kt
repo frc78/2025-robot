@@ -161,6 +161,11 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
             .alongWith(Intake.overIntakeCoralThenHold)
     )
 
+    // Adding this to the automatic sequencing layout per Eli's request at Battlecry
+    x().whileTrue(
+        Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }
+    )
+
     configureReefAlignments()
     configureBargeAlignments()
 }
