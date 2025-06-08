@@ -1,7 +1,6 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.configs.CANrangeConfiguration
-import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
@@ -50,23 +49,20 @@ object Intake : SubsystemBase("intake") {
     private val canRangeOffset
         get() = canRangeOffsetEntry.getDouble(19.0).centimeters
 
-    private val CORAL_CURRENT_THRESHOLD =
-        15.amps // Current spike threshold for detecting when we have a coral
-
-    private val ALGAE_CURRENT_THRESHOLD =
-        (-25).amps // Current spike threshold for detecting when we have an algae
+    /** Current spike threshold for detecting when we have a coral */
+    private val CORAL_CURRENT_THRESHOLD = 15.amps
+    /** Current spike threshold for detecting when we have an algae */
+    private val ALGAE_CURRENT_THRESHOLD = (-25).amps
     private var algaeSpikeStartTime = -1.0
 
-    private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
-        MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
-                    MotorOutput =
-                        COMP_BOT_MOTOR_OUTPUT_CONFIG
+                    MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
+                    OpenLoopRamps.DutyCycleOpenLoopRampPeriod = 1.0
                 }
             )
         }
@@ -94,13 +90,13 @@ object Intake : SubsystemBase("intake") {
      */
     fun hasCoralByCurrent(): Boolean {
         // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) &&
+        return (torqueCurrent >= CORAL_CURRENT_THRESHOLD) &&
             coralDetectedDebounce.calculate(hasBranchCoral)
     }
 
     fun detectAlgaeByCurrent(): Boolean {
         // NOTE: Algae intake current is negative
-        val thresholdMet: Boolean = leader.torqueCurrent.value <= ALGAE_CURRENT_THRESHOLD
+        val thresholdMet = torqueCurrent <= ALGAE_CURRENT_THRESHOLD
         val currentTime = Timer.getTimestamp() // gets clock time in seconds
 
         if (algaeSpikeStartTime != -1.0) {
@@ -129,10 +125,6 @@ object Intake : SubsystemBase("intake") {
                 return 0.0.centimeters
             }
 
-            /* The CANrange is mounted looking from +X to -X, so the coral position increases as it
-            goes toward -X The offset is the value that puts the coral at 0 when it is in the middle of the intake.
-            Because the axis are inverse from each other (-X for the CANrange goes in the same direction as +X for
-            the robot), the adjusted values must be negated in order to sync the two coordinate systems */
             return canRange.distance.value - canRangeOffset
         }
 
@@ -155,7 +147,7 @@ object Intake : SubsystemBase("intake") {
     }
 
     private fun outtakeAlgae(speed: () -> Double) =
-        startEnd({ leader.set(speed()) }, { leader.set(0.0) }).withName("outtakeAlgae")
+        startEnd({ leader.set(speed()) }, { leader.set(0.0) })
 
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
@@ -166,7 +158,6 @@ object Intake : SubsystemBase("intake") {
 
     private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
 
-    // TODO find optimal intake and hold speeds experimentally
     fun intakeCoralThenHold(): Command =
         startEnd({ leader.set(0.7) }, { leader.set(0.07) })
             .until { hasCoralByCurrent() }
@@ -175,7 +166,7 @@ object Intake : SubsystemBase("intake") {
     val overIntakeCoralThenHold by command {
         Commands.sequence(
             intakeCoral,
-            Commands.waitUntil { Intake.hasCoralByCurrent() },
+            Commands.waitUntil { hasCoralByCurrent() },
             Commands.waitSeconds(0.2),
             holdCoral,
         )

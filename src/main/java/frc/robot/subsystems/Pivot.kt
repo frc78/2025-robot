@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.command
 import frc.robot.lib.degrees
@@ -44,18 +45,10 @@ object Pivot : SubsystemBase("pivot") {
     // how horizontal the pivot needs to be for the
     val EXTEND_FOOT_THRESHOLD = 60.degrees
 
+    val STARTING_CONFIG_THRESHOLD = 45.degrees
+
     private val UPPER_LIMIT = 160.degrees
     private val LOWER_LIMIT = 0.degrees
-
-    private val ALPHA_BOT_SLOT0_CONFIGS =
-        Slot0Configs()
-            .withKP(65.365) // 24.365
-            .withKI(0.1)
-            .withKD(0.22908)
-            .withKS(0.1755)
-            .withKV(31.983)
-            .withKA(0.49753)
-            .withKG(0.22628)
 
     private val COMP_BOT_ELEVATOR_DOWN_GAINS =
         Slot0Configs()
@@ -128,6 +121,8 @@ object Pivot : SubsystemBase("pivot") {
     val canExtendElevator: Boolean
         get() = angle > RAISE_ELEVATOR_THRESHOLD
 
+    val atStartingConfig = Trigger { angle > STARTING_CONFIG_THRESHOLD }
+
     val atPosition
         get() = (angle - setpoint).abs(Degrees) < 1.5
 
@@ -189,6 +184,9 @@ object Pivot : SubsystemBase("pivot") {
         leader.setNeutralMode(NeutralModeValue.Brake)
         follower.setNeutralMode(NeutralModeValue.Brake)
     }
+
+    val coast by command { runOnce { coast() }.ignoringDisable(true) }
+    val brake by command { runOnce { brake() }.ignoringDisable(true) }
 
     val sysId =
         Commands.sequence(

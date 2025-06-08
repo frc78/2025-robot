@@ -39,7 +39,7 @@ enum class RobotState(val pivotAngle: Angle, val elevatorHeight: Distance, val w
     AlgaeNet(91.degrees, 53.5.inches, 47.7675.degrees),
     ReadyToClimb(70.degrees, 0.25.inches, 180.degrees),
     FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
-    CoralStorage(62.92.degrees, 0.25.inches, Wrist.lowerLimit),
+    CoralStorage(62.92.degrees, 0.25.inches, 11.25.degrees),
 }
 
 object SuperStructure {

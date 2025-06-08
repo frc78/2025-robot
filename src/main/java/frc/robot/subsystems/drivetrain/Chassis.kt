@@ -83,7 +83,14 @@ import org.littletonrobotics.junction.Logger
  */
 @Suppress("UnusedPrivateProperty", "TooManyFunctions")
 object Chassis :
-    CompBotTunerConstants.CompBotTunerSwerveDrivetrain(DrivetrainConstants, 0.0, FrontLeft, FrontRight, BackLeft, BackRight),
+    CompBotTunerConstants.CompBotTunerSwerveDrivetrain(
+        DrivetrainConstants,
+        0.0,
+        FrontLeft,
+        FrontRight,
+        BackLeft,
+        BackRight,
+    ),
     Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
@@ -191,12 +198,10 @@ object Chassis :
                 /* poseSupplier = */ { state.Pose },
                 /* resetPose = */ this::resetPose,
                 /* robotRelativeSpeedsSupplier = */ { state.Speeds },
-                /* output = */
-                { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
+                /* output = */ { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
                     setControl(pathApplyRobotSpeeds.withSpeeds(speeds))
                 },
-                /* controller = */
-                PPHolonomicDriveController(
+                /* controller = */ PPHolonomicDriveController(
                     /* translationConstants = */ PIDConstants(5.0, 0.0, 0.1),
                     /* rotationConstants = */ PIDConstants(10.0, 0.0, 0.0),
                 ),
@@ -231,8 +236,7 @@ object Chassis :
                 null, // Use default ramp rate (1 V/s)
                 5.0.volts,
                 2.seconds, // Use default timeout (10 s)
-            )
-            { state: SysIdRoutineLog.State ->
+            ) { state: SysIdRoutineLog.State ->
                 // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
@@ -250,8 +254,7 @@ object Chassis :
                 6.voltsPerSecond, // Use default ramp rate (1 A/s)
                 10.0.volts,
                 4.seconds, // Use default timeout (10 s)
-            )
-            { state: SysIdRoutineLog.State ->
+            ) { state: SysIdRoutineLog.State ->
                 // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdTranslation_State", state.toString())
             },
@@ -272,9 +275,8 @@ object Chassis :
             SysIdRoutine.Config(
                 null, // Use default ramp rate (1 V/s)
                 7.0.volts,
-                null // Use default timeout (10 s)
-            )
-            { state: SysIdRoutineLog.State ->
+                null, // Use default timeout (10 s)
+            ) { state: SysIdRoutineLog.State ->
                 // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdSteer_State", state.toString())
             },
@@ -298,8 +300,7 @@ object Chassis :
                 (PI / 6).voltsPerSecond,
                 PI.volts,
                 null, // Use default timeout (10 s)
-            )
-            { state: SysIdRoutineLog.State ->
+            ) { state: SysIdRoutineLog.State ->
                 // Log state with SignalLogger class
                 SignalLogger.writeString("SysIdRotation_State", state.toString())
             },
@@ -324,7 +325,8 @@ object Chassis :
      * @param requestSupplier Function returning the request to apply
      * @return Command to run
      */
-    private fun applyRequest(requestSupplier: () -> SwerveRequest) = this.run { setControl(requestSupplier()) }
+    private fun applyRequest(requestSupplier: () -> SwerveRequest) =
+        this.run { setControl(requestSupplier()) }
 
     val zeroHeading by command {
         Commands.runOnce({ resetRotation(Chassis.operatorForwardDirection) })
@@ -429,22 +431,18 @@ object Chassis :
     fun isStableWithinGoal(distance: Double) = alignmentDebouncer.calculate(isWithinGoal(distance))
 
     /** Drives to a pose using a PID controller */
-    fun driveToPose(pose: () -> Pose2d): Command =
-        runOnce {
-                val target = pose()
-                val diff = target.minus(state.Pose)
-                val distance = diff.translation.norm
-                distanceFromPoseGoal = distance
+    fun driveToPose(pose: () -> Pose2d): Command {
+        var target = pose()
+        return runOnce {
+                target = pose()
                 posePIDController.reset()
-
-                Logger.recordOutput("DriveToPose target", target)
+                Logger.recordOutput("DriveToPose target", Pose2d.struct, target)
                 FieldCentricFacingAngleAlignments.withTargetDirection(target.rotation)
                 hasPoseTarget = true
             }
             .andThen(
                 applyRequest {
                     val robot = Chassis.state.Pose
-                    val target = pose()
                     val diff = robot.translation - target.translation
 
                     distanceFromPoseGoal = diff.norm
@@ -462,6 +460,7 @@ object Chassis :
                 setControl(ApplyRobotSpeeds())
                 hasPoseTarget = false
             }
+    }
 
     private val pathConstraintZones =
         listOf(
@@ -585,28 +584,6 @@ object Chassis :
     }
 
     val autoModeDriveToBarge by command { driveToPose { closestRightBarge } }
-
-    fun snapAngleToReef(
-        block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
-    ): Command {
-        return applyRequest {
-            FieldCentricFacingAngleDriver.withTargetDirection(
-                    closestReef.rotation.rotateByAlliance()
-                )
-                .block()
-        }
-    }
-
-    fun snapAngleToCoralStation(
-        block: SwerveRequest.FieldCentricFacingAngle.() -> SwerveRequest.FieldCentricFacingAngle
-    ): Command {
-        return applyRequest {
-            FieldCentricFacingAngleDriver.withTargetDirection(
-                    closestCoralStation.rotation.rotateByAlliance()
-                )
-                .block()
-        }
-    }
 
     fun fieldCentricDrive(
         block: SwerveRequest.FieldCentric.() -> SwerveRequest.FieldCentric

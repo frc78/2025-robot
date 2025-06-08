@@ -26,7 +26,6 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
-import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.bindings.configureDriverBindings
@@ -62,7 +61,6 @@ object Robot : LoggedRobot() {
     val driverController = CommandXboxController(0)
 
     init {
-        gameField.tags
         HAL.report(
             FRCNetComm.tResourceType.kResourceType_Language,
             FRCNetComm.tInstances.kLanguage_Kotlin,
@@ -99,9 +97,7 @@ object Robot : LoggedRobot() {
         CommandJoystick(5).configureManipTestBindings()
 
         Pivot.coast()
-        RobotModeTriggers.disabled()
-            .and(Trigger { Pivot.angle > 45.degrees })
-            .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
+        RobotModeTriggers.disabled().and(Pivot.atStartingConfig).onTrue(Pivot.brake)
 
         // Move wrist over when leaving coral station area with a coral
         RobotModeTriggers.teleop()
@@ -112,14 +108,7 @@ object Robot : LoggedRobot() {
                     )
                     .meters > 1.meters
             }
-            .onTrue(
-                Commands.either(
-                    Wrist.goToWithoutRequiring(RobotState.CoralStorage),
-                    Commands.none(),
-                ) {
-                    Intake.hasBranchCoral
-                }
-            )
+            .onTrue(Commands.either(Wrist.flip, Commands.none()) { Intake.hasBranchCoral })
 
         // Move wrist and pivot when leaving coral station in auto
         RobotModeTriggers.autonomous()
@@ -132,10 +121,7 @@ object Robot : LoggedRobot() {
             }
             .onTrue(
                 Commands.either(
-                    Commands.sequence(
-                        Wrist.goToWithoutRequiring(RobotState.CoralStorage),
-                        Pivot.goToWithoutRequiring(RobotState.L4),
-                    ),
+                    Commands.sequence(Wrist.flip, Pivot.goToWithoutRequiring(RobotState.L4)),
                     Commands.none(),
                 ) {
                     Intake.hasBranchCoral
@@ -151,10 +137,9 @@ object Robot : LoggedRobot() {
 
     private val autoChooser =
         SendableChooser<Command>().apply {
-            addOption("Beast Mode 😎", Autos.SideCoralFast)
+            setDefaultOption("Beast Mode 😎", Autos.SideCoralFast)
             addOption("Ball Up Top", Autos.CenterAlgaeAuto)
             addOption("OP 9 Coral Optimized", Autos.OPSideCoral)
-            setDefaultOption("Beast Mode Default", Autos.SideCoralFast)
             SmartDashboard.putData("Auto Mode", this)
         }
 
@@ -203,14 +188,12 @@ object Robot : LoggedRobot() {
 
         // Put the mechanism widget with all its components on the dashboard,
         SmartDashboard.putData("robot", robot)
-        //        Vision.setupSimulation()
+        Vision.setupSimulation()
     }
 
     override fun robotPeriodic() {
         CommandScheduler.getInstance().run()
-        if (isReal()) {
-            Vision.update()
-        }
+        Vision.update()
     }
 
     override fun simulationPeriodic() {
@@ -228,12 +211,6 @@ object Robot : LoggedRobot() {
     }
 
     override fun teleopExit() {
-        // Stop logging at the end of the match
-        if (DriverStation.isFMSAttached()) {
-            Logger.end()
-            DataLogManager.stop()
-            SignalLogger.stop()
-        }
         Pivot.brake()
     }
 

@@ -39,11 +39,6 @@ object Wrist : SubsystemBase("wrist") {
     private var upperLimit = 197.degrees
     private const val COMP_GEAR_RATIO = (72 * 72 * 72 * 48) / (14 * 24 * 24 * 24.0)
 
-    private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
-        MotorOutputConfigs()
-            .withNeutralMode(NeutralModeValue.Coast)
-            .withInverted(InvertedValue.Clockwise_Positive)
-
     private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
         MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Coast)
@@ -68,10 +63,6 @@ object Wrist : SubsystemBase("wrist") {
                 .withKA(0.090409)
                 .withKG(0.0)
                 .withGravityType(GravityTypeValue.Arm_Cosine)
-
-            MotionMagic.MotionMagicCruiseVelocity = 1.0
-            MotionMagic.MotionMagicAcceleration = 100.0
-            //            MotionMagic.MotionMagicJerk = 50.0
         }
 
     private var setpoint = lowerLimit
@@ -81,7 +72,7 @@ object Wrist : SubsystemBase("wrist") {
 
     private val motionMagic =
         DynamicMotionMagicVoltage(
-            0.degrees,
+            lowerLimit,
             1.rotationsPerSecond,
             3.rotationsPerSecondPerSecond,
             0.rotationsPerSecondCubed,
@@ -91,7 +82,15 @@ object Wrist : SubsystemBase("wrist") {
 
     private val shouldLimitReverseMotion: Boolean
         get() {
-            return Pivot.angle < 20.degrees && angle > 90.degrees
+            // If the wrist is
+            val willHitBumper = Pivot.angle < 20.degrees && angle > 90.degrees
+            val willHitCoralStation =
+                FieldGeometry.distanceToClosestLine(
+                        FieldGeometry.CORAL_STATIONS,
+                        Chassis.state.Pose.translation,
+                    )
+                    .meters < 0.6.meters
+            return willHitBumper || willHitCoralStation
         }
 
     val atPosition
@@ -105,20 +104,11 @@ object Wrist : SubsystemBase("wrist") {
         }
     }
 
-    fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.wristAngle })
+    /* Flips the wrist to coral storage after leaving the coral station. Does not require the
+     * subsystem to not interrupt active command */
+    val flip by command { Commands.runOnce({ setpoint = RobotState.CoralStorage.wristAngle }) }
 
-    fun goTo(state: RobotState): Command = runOnce {
-        // do not move wrist if within 0.9 meters of a coral station
-        // TODO change to limit reverse motion
-        if (
-            FieldGeometry.distanceToClosestLine(
-                    FieldGeometry.CORAL_STATIONS,
-                    Chassis.state.Pose.translation,
-                )
-                .meters >= 0.6.meters
-        )
-            setpoint = state.wristAngle
-    }
+    fun goTo(state: RobotState): Command = runOnce { setpoint = state.wristAngle }
 
     // Does not have coral station safety check, be careful!
     fun goToRaw(angle: Angle): Command = runOnce { setpoint = angle }
@@ -194,11 +184,6 @@ object Wrist : SubsystemBase("wrist") {
 
         // Command the wrist to move to the setpoint
         motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
-        if (Intake.detectAlgaeByCurrent()) {
-            motionMagic.withAcceleration(6.0)
-        } else {
-            motionMagic.withAcceleration(30.0)
-        }
         leader.setControl(motionMagic)
     }
 }
