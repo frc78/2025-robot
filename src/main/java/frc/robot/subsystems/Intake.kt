@@ -167,7 +167,7 @@ object Intake : SubsystemBase("intake") {
     /** Outtake and then stop after delay */
     val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
     val scoreAlgae by command {
-        outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.7.seconds)1
+        outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.7.seconds)
     }
     val dropAlgae by command { outtakeAlgae { 0.1 }.withTimeout(0.1) }
 
