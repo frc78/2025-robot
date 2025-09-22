@@ -16,6 +16,7 @@ import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.Wrist
 import frc.robot.subsystems.drivetrain.Chassis
 
+@Suppress("LongMethod")
 fun CommandXboxController.configureManipulatorBindings() {
 
     // Coral Stuff
@@ -39,22 +40,7 @@ fun CommandXboxController.configureManipulatorBindings() {
         )
 
     rightBumper()
-        .onTrue(Intake.intakeCoralThenHold())
-        .whileTrue(
-            SuperStructure.reachToIntake
-                .repeatedly()
-                .until { Intake.hasCoralByCurrent() }
-                .andThen(
-                    Elevator.goTo(RobotState.NewCoralStation)
-                        .andWait { Elevator.position < 3.inches }
-                        .andThen(
-                            Commands.parallel(
-                                Pivot.goTo(RobotState.NewCoralStation),
-                                Wrist.goTo(RobotState.NewCoralStation),
-                            )
-                        )
-                )
-        )
+        .onTrue(Intake.intakeCoralThenHold)
         .onFalse(
             Elevator.goTo(RobotState.NewCoralStation)
                 .andWait { Elevator.position < 3.inches }
@@ -65,22 +51,17 @@ fun CommandXboxController.configureManipulatorBindings() {
                     )
                 )
         )
-
-    configManipButtonLayoutAlgae()
-}
-
-private fun CommandXboxController.configManipButtonLayoutAlgae() {
     // Algae Stuff
     povUp()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.HighAlgaeIntake)
-                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .alongWith(Intake.intakeAlgaeThenHold) // holds priority until algae is detected
                 .andThen(SuperStructure.retractWithAlgae())
         )
     povDown()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.LowAlgaeIntake)
-                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .alongWith(Intake.intakeAlgaeThenHold) // holds priority until algae is detected
                 .andThen(SuperStructure.retractWithAlgae())
         )
     povRight().onTrue(SuperStructure.smartGoTo(RobotState.AlgaeNet))
@@ -88,7 +69,7 @@ private fun CommandXboxController.configManipButtonLayoutAlgae() {
     leftBumper()
         .onTrue(
             SuperStructure.smartGoTo(RobotState.AlgaeGroundPickup)
-                .alongWith(Intake.intakeAlgaeThenHold()) // holds priority until algae is detected
+                .alongWith(Intake.intakeAlgaeThenHold) // holds priority until algae is detected
                 .andThen(SuperStructure.smartGoTo(RobotState.AlgaeStorage))
         )
     leftTrigger(0.55)

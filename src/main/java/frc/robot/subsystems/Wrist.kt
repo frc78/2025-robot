@@ -108,17 +108,35 @@ object Wrist : SubsystemBase("wrist") {
      * subsystem to not interrupt active command */
     val flip by command { Commands.runOnce({ setpoint = RobotState.CoralStorage.wristAngle }) }
 
-    fun goTo(state: RobotState): Command = runOnce { setpoint = state.wristAngle }
+    fun goTo(state: RobotState): Command = goTo(state.wristAngle)
 
     // Does not have coral station safety check, be careful!
-    fun goToRaw(angle: Angle): Command = runOnce { setpoint = angle }
+    fun goTo(angle: Angle): Command =
+        runOnce { setpoint = angle }.andThen(run { runMotorToSetpoint() })
+
+    private fun runMotorToSetpoint() {
+        // Command the wrist to move to the setpoint
+        leader.setControl(
+            motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
+        )
+    }
 
     val angle: Angle
         get() = leader.position.value
 
-    val manualUp by command { run { setpoint += 10.degrees * .020 } }
+    val manualUp by command {
+        run {
+            setpoint += 10.degrees * .020
+            runMotorToSetpoint()
+        }
+    }
 
-    val manualDown by command { run { setpoint -= 10.degrees * .020 } }
+    val manualDown by command {
+        run {
+            setpoint -= 10.degrees * .020
+            runMotorToSetpoint()
+        }
+    }
 
     private val sysIdRoutine =
         SysIdRoutine(
@@ -181,9 +199,5 @@ object Wrist : SubsystemBase("wrist") {
         Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
         Logger.recordOutput("wrist/setpoint", setpoint.degrees)
-
-        // Command the wrist to move to the setpoint
-        motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
-        leader.setControl(motionMagic)
     }
 }

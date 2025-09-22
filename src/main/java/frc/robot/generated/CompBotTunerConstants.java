@@ -259,6 +259,19 @@ public class CompBotTunerConstants {
   /** Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected device types. */
   public static class CompBotTunerSwerveDrivetrain
       extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> {
+
+    public CompBotTunerSwerveDrivetrain() {
+      super(
+          TalonFX::new,
+          TalonFX::new,
+          CANcoder::new,
+          DrivetrainConstants,
+          FrontLeft,
+          FrontRight,
+          BackLeft,
+          BackRight);
+    }
+
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
      *

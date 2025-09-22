@@ -78,9 +78,6 @@ object Pivot : SubsystemBase("pivot") {
     private val COMP_BOT_FEEDBACK_CONFIGS =
         FeedbackConfigs().withFusedCANcoder(cancoder).withRotorToSensorRatio(GEAR_RATIO)
 
-    private val ALPHA_BOT_FEEDBACK_CONFIGS =
-        FeedbackConfigs().withSensorToMechanismRatio(GEAR_RATIO)
-
     private val leader =
         TalonFX(9, "*").apply {
             val config =
@@ -126,11 +123,20 @@ object Pivot : SubsystemBase("pivot") {
     val atPosition
         get() = (angle - setpoint).abs(Degrees) < 1.5
 
-    fun goTo(state: RobotState) = runOnce { setpoint = state.pivotAngle }
+    fun goTo(state: RobotState) = goTo(state.pivotAngle)
 
-    fun goToRaw(angle: Angle) = runOnce { setpoint = angle }
+    fun goTo(angle: Angle) = runOnce { setpoint = angle }.andThen(run { runMotorToSetpoint() })
 
-    fun goToWithoutRequiring(state: RobotState) = Commands.runOnce({ setpoint = state.pivotAngle })
+    fun goToWithoutRequiring(state: RobotState) = runOnce({ setpoint = state.pivotAngle })
+
+    private fun runMotorToSetpoint() {
+        leader.setControl(
+            motionMagic
+                .withPosition(setpoint)
+                .withLimitForwardMotion(Climber.isExtended)
+                .withSlot(if (Elevator.position < 10.inches) 0 else 1)
+        )
+    }
 
     val angle: Angle
         get() = leader.position.value
@@ -211,13 +217,6 @@ object Pivot : SubsystemBase("pivot") {
         Logger.recordOutput("pivot/setpoint", setpoint.degrees)
         Logger.recordOutput("pivot/angle_degrees", angle.degrees)
         Logger.recordOutput("pivot/at_position", atPosition)
-
-        leader.setControl(
-            motionMagic
-                .withPosition(setpoint)
-                .withLimitForwardMotion(Climber.isExtended)
-                .withSlot(if (Elevator.position < 10.inches) 0 else 1)
-        )
     }
 
     override fun simulationPeriodic() {

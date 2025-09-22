@@ -44,7 +44,6 @@ import frc.robot.Robot
 import frc.robot.generated.CompBotTunerConstants
 import frc.robot.generated.CompBotTunerConstants.BackLeft
 import frc.robot.generated.CompBotTunerConstants.BackRight
-import frc.robot.generated.CompBotTunerConstants.DrivetrainConstants
 import frc.robot.generated.CompBotTunerConstants.FrontLeft
 import frc.robot.generated.CompBotTunerConstants.FrontRight
 import frc.robot.lib.FieldPoses.closestBarge
@@ -66,7 +65,6 @@ import frc.robot.lib.metersPerSecondPerSecond
 import frc.robot.lib.poundSquareInches
 import frc.robot.lib.pounds
 import frc.robot.lib.radians
-import frc.robot.lib.rotateByAlliance
 import frc.robot.lib.rotationsPerSecond
 import frc.robot.lib.rotationsPerSecondPerSecond
 import frc.robot.lib.seconds
@@ -82,16 +80,7 @@ import org.littletonrobotics.junction.Logger
  * be used in command-based projects.
  */
 @Suppress("UnusedPrivateProperty", "TooManyFunctions")
-object Chassis :
-    CompBotTunerConstants.CompBotTunerSwerveDrivetrain(
-        DrivetrainConstants,
-        0.0,
-        FrontLeft,
-        FrontRight,
-        BackLeft,
-        BackRight,
-    ),
-    Subsystem {
+object Chassis : CompBotTunerConstants.CompBotTunerSwerveDrivetrain(), Subsystem {
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
     private val closestReefPub = table.getStructTopic("closest_reef", Pose2d.struct).publish()
@@ -145,15 +134,6 @@ object Chassis :
     private val pathApplyRobotSpeeds =
         ApplyRobotSpeeds().withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
 
-    // For use with commands which are still taking driver input for translation
-    private val FieldCentricFacingAngleDriver: SwerveRequest.FieldCentricFacingAngle =
-        SwerveRequest.FieldCentricFacingAngle()
-            .withHeadingPID(6.0, 0.0, 0.1)
-            .withRotationalDeadband(0.05)
-            .withForwardPerspective(SwerveRequest.ForwardPerspectiveValue.OperatorPerspective)
-            .withDriveRequestType(SwerveModule.DriveRequestType.Velocity)
-            .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
-
     // For use with alignment commands
     private val FieldCentricFacingAngleAlignments: SwerveRequest.FieldCentricFacingAngle =
         SwerveRequest.FieldCentricFacingAngle()
@@ -175,46 +155,39 @@ object Chassis :
             .withSteerRequestType(SwerveModule.SteerRequestType.MotionMagicExpo)
 
     fun configureAutoBuilder() {
-        try {
-            val config =
-                RobotConfig(
-                    116.pounds,
-                    23009.poundSquareInches,
-                    ModuleConfig(
-                        2.inches,
-                        4.48.metersPerSecond,
-                        1.2,
-                        DCMotor.getKrakenX60Foc(1),
-                        7.13,
-                        50.amps,
-                        1,
-                    ),
-                    Translation2d(FrontLeft.LocationX, FrontLeft.LocationY),
-                    Translation2d(FrontRight.LocationX, FrontRight.LocationY),
-                    Translation2d(BackLeft.LocationX, BackLeft.LocationY),
-                    Translation2d(BackRight.LocationX, BackRight.LocationY),
-                )
-            AutoBuilder.configure(
-                /* poseSupplier = */ { state.Pose },
-                /* resetPose = */ this::resetPose,
-                /* robotRelativeSpeedsSupplier = */ { state.Speeds },
-                /* output = */ { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
-                    setControl(pathApplyRobotSpeeds.withSpeeds(speeds))
-                },
-                /* controller = */ PPHolonomicDriveController(
-                    /* translationConstants = */ PIDConstants(5.0, 0.0, 0.1),
-                    /* rotationConstants = */ PIDConstants(10.0, 0.0, 0.0),
+        val config =
+            RobotConfig(
+                116.pounds,
+                23009.poundSquareInches,
+                ModuleConfig(
+                    2.inches,
+                    4.48.metersPerSecond,
+                    1.2,
+                    DCMotor.getKrakenX60Foc(1),
+                    7.13,
+                    50.amps,
+                    1,
                 ),
-                /* robotConfig = */ config,
-                /* shouldFlipPath = */ { Robot.alliance == Alliance.Red },
-                /* ...driveRequirements = */ this, // Subsystem for requirements
+                Translation2d(FrontLeft.LocationX, FrontLeft.LocationY),
+                Translation2d(FrontRight.LocationX, FrontRight.LocationY),
+                Translation2d(BackLeft.LocationX, BackLeft.LocationY),
+                Translation2d(BackRight.LocationX, BackRight.LocationY),
             )
-        } catch (ex: Exception) {
-            DriverStation.reportError(
-                "Failed to load PathPlanner config and configure AutoBuilder",
-                ex.stackTrace,
-            )
-        }
+        AutoBuilder.configure(
+            /* poseSupplier = */ { state.Pose },
+            /* resetPose = */ this::resetPose,
+            /* robotRelativeSpeedsSupplier = */ { state.Speeds },
+            /* output = */ { speeds: ChassisSpeeds, feedforwards: DriveFeedforwards ->
+                setControl(pathApplyRobotSpeeds.withSpeeds(speeds))
+            },
+            /* controller = */ PPHolonomicDriveController(
+                /* translationConstants = */ PIDConstants(5.0, 0.0, 0.1),
+                /* rotationConstants = */ PIDConstants(10.0, 0.0, 0.0),
+            ),
+            /* robotConfig = */ config,
+            /* shouldFlipPath = */ { Robot.alliance == Alliance.Red },
+            /* ...driveRequirements = */ this, // Subsystem for requirements
+        )
     }
 
     override fun addVisionMeasurement(

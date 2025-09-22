@@ -19,7 +19,6 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
@@ -44,17 +43,6 @@ object Elevator : SubsystemBase("elevator") {
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
     // Constants for the feedforward calculation
-    private val ALPHA_BOT_CONFIGS =
-        Slot0Configs().apply {
-            kS = 0.23487
-            kV = 0.60823
-            kA = 0.034044
-            kG = 0.55356
-
-            kP = 34.887
-            kI = 0.0
-            kD = 1.2611
-        }
     private val COMP_BOT_CONFIGS =
         Slot0Configs().apply {
             kS = 0.21739
@@ -88,7 +76,7 @@ object Elevator : SubsystemBase("elevator") {
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
-                    Slot0 =COMP_BOT_CONFIGS
+                    Slot0 = COMP_BOT_CONFIGS
                     Slot0.GravityType = GravityTypeValue.Elevator_Static
                     Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
 
@@ -111,9 +99,13 @@ object Elevator : SubsystemBase("elevator") {
             field = value.coerceIn(0.inches, MAX_HEIGHT)
         }
 
-    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.elevatorHeight })
+    private fun runMotorToSetpoint() {
+        leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations()))
+    }
 
-    fun goToRaw(height: Distance): Command = runOnce { setpoint = height }
+    fun goTo(state: RobotState) = goTo(state.elevatorHeight)
+
+    fun goTo(height: Distance) = runOnce { setpoint = height }.andThen(run { runMotorToSetpoint() })
 
     val isStowed: Boolean
         get() = position < IS_STOWED_THRESHOLD
@@ -121,9 +113,19 @@ object Elevator : SubsystemBase("elevator") {
     val atPosition: Boolean
         get() = (position - setpoint).abs(Inches) < .5
 
-    val manualUp by command { run { setpoint += 10.inches * 0.020 } }
+    val manualUp by command {
+        run {
+            setpoint += 10.inches * 0.020
+            runMotorToSetpoint()
+        }
+    }
 
-    val manualDown by command { run { setpoint -= 10.inches * 0.020 } }
+    val manualDown by command {
+        run {
+            setpoint -= 10.inches * 0.020
+            runMotorToSetpoint()
+        }
+    }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
@@ -200,7 +202,6 @@ object Elevator : SubsystemBase("elevator") {
         Logger.recordOutput("elevator/setpoint", setpoint.inches)
         Logger.recordOutput("elevator/stowed", isStowed)
         Logger.recordOutput("elevator/at_position", atPosition)
-        leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations()))
     }
 
     override fun simulationPeriodic() {

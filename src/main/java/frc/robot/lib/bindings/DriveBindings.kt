@@ -39,7 +39,6 @@ fun CommandXboxController.configureDriverBindings() {
 }
 
 fun CommandXboxController.configureAutoAlignTestingLayout() {
-
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
 
@@ -49,8 +48,6 @@ fun CommandXboxController.configureAutoAlignTestingLayout() {
     y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
     // y and right bumper
     y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-    val hasCoral = Trigger { Intake.hasBranchCoral }
-    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
 
     rightBumper().and(notLeftBumper).whileTrue(Chassis.driveToRightBranch)
 
@@ -69,7 +66,7 @@ fun CommandXboxController.configureDriveBasicLayout() {
             }
             .withName("Field centric xbox drive")
     // Rumble for short duration on game piece acquisition
-    Trigger { Intake.hasCoralByCurrent() }
+    Trigger { Intake.hasCoralByCurrent }
         .onTrue(
             Commands.startEnd(
                     { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
@@ -123,6 +120,7 @@ private fun CommandXboxController.configureReefAlignments() {
     val hasCoral = Trigger { Intake.hasBranchCoral }
     val hasNoCoral = Trigger { !Intake.hasBranchCoral }
 
+    // Score on right branch when right bumper is pressed
     rightBumper()
         .and(notLeftBumper)
         .and(hasCoral)
@@ -140,6 +138,7 @@ private fun CommandXboxController.configureReefAlignments() {
             }
         )
 
+    // Score on left branch when left bumper is pressed
     leftBumper()
         .and(notRightBumper)
         .and(hasCoral)
@@ -157,6 +156,7 @@ private fun CommandXboxController.configureReefAlignments() {
             }
         )
 
+    // Grab algae when both bumpers are pressed
     leftBumper()
         .and(rightBumper())
         .and(hasNoCoral)

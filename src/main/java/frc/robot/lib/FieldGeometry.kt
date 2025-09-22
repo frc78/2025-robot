@@ -1,10 +1,8 @@
 package frc.robot.lib
 
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.DriverStation
 import frc.robot.Robot
-import frc.robot.subsystems.drivetrain.Chassis
 
 /** Object for defining field geometry and functions to measure distances */
 object FieldGeometry {
@@ -30,35 +28,7 @@ object FieldGeometry {
                 listOf(RED_CORAL_STATION_LOWER, RED_CORAL_STATION_UPPER)
             }
 
-    private val BLUE_BARGE_ALIGNMENT_LINE_LEFT =
-        LineSegment(Translation2d(7.65, 7.374), Translation2d(7.65, 4.815))
-    private val BLUE_BARGE_ALIGNMENT_LINE_RIGHT = BLUE_BARGE_ALIGNMENT_LINE_LEFT.mirror()
-
-    private val RED_BARGE_ALIGNMENT_LINE_RIGHT =
-        BLUE_BARGE_ALIGNMENT_LINE_LEFT.rotateToOtherAlliance()
-    private val RED_BARGE_ALIGNMENT_LINE_LEFT =
-        BLUE_BARGE_ALIGNMENT_LINE_RIGHT.rotateToOtherAlliance()
-
-    val BARGE_ALIGNMENT_LINES
-        get() =
-            if (Robot.alliance == DriverStation.Alliance.Blue) {
-                listOf(BLUE_BARGE_ALIGNMENT_LINE_LEFT, BLUE_BARGE_ALIGNMENT_LINE_RIGHT)
-            } else {
-                listOf(RED_BARGE_ALIGNMENT_LINE_LEFT, RED_BARGE_ALIGNMENT_LINE_RIGHT)
-            }
-
     fun distanceToClosestLine(lineSegments: List<LineSegment>, position: Translation2d): Double {
         return lineSegments.minOfOrNull { it.perpendicularDistance(position) } ?: Double.MAX_VALUE
     }
-
-    fun getClosestLine(lineSegments: List<LineSegment>, position: Translation2d): LineSegment {
-        return lineSegments.minBy { it.getShortestDistance(position) }
-    }
-}
-
-fun Rotation2d.rotateByAlliance(): Rotation2d {
-    if (Robot.alliance == DriverStation.Alliance.Red) {
-        return this.rotateBy(Chassis.kRedAlliancePerspectiveRotation)
-    }
-    return this.rotateBy(Chassis.kBlueAlliancePerspectiveRotation)
 }

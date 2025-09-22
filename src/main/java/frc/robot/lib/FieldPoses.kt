@@ -208,8 +208,11 @@ object FieldPoses {
     private val BARGE_TO_BARGE_LEFT = Transform2d(0.meters, (-42.875).inches, Rotation2d.kZero)
     private val BARGE_TO_BARGE_RIGHT = Transform2d(0.meters, 42.875.inches, Rotation2d.kZero)
 
-    val closestBarge
-        get() = Chassis.state.Pose.nearest(bargePoses)
+    val closestBarge: Pose2d
+        get() {
+            val nearestBarge = Chassis.state.Pose.nearest(bargePoses)
+            return Pose2d(nearestBarge.x, Chassis.state.Pose.y, nearestBarge.rotation)
+        }
 
     val closestLeftBarge
         get() = closestBarge.transformBy(BARGE_TO_BARGE_LEFT)

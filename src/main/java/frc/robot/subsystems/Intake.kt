@@ -6,7 +6,6 @@ import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
-import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.networktables.NetworkTableInstance
@@ -14,7 +13,6 @@ import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.lib.amps
@@ -71,13 +69,6 @@ object Intake : SubsystemBase("intake") {
         leader.set(0.0)
     }
 
-    /**
-     * Returns true if a coral is detected in the path of the CANrange. Only corals that are
-     * oriented vertically, and thus able to be scored on one of the reef branches, will be detected
-     */
-    val hasBranchCoral: Boolean
-        get() = canRange.isDetected.value
-
     val supplyCurrent: Current
         get() = leader.supplyCurrent.value
 
@@ -85,18 +76,22 @@ object Intake : SubsystemBase("intake") {
         get() = leader.torqueCurrent.value
 
     /**
+     * Returns true if a coral is detected in the path of the CANrange. Only corals that are
+     * oriented vertically, and thus able to be scored on one of the reef branches, will be detected
+     */
+    val hasBranchCoral: Boolean
+        get() = hasCoralByCurrent && canRange.isDetected.value
+
+    /**
      * Return true if the intake motor is experiencing current draw greater than the given
      * threshold.
      */
-    fun hasCoralByCurrent(): Boolean {
-        // return true if current is spiked and coral is detected by CANRange
-        return (torqueCurrent >= CORAL_CURRENT_THRESHOLD) &&
-            coralDetectedDebounce.calculate(hasBranchCoral)
-    }
+    val hasCoralByCurrent
+        get() = torqueCurrent >= CORAL_CURRENT_THRESHOLD
 
     fun detectAlgaeByCurrent(): Boolean {
         // NOTE: Algae intake current is negative
-        val thresholdMet = torqueCurrent <= ALGAE_CURRENT_THRESHOLD
+        val thresholdMet: Boolean = torqueCurrent <= ALGAE_CURRENT_THRESHOLD
         val currentTime = Timer.getTimestamp() // gets clock time in seconds
 
         if (algaeSpikeStartTime != -1.0) {
@@ -156,17 +151,16 @@ object Intake : SubsystemBase("intake") {
     }
     val dropAlgae by command { outtakeAlgae { 0.1 }.withTimeout(0.1) }
 
-    private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
-
-    fun intakeCoralThenHold(): Command =
+    val intakeCoralThenHold by command {
         startEnd({ leader.set(0.7) }, { leader.set(0.07) })
-            .until { hasCoralByCurrent() }
+            .until { hasCoralByCurrent }
             .withName("Intake coral then hold")
+    }
 
     val overIntakeCoralThenHold by command {
         Commands.sequence(
             intakeCoral,
-            Commands.waitUntil { hasCoralByCurrent() },
+            Commands.waitUntil { hasCoralByCurrent },
             Commands.waitSeconds(0.2),
             holdCoral,
         )
@@ -174,10 +168,11 @@ object Intake : SubsystemBase("intake") {
     val intakeCoral by command { runOnce { leader.set(0.7) } }
     val holdCoral by command { runOnce { leader.set(0.07) } }
 
-    fun intakeAlgaeThenHold(): Command =
+    val intakeAlgaeThenHold by command {
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
             .until { detectAlgaeByCurrent() }
             .withName("Intake algae then hold")
+    }
 
     private val sim =
         FlywheelSim(
