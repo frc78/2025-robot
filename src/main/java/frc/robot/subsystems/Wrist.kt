@@ -69,7 +69,7 @@ object Wrist : SubsystemBase("wrist") {
                 .withKS(0.21336)
                 .withKV(10.335)
                 .withKA(0.090409)
-                .withKG(0.0)
+                .withKG(0.0) // .0937 from sysID. cosine is close to 0, but not exact
                 .withGravityType(GravityTypeValue.Arm_Cosine)
 
             MotionMagic.MotionMagicCruiseVelocity = 1.0
