@@ -188,7 +188,7 @@ object Intake : SubsystemBase("intake") {
         )
     }
     val intakeCoral by command { runOnce { leader.set(0.7) } }
-    val holdCoral by command { runOnce { leader.set(0.07) } }
+    val holdCoral by command { runOnce { leader.set(0.06) } }
 
     fun intakeAlgaeThenHold(): Command =
         startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
