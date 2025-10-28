@@ -173,8 +173,8 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 private fun CommandXboxController.configureReefAlignments() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
-    val hasCoral = Trigger { Intake.hasBranchCoral }
-    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
+    val hasCoral = Trigger { Intake.hasCoralByCurrent() }
+    val hasNoCoral = hasCoral.negate()
 
     rightBumper()
         .and(notLeftBumper)
