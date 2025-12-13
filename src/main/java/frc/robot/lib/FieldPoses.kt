@@ -54,9 +54,6 @@ object FieldPoses {
     val closestAlgaeIsHigh
         get() = closestReef in HIGH_ALGAE_REEF_POSES
 
-    private val CORAL_STATION_LEFT = Transform2d(0.inches, 24.inches, Rotation2d.kZero)
-    private val CORAL_STATION_RIGHT = Transform2d(0.inches, (-24).inches, Rotation2d.kZero)
-
     private val BLUE_CORAL_STATION_LOCATIONS =
         intArrayOf(12, 13).map {
             Robot.gameField.getTagPose(it).get().toPose2d().transformBy(CORAL_TO_BOT_TRANSFORM)
@@ -122,12 +119,6 @@ object FieldPoses {
                 }
             return Chassis.state.Pose.nearest(allianceCoralStations)
         }
-
-    val closestLeftCoralStation
-        get() = closestCoralStation.transformBy(CORAL_STATION_LEFT)
-
-    val closestRightCoralStation
-        get() = closestCoralStation.transformBy(CORAL_STATION_RIGHT)
 
     enum class ReefFace {
         AB,

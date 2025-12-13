@@ -23,55 +23,21 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.IS_COMP
-import frc.robot.lib.command
-import frc.robot.lib.inches
-import frc.robot.lib.kilograms
-import frc.robot.lib.meters
-import frc.robot.lib.metersPerSecond
-import frc.robot.lib.pounds
-import frc.robot.lib.rotations
-import frc.robot.lib.toAngle
-import frc.robot.lib.toAngularVelocity
-import frc.robot.lib.toDistance
-import frc.robot.lib.volts
+import frc.robot.lib.*
 import org.littletonrobotics.junction.Logger
 
 object Elevator : SubsystemBase("elevator") {
     private val motionMagic = MotionMagicVoltage(0.0)
-    val IS_STOWED_THRESHOLD = 3.inches
-    val MOVE_PIVOT_THRESHOLD = 40.inches
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
-    // Constants for the feedforward calculation
-    private val ALPHA_BOT_CONFIGS =
-        Slot0Configs().apply {
-            kS = 0.23487
-            kV = 0.60823
-            kA = 0.034044
-            kG = 0.55356
 
-            kP = 34.887
-            kI = 0.0
-            kD = 1.2611
-        }
-    private val COMP_BOT_CONFIGS =
-        Slot0Configs().apply {
-            kS = 0.21739
-            kV = 0.56149
-            kA = 0.013467
-            kG = 0.32537
-
-            kP = 10.614
-            kI = 0.0
-            kD = 0.26475
-        }
+    private val COMP_BOT_CONFIGS = Slot0Configs()
 
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
 
-    val MAX_HEIGHT = if (IS_COMP) 54.inches else 54.inches
+    val MAX_HEIGHT = 54.inches
 
     private val leader =
         TalonFX(LEADER_MOTOR_ID, "*").apply {
@@ -89,9 +55,18 @@ object Elevator : SubsystemBase("elevator") {
                     MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive
                     MotorOutput.NeutralMode = NeutralModeValue.Brake
 
-                    Slot0 = if (IS_COMP) COMP_BOT_CONFIGS else ALPHA_BOT_CONFIGS
-                    Slot0.GravityType = GravityTypeValue.Elevator_Static
-                    Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
+                    Slot0.apply {
+                        kS = 0.21739
+                        kV = 0.56149
+                        kA = 0.013467
+                        kG = 0.32537
+
+                        kP = 10.614
+                        kI = 0.0
+                        kD = 0.26475
+                        GravityType = GravityTypeValue.Elevator_Static
+                        StaticFeedforwardSign = StaticFeedforwardSignValue.UseVelocitySign
+                    }
 
                     MotionMagic.withMotionMagicCruiseVelocity(18.0)
                         .withMotionMagicAcceleration(400.0)
@@ -107,24 +82,8 @@ object Elevator : SubsystemBase("elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
-    var setpoint = 0.inches
-        set(value) {
-            field = value.coerceIn(0.inches, MAX_HEIGHT)
-        }
-
-    fun goTo(state: RobotState): Command = Commands.runOnce({ setpoint = state.elevatorHeight })
-
-    fun goToRaw(height: Distance): Command = runOnce { setpoint = height }
-
-    val isStowed: Boolean
-        get() = position < IS_STOWED_THRESHOLD
-
     val atPosition: Boolean
         get() = (position - setpoint).abs(Inches) < .5
-
-    val manualUp by command { run { setpoint += 10.inches * 0.020 } }
-
-    val manualDown by command { run { setpoint -= 10.inches * 0.020 } }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
@@ -166,8 +125,8 @@ object Elevator : SubsystemBase("elevator") {
         )
 
     @Suppress("UnusedPrivateProperty")
-    private val sysId by command {
-        Commands.sequence(
+    private fun sysId(): Command {
+        return Commands.sequence(
                 runOnce {
                     SignalLogger.start()
                     leader.configurator.apply(
@@ -198,10 +157,6 @@ object Elevator : SubsystemBase("elevator") {
 
     override fun periodic() {
         Logger.recordOutput("elevator/position", position.inches)
-        Logger.recordOutput("elevator/setpoint", setpoint.inches)
-        Logger.recordOutput("elevator/stowed", isStowed)
-        Logger.recordOutput("elevator/at_position", atPosition)
-        leader.setControl(motionMagic.withPosition(setpoint.toDrumRotations()))
     }
 
     override fun simulationPeriodic() {

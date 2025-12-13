@@ -1,34 +1,43 @@
 package frc.robot.subsystems
 
 import com.ctre.phoenix6.configs.CANrangeConfiguration
-import com.ctre.phoenix6.configs.MotorOutputConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.ControlRequest
+import com.ctre.phoenix6.controls.DutyCycleOut
+import com.ctre.phoenix6.controls.TorqueCurrentFOC
 import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
-import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.measure.Current
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.IS_COMP
-import frc.robot.lib.amps
-import frc.robot.lib.centimeters
-import frc.robot.lib.command
-import frc.robot.lib.kilogramSquareMeters
-import frc.robot.lib.meters
-import frc.robot.lib.poundSquareInches
-import frc.robot.lib.seconds
+import edu.wpi.first.wpilibj2.command.button.Trigger
+import frc.robot.lib.*
+import frc.robot.lib.bindings.ReefscapeController
+import frc.robot.subsystems.Intake.IntakeState.*
+import java.util.function.BooleanSupplier
 import org.littletonrobotics.junction.Logger
 
 object Intake : SubsystemBase("intake") {
+
+    enum class IntakeState(val control: ControlRequest) {
+        // Separate intake vs holding states to allow going home if game piece isn't acquired
+        INTAKING_CORAL(TorqueCurrentFOC(20.amps)),
+        HOLDING_CORAL(TorqueCurrentFOC(20.amps)),
+        INTAKING_ALGAE(TorqueCurrentFOC((-40).amps)),
+        HOLDING_ALGAE(TorqueCurrentFOC((-40).amps)),
+        EJECTING_CORAL(DutyCycleOut(-.5)),
+        NETTING_ALGAE(DutyCycleOut(0.2)),
+        PROCESSING_ALGAE(DutyCycleOut(0.1)),
+        HOME(DutyCycleOut(0.0));
+
+        fun transition(to: IntakeState, condition: BooleanSupplier) {
+            Trigger { currentState == this }.and(condition).onTrue(runOnce { currentState = to })
+        }
+    }
 
     private val canRange: CANrange =
         CANrange(0, "*").apply {
@@ -43,87 +52,96 @@ object Intake : SubsystemBase("intake") {
             )
         }
 
-    private val canRangeOffsetEntry =
-        NetworkTableInstance.getDefault().getTable("intake").getEntry("canRangeOffset").also {
-            it.setDouble(19.0)
-        }
+    private val CAN_RANGE_OFFSET = 19.0.centimeters
 
-    private val canRangeOffset
-        get() = canRangeOffsetEntry.getDouble(19.0).centimeters
-
-    private val CORAL_CURRENT_THRESHOLD =
-        15.amps // Current spike threshold for detecting when we have a coral
-
-    private val ALGAE_CURRENT_THRESHOLD =
-        (-25).amps // Current spike threshold for detecting when we have an algae
-    private var algaeSpikeStartTime = -1.0
-
-    private val ALPHA_BOT_MOTOR_OUTPUT_CONFIG =
-        MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive)
-    private val COMP_BOT_MOTOR_OUTPUT_CONFIG =
-        MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive)
     private val leader = // used to be the algae motor, now is the only motor on new rev of intake
         TalonFX(15, "*").apply {
             configurator.apply(
                 TalonFXConfiguration().apply {
                     CurrentLimits.StatorCurrentLimit = 40.0
                     CurrentLimits.SupplyCurrentLimit = 20.0
-                    MotorOutput =
-                        if (IS_COMP) COMP_BOT_MOTOR_OUTPUT_CONFIG else ALPHA_BOT_MOTOR_OUTPUT_CONFIG
+                    MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
                 }
             )
         }
 
+    private var currentState = HOME
+
+    private val intakeAlgae =
+        ReefscapeController.floorAlgae()
+            .or(ReefscapeController.lowAlgae())
+            .or(ReefscapeController.highAlgae())
+
     init {
-        leader.set(0.0)
+        defaultCommand = run { leader.setControl(currentState.control) }
+        HOME.apply {
+            transition(INTAKING_CORAL, ReefscapeController.coral())
+            transition(INTAKING_ALGAE, intakeAlgae)
+        }
+        INTAKING_CORAL.apply {
+            transition(HOME, ReefscapeController.home())
+            transition(HOLDING_CORAL, { holdingCoral })
+            transition(INTAKING_ALGAE, intakeAlgae)
+        }
+        INTAKING_ALGAE.apply {
+            transition(HOME, ReefscapeController.home())
+            transition(HOLDING_ALGAE, { holdingAlgae })
+            transition(INTAKING_CORAL, ReefscapeController.coral())
+        }
+        HOLDING_CORAL.apply { transition(EJECTING_CORAL, ReefscapeController.score()) }
+        HOLDING_ALGAE.apply {
+            transition(
+                NETTING_ALGAE,
+                ReefscapeController.score().and {
+                    true
+                }, /* replace with check for superstructure state */
+            )
+            transition(
+                PROCESSING_ALGAE,
+                ReefscapeController.score().and {
+                    false /* replace with check for superstructure state */
+                },
+            )
+        }
+        EJECTING_CORAL.apply {
+            transition(HOME, ReefscapeController.home())
+            transition(INTAKING_CORAL, ReefscapeController.coral())
+            transition(
+                INTAKING_ALGAE,
+                ReefscapeController.lowAlgae()
+                    .or(ReefscapeController.highAlgae())
+                    .or(ReefscapeController.floorAlgae()),
+            )
+        }
+        NETTING_ALGAE.apply {
+            transition(HOME, ReefscapeController.home())
+            transition(INTAKING_CORAL, ReefscapeController.coral())
+            transition(
+                INTAKING_ALGAE,
+                ReefscapeController.lowAlgae()
+                    .or(ReefscapeController.highAlgae())
+                    .or(ReefscapeController.floorAlgae()),
+            )
+        }
+        PROCESSING_ALGAE.apply {
+            transition(INTAKING_CORAL, ReefscapeController.coral())
+            transition(INTAKING_ALGAE, intakeAlgae)
+            transition(HOME, ReefscapeController.home())
+        }
     }
 
     /**
      * Returns true if a coral is detected in the path of the CANrange. Only corals that are
      * oriented vertically, and thus able to be scored on one of the reef branches, will be detected
      */
-    val hasBranchCoral: Boolean
+    private val hasBranchCoral: Boolean
         get() = canRange.isDetected.value
 
-    val supplyCurrent: Current
-        get() = leader.supplyCurrent.value
+    val holdingCoral
+        get() = leader.torqueCurrent.valueAsDouble > 15 && leader.velocity.valueAsDouble < 5
 
-    val torqueCurrent: Current
-        get() = leader.torqueCurrent.value
-
-    /**
-     * Return true if the intake motor is experiencing current draw greater than the given
-     * threshold.
-     */
-    fun hasCoralByCurrent(): Boolean {
-        // return true if current is spiked and coral is detected by CANRange
-        return (leader.torqueCurrent.value >= CORAL_CURRENT_THRESHOLD) &&
-            coralDetectedDebounce.calculate(hasBranchCoral)
-    }
-
-    fun detectAlgaeByCurrent(): Boolean {
-        // NOTE: Algae intake current is negative
-        val thresholdMet: Boolean = leader.torqueCurrent.value <= ALGAE_CURRENT_THRESHOLD
-        val currentTime = Timer.getTimestamp() // gets clock time in seconds
-
-        if (algaeSpikeStartTime != -1.0) {
-            // if a spike was previously detected...
-            if (thresholdMet) {
-                if (currentTime - algaeSpikeStartTime >= 0.1) {
-                    // if spiked for >= 0.3 seconds return true
-                    return true
-                }
-            } else {
-                // if not spiked currently, reset start time
-                algaeSpikeStartTime = -1.0
-            }
-        } else if (thresholdMet) {
-            // if spike is newly detected, note start time of spike
-            algaeSpikeStartTime = currentTime
-        }
-
-        return false
-    }
+    val holdingAlgae
+        get() = leader.torqueCurrent.valueAsDouble < -15 && leader.velocity.valueAsDouble > -5
 
     /** Returns the distance from the center of the intake to the center of the coral. */
     val coralLocation: Distance
@@ -136,64 +154,18 @@ object Intake : SubsystemBase("intake") {
             goes toward -X The offset is the value that puts the coral at 0 when it is in the middle of the intake.
             Because the axis are inverse from each other (-X for the CANrange goes in the same direction as +X for
             the robot), the adjusted values must be negated in order to sync the two coordinate systems */
-            return canRange.distance.value - canRangeOffset
+            return canRange.distance.value - CAN_RANGE_OFFSET
         }
 
     override fun periodic() {
+        Logger.recordOutput("intake/state", currentState.name)
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
         Logger.recordOutput("intake/coral_position", canRange.distance.value)
         Logger.recordOutput("intake/coral_location", coralLocation)
-        Logger.recordOutput("intake/supply_current", supplyCurrent)
         Logger.recordOutput("intake/torque_current", leader.torqueCurrent.value)
-        Logger.recordOutput("intake/has_algae", detectAlgaeByCurrent())
+        Logger.recordOutput("intake/has_algae", holdingAlgae)
         Logger.recordOutput("intake/speed", leader.get())
     }
-
-    val manualIntake by command { startEnd({ leader.set(1.0) }, { leader.set(0.0) }) }
-
-    val manualOuttake by command { startEnd({ leader.set(-1.0) }, { leader.set(0.0) }) }
-
-    val outtakeCoral by command {
-        startEnd({ leader.set(-0.5) }, { leader.set(0.0) }).withName("outtakeCoral")
-    }
-
-    val manualOuttakeCoral by command {
-        startEnd({ leader.set(-0.8) }, { leader.set(0.0) }).withName("outtakeCoral")
-    }
-
-    private fun outtakeAlgae(speed: () -> Double) =
-        startEnd({ leader.set(speed()) }, { leader.set(0.0) }).withName("outtakeAlgae")
-
-    /** Outtake and then stop after delay */
-    val scoreCoral by command { outtakeCoral.withTimeout(0.2.seconds) }
-    val scoreAlgae by command {
-        outtakeAlgae { if (Elevator.position.meters <= 0.2) 0.2 else 1.0 }.withTimeout(0.7.seconds)
-    }
-    val dropAlgae by command { outtakeAlgae { 0.1 }.withTimeout(0.1) }
-
-    private val coralDetectedDebounce = Debouncer(0.1, Debouncer.DebounceType.kRising)
-
-    // TODO find optimal intake and hold speeds experimentally
-    fun intakeCoralThenHold(): Command =
-        startEnd({ leader.set(0.7) }, { leader.set(0.07) })
-            .until { hasCoralByCurrent() }
-            .withName("Intake coral then hold")
-
-    val overIntakeCoralThenHold by command {
-        Commands.sequence(
-            intakeCoral,
-            Commands.waitUntil { Intake.hasCoralByCurrent() },
-            Commands.waitSeconds(0.2),
-            holdCoral,
-        )
-    }
-    val intakeCoral by command { runOnce { leader.set(0.7) } }
-    val holdCoral by command { runOnce { leader.set(0.07) } }
-
-    fun intakeAlgaeThenHold(): Command =
-        startEnd({ leader.set(-1.0) }, { leader.set(-0.6) })
-            .until { detectAlgaeByCurrent() }
-            .withName("Intake algae then hold")
 
     private val sim =
         FlywheelSim(

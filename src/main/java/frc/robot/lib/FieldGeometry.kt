@@ -30,29 +30,8 @@ object FieldGeometry {
                 listOf(RED_CORAL_STATION_LOWER, RED_CORAL_STATION_UPPER)
             }
 
-    private val BLUE_BARGE_ALIGNMENT_LINE_LEFT =
-        LineSegment(Translation2d(7.65, 7.374), Translation2d(7.65, 4.815))
-    private val BLUE_BARGE_ALIGNMENT_LINE_RIGHT = BLUE_BARGE_ALIGNMENT_LINE_LEFT.mirror()
-
-    private val RED_BARGE_ALIGNMENT_LINE_RIGHT =
-        BLUE_BARGE_ALIGNMENT_LINE_LEFT.rotateToOtherAlliance()
-    private val RED_BARGE_ALIGNMENT_LINE_LEFT =
-        BLUE_BARGE_ALIGNMENT_LINE_RIGHT.rotateToOtherAlliance()
-
-    val BARGE_ALIGNMENT_LINES
-        get() =
-            if (Robot.alliance == DriverStation.Alliance.Blue) {
-                listOf(BLUE_BARGE_ALIGNMENT_LINE_LEFT, BLUE_BARGE_ALIGNMENT_LINE_RIGHT)
-            } else {
-                listOf(RED_BARGE_ALIGNMENT_LINE_LEFT, RED_BARGE_ALIGNMENT_LINE_RIGHT)
-            }
-
     fun distanceToClosestLine(lineSegments: List<LineSegment>, position: Translation2d): Double {
         return lineSegments.minOfOrNull { it.perpendicularDistance(position) } ?: Double.MAX_VALUE
-    }
-
-    fun getClosestLine(lineSegments: List<LineSegment>, position: Translation2d): LineSegment {
-        return lineSegments.minBy { it.getShortestDistance(position) }
     }
 }
 
