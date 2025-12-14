@@ -15,24 +15,35 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.lib.*
+import frc.robot.lib.amps
 import frc.robot.lib.bindings.ReefscapeController
-import frc.robot.subsystems.Intake.IntakeState.*
+import frc.robot.lib.centimeters
+import frc.robot.lib.kilogramSquareMeters
+import frc.robot.lib.meters
+import frc.robot.lib.poundSquareInches
+import frc.robot.subsystems.Intake.IntakeState.EjectCoral
+import frc.robot.subsystems.Intake.IntakeState.HoldAlgae
+import frc.robot.subsystems.Intake.IntakeState.HoldCoral
+import frc.robot.subsystems.Intake.IntakeState.Idle
+import frc.robot.subsystems.Intake.IntakeState.IntakeAlgae
+import frc.robot.subsystems.Intake.IntakeState.IntakeCoral
+import frc.robot.subsystems.Intake.IntakeState.NetAlgae
+import frc.robot.subsystems.Intake.IntakeState.ProcessAlgae
 import java.util.function.BooleanSupplier
 import org.littletonrobotics.junction.Logger
 
 object Intake : SubsystemBase("intake") {
 
     enum class IntakeState(val control: ControlRequest) {
+        Idle(DutyCycleOut(0.0)),
         // Separate intake vs holding states to allow going home if game piece isn't acquired
-        INTAKING_CORAL(TorqueCurrentFOC(20.amps)),
-        HOLDING_CORAL(TorqueCurrentFOC(20.amps)),
-        INTAKING_ALGAE(TorqueCurrentFOC((-40).amps)),
-        HOLDING_ALGAE(TorqueCurrentFOC((-40).amps)),
-        EJECTING_CORAL(DutyCycleOut(-.5)),
-        NETTING_ALGAE(DutyCycleOut(0.2)),
-        PROCESSING_ALGAE(DutyCycleOut(0.1)),
-        HOME(DutyCycleOut(0.0));
+        IntakeCoral(TorqueCurrentFOC(20.amps)),
+        HoldCoral(TorqueCurrentFOC(20.amps)),
+        EjectCoral(DutyCycleOut(-.5)),
+        IntakeAlgae(TorqueCurrentFOC((-40).amps)),
+        HoldAlgae(TorqueCurrentFOC((-40).amps)),
+        NetAlgae(DutyCycleOut(0.2)),
+        ProcessAlgae(DutyCycleOut(0.1));
 
         fun transition(to: IntakeState, condition: BooleanSupplier) {
             Trigger { currentState == this }.and(condition).onTrue(runOnce { currentState = to })
@@ -65,8 +76,9 @@ object Intake : SubsystemBase("intake") {
             )
         }
 
-    private var currentState = HOME
+    var currentState = Idle
 
+    /* Helper trigger for any algae intake buttons pressed */
     private val intakeAlgae =
         ReefscapeController.floorAlgae()
             .or(ReefscapeController.lowAlgae())
@@ -74,59 +86,59 @@ object Intake : SubsystemBase("intake") {
 
     init {
         defaultCommand = run { leader.setControl(currentState.control) }
-        HOME.apply {
-            transition(INTAKING_CORAL, ReefscapeController.coral())
-            transition(INTAKING_ALGAE, intakeAlgae)
+        Idle.apply {
+            transition(IntakeCoral, ReefscapeController.coral())
+            transition(IntakeAlgae, intakeAlgae)
         }
-        INTAKING_CORAL.apply {
-            transition(HOME, ReefscapeController.home())
-            transition(HOLDING_CORAL, { holdingCoral })
-            transition(INTAKING_ALGAE, intakeAlgae)
+        IntakeCoral.apply {
+            transition(Idle, ReefscapeController.home())
+            transition(HoldCoral, { holdingCoral })
+            transition(IntakeAlgae, intakeAlgae)
         }
-        INTAKING_ALGAE.apply {
-            transition(HOME, ReefscapeController.home())
-            transition(HOLDING_ALGAE, { holdingAlgae })
-            transition(INTAKING_CORAL, ReefscapeController.coral())
+        IntakeAlgae.apply {
+            transition(Idle, ReefscapeController.home())
+            transition(HoldAlgae) { holdingAlgae }
+            transition(IntakeCoral, ReefscapeController.coral())
         }
-        HOLDING_CORAL.apply { transition(EJECTING_CORAL, ReefscapeController.score()) }
-        HOLDING_ALGAE.apply {
+        HoldCoral.apply { transition(EjectCoral, ReefscapeController.score()) }
+        HoldAlgae.apply {
             transition(
-                NETTING_ALGAE,
+                NetAlgae,
                 ReefscapeController.score().and {
                     true
                 }, /* replace with check for superstructure state */
             )
             transition(
-                PROCESSING_ALGAE,
+                ProcessAlgae,
                 ReefscapeController.score().and {
                     false /* replace with check for superstructure state */
                 },
             )
         }
-        EJECTING_CORAL.apply {
-            transition(HOME, ReefscapeController.home())
-            transition(INTAKING_CORAL, ReefscapeController.coral())
+        EjectCoral.apply {
+            transition(Idle, ReefscapeController.home())
+            transition(IntakeCoral, ReefscapeController.coral())
             transition(
-                INTAKING_ALGAE,
+                IntakeAlgae,
                 ReefscapeController.lowAlgae()
                     .or(ReefscapeController.highAlgae())
                     .or(ReefscapeController.floorAlgae()),
             )
         }
-        NETTING_ALGAE.apply {
-            transition(HOME, ReefscapeController.home())
-            transition(INTAKING_CORAL, ReefscapeController.coral())
+        NetAlgae.apply {
+            transition(Idle, ReefscapeController.home())
+            transition(IntakeCoral, ReefscapeController.coral())
             transition(
-                INTAKING_ALGAE,
+                IntakeAlgae,
                 ReefscapeController.lowAlgae()
                     .or(ReefscapeController.highAlgae())
                     .or(ReefscapeController.floorAlgae()),
             )
         }
-        PROCESSING_ALGAE.apply {
-            transition(INTAKING_CORAL, ReefscapeController.coral())
-            transition(INTAKING_ALGAE, intakeAlgae)
-            transition(HOME, ReefscapeController.home())
+        ProcessAlgae.apply {
+            transition(IntakeCoral, ReefscapeController.coral())
+            transition(IntakeAlgae, intakeAlgae)
+            transition(Idle, ReefscapeController.home())
         }
     }
 
