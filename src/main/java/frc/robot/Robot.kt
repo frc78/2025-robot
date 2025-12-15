@@ -4,7 +4,6 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.pathplanner.lib.commands.FollowPathCommand
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.hal.FRCNetComm
@@ -22,13 +21,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
-import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers
-import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.auto.Autos
-import frc.robot.lib.FieldGeometry
-import frc.robot.lib.bindings.ReefscapeController
-import frc.robot.lib.bindings.configureDriverBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
@@ -39,9 +31,6 @@ import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.photonvision.PhotonPoseEstimator
-
-// Might have to be manually set when testing on SkibJr
-val IS_COMP = "COMP" == System.getenv("frc_bot")
 
 object Robot : LoggedRobot() {
     val gameField: AprilTagFieldLayout =
@@ -60,7 +49,6 @@ object Robot : LoggedRobot() {
             WPILibVersion.Version,
         )
         DriverStation.silenceJoystickConnectionWarning(true)
-        Logger.recordMetadata("IS_COMP", "$IS_COMP")
         // Publish data to NetworkTables
         Logger.addDataReceiver(NT4Publisher())
         PowerDistribution(1, PowerDistribution.ModuleType.kRev)
@@ -74,78 +62,19 @@ object Robot : LoggedRobot() {
         }
         // Record both DS control and joystick data
         DriverStation.startDataLog(DataLogManager.getLog())
-        Chassis.configureAutoBuilder()
         Chassis.registerTelemetry(Telemetry::telemeterize)
 
         // Initializing Subsystems
         SuperStructure
         LEDSubsystem
         Intake
-        Pivot
-        Wrist
         Climber
 
-        ReefscapeController.configureDriverBindings()
-
         Pivot.coast()
-        RobotModeTriggers.disabled()
-            .and(Trigger { Pivot.angle > 45.degrees })
-            .onTrue(Commands.runOnce({ Pivot.brake() }).ignoringDisable(true))
-
-        // Move wrist over when leaving coral station area with a coral
-        RobotModeTriggers.teleop()
-            .and {
-                FieldGeometry.distanceToClosestLine(
-                        FieldGeometry.CORAL_STATIONS,
-                        Chassis.state.Pose.translation,
-                    )
-                    .meters > 1.meters
-            }
-            .onTrue(
-                Commands.either(
-                    Wrist.goToWithoutRequiring(RobotState.CoralStorage),
-                    Commands.none(),
-                ) {
-                    Intake.hasBranchCoral
-                }
-            )
-
-        // Move wrist and pivot when leaving coral station in auto
-        RobotModeTriggers.autonomous()
-            .and {
-                FieldGeometry.distanceToClosestLine(
-                        FieldGeometry.CORAL_STATIONS,
-                        Chassis.state.Pose.translation,
-                    )
-                    .meters > 0.6.meters
-            }
-            .onTrue(
-                Commands.either(
-                    Commands.sequence(
-                        Wrist.goToWithoutRequiring(RobotState.CoralStorage),
-                        Pivot.goToWithoutRequiring(RobotState.L4),
-                    ),
-                    Commands.none(),
-                ) {
-                    Intake.hasBranchCoral
-                }
-            )
-
-        // Sets the Wrist to immediately go to its lower limit.  It starts all the way down to zero
-        // it,
-        // but the lowest safe limit is greater than this due to the top elevator supports
-        Wrist.initializePosition()
-        FollowPathCommand.warmupCommand().schedule()
     }
 
     private val autoChooser =
-        SendableChooser<Command>().apply {
-            addOption("Beast Mode 😎", Autos.SideCoralFast)
-            addOption("Ball Up Top", Autos.CenterAlgaeAuto)
-            addOption("OP 9 Coral Optimized", Autos.OPSideCoral)
-            setDefaultOption("Beast Mode Default", Autos.SideCoralFast)
-            SmartDashboard.putData("Auto Mode", this)
-        }
+        SendableChooser<Command>().apply { SmartDashboard.putData("Auto Mode", this) }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
@@ -196,13 +125,32 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
-        CommandScheduler.getInstance().run()
+        SuperStructure.periodic()
+        Intake.periodic()
+        Climber.periodic()
+        Chassis.periodic()
         if (isReal()) {
             Vision.update()
         }
     }
 
+    override fun autonomousPeriodic() {
+        SuperStructure.stateMachine()
+        LEDSubsystem.stateMachine()
+        Intake.stateMachine()
+    }
+
+    override fun teleopPeriodic() {
+        SuperStructure.stateMachine()
+        LEDSubsystem.stateMachine()
+        Intake.stateMachine()
+        Chassis.stateMachine()
+    }
+
     override fun simulationPeriodic() {
+        SuperStructure.simulationPeriodic()
+        Intake.simulationPeriodic()
+
         // The angle of the elevator is determined by the pivot angle
         // The angle parameter expects a value in degrees, so we convert it to degrees
         elevatorMech.angle = Pivot.angle.degrees
@@ -212,31 +160,21 @@ object Robot : LoggedRobot() {
         wristMech.angle = 140 - Wrist.angle.degrees
     }
 
-    override fun teleopInit() {
-        CommandScheduler.getInstance().cancelAll()
-    }
-
-    override fun teleopExit() {
-        // Stop logging at the end of the match
-        if (DriverStation.isFMSAttached()) {
-            Logger.end()
-            DataLogManager.stop()
-            SignalLogger.stop()
-        }
-        Pivot.brake()
-    }
-
-    override fun testInit() {
-        CommandScheduler.getInstance().cancelAll()
-    }
-
     override fun autonomousInit() {
-        CommandScheduler.getInstance().cancelAll()
         autoChooser.selected?.let { CommandScheduler.getInstance().schedule(it) }
     }
 
     override fun disabledInit() {
         Vision.setMultitagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY)
+    }
+
+    private var pivotBraked = false
+
+    override fun disabledPeriodic() {
+        if (Pivot.angle > 45.degrees && !pivotBraked) {
+            Pivot.brake()
+            pivotBraked = true
+        }
     }
 
     override fun disabledExit() {

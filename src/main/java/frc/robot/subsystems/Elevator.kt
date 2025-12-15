@@ -1,12 +1,8 @@
 package frc.robot.subsystems
 
-import com.ctre.phoenix6.SignalLogger
-import com.ctre.phoenix6.configs.Slot0Configs
-import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.Follower
 import com.ctre.phoenix6.controls.MotionMagicVoltage
-import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.GravityTypeValue
 import com.ctre.phoenix6.signals.InvertedValue
@@ -19,20 +15,14 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.ElevatorSim
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.lib.*
 import org.littletonrobotics.junction.Logger
 
-object Elevator : SubsystemBase("elevator") {
+object Elevator {
     private val motionMagic = MotionMagicVoltage(0.0)
 
     private const val LEADER_MOTOR_ID = 11
     private const val FOLLOWER_MOTOR_ID = 12
-
-    private val COMP_BOT_CONFIGS = Slot0Configs()
 
     private const val GEAR_RATIO = 5.0
     private val DRUM_RADIUS = (1.75.inches + .25.inches) / 2.0
@@ -82,8 +72,11 @@ object Elevator : SubsystemBase("elevator") {
     val position
         get() = leader.position.value.toElevatorHeight()
 
-    val atPosition: Boolean
-        get() = (position - setpoint).abs(Inches) < .5
+
+
+    fun goTo(height: Distance) {
+        leader.setControl(motionMagic.withPosition(height.toDrumRotations()))
+    }
 
     init {
         TalonFX(FOLLOWER_MOTOR_ID, "*").apply { setControl(Follower(LEADER_MOTOR_ID, true)) }
@@ -109,57 +102,11 @@ object Elevator : SubsystemBase("elevator") {
         leader.simState.apply { Orientation = ChassisReference.CounterClockwise_Positive }
     }
 
-    private val voltageOut = VoltageOut(0.volts)
-
-    private val sysIdRoutine =
-        SysIdRoutine(
-            SysIdRoutine.Config(null, 3.volts, null) {
-                SignalLogger.writeString("elevator_state", "$it")
-            },
-            SysIdRoutine.Mechanism(
-                { leader.setControl(voltageOut.withOutput(it)) },
-                null,
-                this,
-                "elevator",
-            ),
-        )
-
-    @Suppress("UnusedPrivateProperty")
-    private fun sysId(): Command {
-        return Commands.sequence(
-                runOnce {
-                    SignalLogger.start()
-                    leader.configurator.apply(
-                        SoftwareLimitSwitchConfigs().apply {
-                            ForwardSoftLimitEnable = true
-                            ForwardSoftLimitThreshold = MAX_HEIGHT.toDrumRotations().rotations
-                            ReverseSoftLimitEnable = true
-                            ReverseSoftLimitThreshold = 0.1
-                        }
-                    )
-                },
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
-                },
-                sysIdRoutine.quasistatic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 6.inches.toDrumRotations()
-                },
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kForward).until {
-                    leader.position.value > 50.inches.toDrumRotations()
-                },
-                sysIdRoutine.dynamic(SysIdRoutine.Direction.kReverse).until {
-                    leader.position.value < 6.inches.toDrumRotations()
-                },
-                runOnce { SignalLogger.stop() },
-            )
-            .withName("Elevator sysId")
-    }
-
-    override fun periodic() {
+    fun periodic() {
         Logger.recordOutput("elevator/position", position.inches)
     }
 
-    override fun simulationPeriodic() {
+    fun simulationPeriodic() {
         elevatorSim.setInputVoltage(RobotController.getBatteryVoltage())
         val motorVoltage = leaderSim.motorVoltage
         elevatorSim.setInputVoltage(motorVoltage)

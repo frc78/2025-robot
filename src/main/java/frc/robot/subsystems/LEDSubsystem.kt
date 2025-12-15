@@ -4,16 +4,20 @@ import edu.wpi.first.wpilibj.AddressableLED
 import edu.wpi.first.wpilibj.AddressableLEDBuffer
 import edu.wpi.first.wpilibj.LEDPattern
 import edu.wpi.first.wpilibj.util.Color
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.lib.Level
-import frc.robot.lib.ScoreSelector
-import frc.robot.lib.command
-import frc.robot.lib.seconds
 
-object LEDSubsystem : SubsystemBase("led") {
+object LEDSubsystem {
+
+    enum class LedState {
+        Disabled,
+        Idle,
+        GamePieceAcquired,
+        Aligned,
+    }
+
     private val led = AddressableLED(0)
     private val buffer = AddressableLEDBuffer(30)
+
+    var currentState = LedState.Disabled
 
     init {
         led.setColorOrder(AddressableLED.ColorOrder.kRGB)
@@ -21,26 +25,34 @@ object LEDSubsystem : SubsystemBase("led") {
         led.setLength(buffer.length)
         led.setData(buffer)
         led.start()
-        defaultCommand = runOnce { setColorForSelectedLevel() }
     }
 
-    fun setColorForSelectedLevel() = setColor(colorForSelectedLevel)
-
-    private val colorForSelectedLevel
-        get() =
-            when (ScoreSelector.SelectedLevel) {
-                Level.L1 -> Color.kGreen
-                Level.L2 -> Color.kRed
-                Level.L3 -> Color.kBlue
-                Level.L4 -> Color.kYellow
+    fun stateMachine() {
+        when (currentState) {
+            LedState.Disabled -> {
+                setColor(Color.kWhite)
             }
-
-    val flashForSelectedLevel by command {
-        this.run {
-            val base = LEDPattern.solid(colorForSelectedLevel)
-            val pattern = base.blink(.25.seconds)
-            pattern.applyTo(buffer)
-            led.setData(buffer)
+            LedState.Idle -> {
+                setColor(Color.kBlack)
+                if (
+                    Intake.currentState == Intake.IntakeState.HoldCoral ||
+                        Intake.currentState == Intake.IntakeState.HoldAlgae
+                ) {
+                    currentState = LedState.GamePieceAcquired
+                }
+            }
+            LedState.GamePieceAcquired -> {
+                setColor(Color.kGreen)
+                if (
+                    Intake.currentState != Intake.IntakeState.HoldCoral &&
+                        Intake.currentState != Intake.IntakeState.HoldAlgae
+                ) {
+                    currentState = LedState.Idle
+                }
+            }
+            LedState.Aligned -> {
+                setColor(Color.kBlue)
+            }
         }
     }
 
@@ -48,16 +60,4 @@ object LEDSubsystem : SubsystemBase("led") {
         LEDPattern.solid(color).applyTo(buffer)
         led.setData(buffer)
     }
-
-    private fun flashColor(color: Color): Command {
-        val base = LEDPattern.solid(color)
-        val pattern = base.blink(.25.seconds)
-        return run {
-            pattern.applyTo(buffer)
-            led.setData(buffer)
-        }
-    }
-
-    val flashWhite by command { flashColor(Color.kWhite) }
-    val flashPink by command { flashColor(Color.kHotPink) }
 }

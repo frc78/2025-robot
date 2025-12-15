@@ -5,30 +5,37 @@ import com.ctre.phoenix6.controls.ControlRequest
 import com.ctre.phoenix6.controls.PositionVoltage
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.lib.rotations
 import frc.robot.subsystems.SuperStructure.SuperStructureState.FullyClimbed
 import org.littletonrobotics.junction.Logger
 
-object Climber : SubsystemBase("climber") {
+object Climber {
 
     enum class ClimberState(val control: ControlRequest) {
         Retracted(PositionVoltage(0.0.rotations)),
-        Extended(PositionVoltage(extendedPosition))
+        Extended(PositionVoltage(EXTENDED_ROTATIONS)),
     }
-    private val rotationsPerInch = 12.0.rotations
+
+    // 12 TPI leadscrew
+    private const val LEADSCREW_TPI = 12.0
     private const val EXTENDED_INCHES = 6.0
-    private val extendedPosition = rotationsPerInch * EXTENDED_INCHES
+    private const val EXTENDED_ROTATIONS = LEADSCREW_TPI * EXTENDED_INCHES
 
-
-    init {
-        defaultCommand = run { leader.setControl(currentState.control)}
-        bind(ClimberState.Retracted).and{SuperStructure.currentState == FullyClimbed }.onTrue(runOnce { currentState = ClimberState.Extended })
+    fun stateMachine() {
+        leader.setControl(currentState.control)
+        when (currentState) {
+            ClimberState.Retracted -> {
+                if (SuperStructure.currentState == FullyClimbed) {
+                    currentState = ClimberState.Extended
+                }
+            }
+            ClimberState.Extended -> {
+                // No automatic transition out of extended
+            }
+        }
     }
 
     private var currentState = ClimberState.Retracted
-    fun bind(state: ClimberState) = Trigger{ currentState == state }
 
     private val leader =
         TalonFX(16, "*").apply {
@@ -43,8 +50,7 @@ object Climber : SubsystemBase("climber") {
             )
         }
 
-    override fun periodic() {
+    fun periodic() {
         Logger.recordOutput("climber/position", leader.position.value)
     }
-
 }

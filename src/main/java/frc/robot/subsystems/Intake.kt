@@ -9,30 +9,18 @@ import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.UpdateModeValue
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import edu.wpi.first.wpilibj2.command.SubsystemBase
-import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.lib.amps
+import frc.robot.lib.*
 import frc.robot.lib.bindings.ReefscapeController
-import frc.robot.lib.centimeters
-import frc.robot.lib.kilogramSquareMeters
-import frc.robot.lib.meters
-import frc.robot.lib.poundSquareInches
-import frc.robot.subsystems.Intake.IntakeState.EjectCoral
-import frc.robot.subsystems.Intake.IntakeState.HoldAlgae
-import frc.robot.subsystems.Intake.IntakeState.HoldCoral
-import frc.robot.subsystems.Intake.IntakeState.Idle
-import frc.robot.subsystems.Intake.IntakeState.IntakeAlgae
-import frc.robot.subsystems.Intake.IntakeState.IntakeCoral
-import frc.robot.subsystems.Intake.IntakeState.NetAlgae
-import frc.robot.subsystems.Intake.IntakeState.ProcessAlgae
-import java.util.function.BooleanSupplier
+import frc.robot.subsystems.Intake.IntakeState.*
 import org.littletonrobotics.junction.Logger
 
-object Intake : SubsystemBase("intake") {
+object Intake {
 
     enum class IntakeState(val control: ControlRequest) {
         Idle(DutyCycleOut(0.0)),
@@ -43,11 +31,7 @@ object Intake : SubsystemBase("intake") {
         IntakeAlgae(TorqueCurrentFOC((-40).amps)),
         HoldAlgae(TorqueCurrentFOC((-40).amps)),
         NetAlgae(DutyCycleOut(0.2)),
-        ProcessAlgae(DutyCycleOut(0.1));
-
-        fun transition(to: IntakeState, condition: BooleanSupplier) {
-            Trigger { currentState == this }.and(condition).onTrue(runOnce { currentState = to })
-        }
+        ProcessAlgae(DutyCycleOut(0.1)),
     }
 
     private val canRange: CANrange =
@@ -76,69 +60,85 @@ object Intake : SubsystemBase("intake") {
             )
         }
 
+    private val stateTimer = Timer()
     var currentState = Idle
+        set(value) {
+            if (field != value) {
+                stateTimer.restart()
+            }
+            field = value
+        }
 
-    /* Helper trigger for any algae intake buttons pressed */
-    private val intakeAlgae =
-        ReefscapeController.floorAlgae()
-            .or(ReefscapeController.lowAlgae())
-            .or(ReefscapeController.highAlgae())
+    fun stateMachine() {
+        leader.setControl(currentState.control)
+        val intakeAlgae =
+            ReefscapeController.floorAlgae()
+                .or(ReefscapeController.lowAlgae())
+                .or(ReefscapeController.highAlgae())
+        when (currentState) {
+            Idle -> {
+                if (ReefscapeController.coral()) {
+                    currentState = IntakeCoral
+                } else if (intakeAlgae) {
+                    currentState = IntakeAlgae
+                }
+            }
 
-    init {
-        defaultCommand = run { leader.setControl(currentState.control) }
-        Idle.apply {
-            transition(IntakeCoral, ReefscapeController.coral())
-            transition(IntakeAlgae, intakeAlgae)
-        }
-        IntakeCoral.apply {
-            transition(Idle, ReefscapeController.home())
-            transition(HoldCoral, { holdingCoral })
-            transition(IntakeAlgae, intakeAlgae)
-        }
-        IntakeAlgae.apply {
-            transition(Idle, ReefscapeController.home())
-            transition(HoldAlgae) { holdingAlgae }
-            transition(IntakeCoral, ReefscapeController.coral())
-        }
-        HoldCoral.apply { transition(EjectCoral, ReefscapeController.score()) }
-        HoldAlgae.apply {
-            transition(
-                NetAlgae,
-                ReefscapeController.score().and {
-                    true
-                }, /* replace with check for superstructure state */
-            )
-            transition(
-                ProcessAlgae,
-                ReefscapeController.score().and {
-                    false /* replace with check for superstructure state */
-                },
-            )
-        }
-        EjectCoral.apply {
-            transition(Idle, ReefscapeController.home())
-            transition(IntakeCoral, ReefscapeController.coral())
-            transition(
-                IntakeAlgae,
-                ReefscapeController.lowAlgae()
-                    .or(ReefscapeController.highAlgae())
-                    .or(ReefscapeController.floorAlgae()),
-            )
-        }
-        NetAlgae.apply {
-            transition(Idle, ReefscapeController.home())
-            transition(IntakeCoral, ReefscapeController.coral())
-            transition(
-                IntakeAlgae,
-                ReefscapeController.lowAlgae()
-                    .or(ReefscapeController.highAlgae())
-                    .or(ReefscapeController.floorAlgae()),
-            )
-        }
-        ProcessAlgae.apply {
-            transition(IntakeCoral, ReefscapeController.coral())
-            transition(IntakeAlgae, intakeAlgae)
-            transition(Idle, ReefscapeController.home())
+            IntakeCoral -> {
+                if (ReefscapeController.home()) {
+                    currentState = Idle
+                } else if (holdingCoral) {
+                    currentState = HoldCoral
+                }
+            }
+
+            HoldCoral -> {
+                if (ReefscapeController.score()) {
+                    currentState = EjectCoral
+                }
+            }
+
+            EjectCoral -> {
+                if (ReefscapeController.home()) {
+                    currentState = Idle
+                } else if (ReefscapeController.coral()) {
+                    currentState = IntakeCoral
+                }
+            }
+
+            IntakeAlgae -> {
+                if (ReefscapeController.home()) {
+                    currentState = Idle
+                } else if (holdingAlgae) {
+                    currentState = HoldAlgae
+                }
+            }
+
+            HoldAlgae -> {
+                if (ReefscapeController.score()) {
+                    currentState = ProcessAlgae
+                }
+            }
+
+            NetAlgae -> {
+                if (ReefscapeController.home()) {
+                    currentState = Idle
+                } else if (ReefscapeController.coral()) {
+                    currentState = IntakeCoral
+                } else if (intakeAlgae) {
+                    currentState = IntakeAlgae
+                }
+            }
+
+            ProcessAlgae -> {
+                if (ReefscapeController.home()) {
+                    currentState = Idle
+                } else if (ReefscapeController.coral()) {
+                    currentState = IntakeCoral
+                } else if (intakeAlgae) {
+                    currentState = IntakeAlgae
+                }
+            }
         }
     }
 
@@ -149,11 +149,19 @@ object Intake : SubsystemBase("intake") {
     private val hasBranchCoral: Boolean
         get() = canRange.isDetected.value
 
+    private val holdCoralDebounce = Debouncer(0.5, Debouncer.DebounceType.kRising)
     val holdingCoral
-        get() = leader.torqueCurrent.valueAsDouble > 15 && leader.velocity.valueAsDouble < 5
+        get() =
+            holdCoralDebounce.calculate(
+                leader.torqueCurrent.valueAsDouble > 15 && leader.velocity.valueAsDouble < 5
+            )
 
+    private val holdAlgaeDebounce = Debouncer(0.5, Debouncer.DebounceType.kRising)
     val holdingAlgae
-        get() = leader.torqueCurrent.valueAsDouble < -15 && leader.velocity.valueAsDouble > -5
+        get() =
+            holdAlgaeDebounce.calculate(
+                leader.torqueCurrent.valueAsDouble < -15 && leader.velocity.valueAsDouble > -5
+            )
 
     /** Returns the distance from the center of the intake to the center of the coral. */
     val coralLocation: Distance
@@ -169,7 +177,7 @@ object Intake : SubsystemBase("intake") {
             return canRange.distance.value - CAN_RANGE_OFFSET
         }
 
-    override fun periodic() {
+    fun periodic() {
         Logger.recordOutput("intake/state", currentState.name)
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
         Logger.recordOutput("intake/coral_position", canRange.distance.value)
@@ -183,7 +191,7 @@ object Intake : SubsystemBase("intake") {
         FlywheelSim(
             LinearSystemId.createFlywheelSystem(
                 DCMotor.getKrakenX60Foc(1),
-                8.28.poundSquareInches.kilogramSquareMeters,
+                .263.poundSquareInches.kilogramSquareMeters,
                 36.0 / 12.0,
             ),
             DCMotor.getKrakenX60Foc(1),
@@ -192,9 +200,18 @@ object Intake : SubsystemBase("intake") {
 
     private val simState by lazy { leader.simState }
 
-    override fun simulationPeriodic() {
+    fun simulationPeriodic() {
         sim.inputVoltage = simState.motorVoltage
         sim.update(0.02)
-        simState.setRotorVelocity(sim.angularVelocity)
+        if (
+            currentState == IntakeCoral ||
+                currentState == HoldCoral ||
+                currentState == IntakeState.IntakeAlgae ||
+                currentState == IntakeState.HoldAlgae
+        ) {
+            simState.setRotorVelocity(0.0)
+        } else {
+            simState.setRotorVelocity(sim.angularVelocity * 36.0 / 12.0)
+        }
     }
 }
