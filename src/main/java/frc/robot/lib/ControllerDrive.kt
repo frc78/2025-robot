@@ -53,7 +53,7 @@ val XboxController.speedModifiers
     get() =
         // TODO refactor this to be at all readable, or at least some comments
         (if (TRIGGER_ADJUST) triggerAdjust else 1.0) *
-            (if (DISTANCE_SLOWING && if (RobotBase.isReal()) !Intake.hasBranchCoral else true)
+            (if (DISTANCE_SLOWING && if (RobotBase.isReal()) !Intake.holdingCoral else true)
                 obstacleSlowdown
             else 1.0) *
             // scale speed down with elevator height, full speed under 1 inch extension down to .15

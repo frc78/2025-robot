@@ -18,53 +18,12 @@ import frc.robot.subsystems.RobotState
 import frc.robot.subsystems.SuperStructure
 import frc.robot.subsystems.drivetrain.Chassis
 
-private val DRIVE_LAYOUT =
-    DriveLayout.AUTOMATIC_SEQUENCING.also { SmartDashboard.putString("drive_layout", it.name) }
-
 val TRIGGER_ADJUST = true.also { SmartDashboard.putBoolean("trigger_adjust", it) }
 val DISTANCE_SLOWING = true.also { SmartDashboard.putBoolean("distance_slowing", it) }
 
-private enum class DriveLayout {
-    BASIC,
-    SNAPPING,
-    MANUAL_SEQUENCING,
-    AUTOMATIC_SEQUENCING,
-    ALIGN_TESTING,
-}
-
 fun CommandXboxController.configureDriverBindings() {
     configureDriveBasicLayout()
-
-    when (DRIVE_LAYOUT) {
-        DriveLayout.BASIC -> {
-            /*Already configured by default*/
-        }
-        DriveLayout.SNAPPING -> configureDriveSnappingLayout()
-        DriveLayout.MANUAL_SEQUENCING -> configureDriveManualSequencingLayout()
-        DriveLayout.AUTOMATIC_SEQUENCING -> configureDriveAutomaticSequencingLayout()
-        DriveLayout.ALIGN_TESTING -> configureAutoAlignTestingLayout()
-    }
-}
-
-fun CommandXboxController.configureAutoAlignTestingLayout() {
-
-    val notLeftBumper = leftBumper().negate()
-    val notRightBumper = rightBumper().negate()
-
-    // only y
-    y().and(notLeftBumper).and(notRightBumper).whileTrue(Chassis.driveToBarge)
-    // y and left bumper
-    y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
-    // y and right bumper
-    y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-    val hasCoral = Trigger { Intake.hasBranchCoral }
-    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
-
-    rightBumper().and(notLeftBumper).whileTrue(Chassis.driveToRightBranch)
-
-    leftBumper().and(notRightBumper).whileTrue(Chassis.driveToLeftBranch)
-
-    leftBumper().and(rightBumper()).whileTrue(Chassis.driveToClosestReef)
+    configureDriveAutomaticSequencingLayout()
 }
 
 // Basic driving
@@ -77,7 +36,7 @@ fun CommandXboxController.configureDriveBasicLayout() {
             }
             .withName("Field centric xbox drive")
     // Rumble for short duration on game piece acquisition
-    Trigger { Intake.hasCoralByCurrent() }
+    Trigger { Intake.holdingCoral || Intake.holdingAlgae }
         .onTrue(
             Commands.startEnd(
                     { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
@@ -85,55 +44,6 @@ fun CommandXboxController.configureDriveBasicLayout() {
                 )
                 .withTimeout(0.5)
         )
-
-    Trigger { Intake.detectAlgaeByCurrent() }
-        .onTrue(
-            Commands.startEnd(
-                    { setRumble(GenericHID.RumbleType.kBothRumble, 1.0) },
-                    { setRumble(GenericHID.RumbleType.kBothRumble, 0.0) },
-                )
-                .withTimeout(0.5)
-        )
-}
-
-// Driving with snapping bindings for reef alignment
-private fun CommandXboxController.configureDriveSnappingLayout() {
-    val notLeftBumper = leftBumper().negate()
-    val notRightBumper = rightBumper().negate()
-    val notA = a().negate()
-    val notY = y().negate()
-    // only left bumper
-    leftBumper().and(notRightBumper).and(notA).and(notY).whileTrue(Chassis.driveToLeftBranch)
-    // only right bumper
-    rightBumper().and(notLeftBumper).and(notA).and(notY).whileTrue(Chassis.driveToRightBranch)
-
-    // both left and right bumper
-    leftBumper().and(rightBumper()).and(notA).and(notY).whileTrue(Chassis.driveToClosestReef)
-
-    a().whileTrue(
-        Chassis.snapAngleToCoralStation {
-            withVelocityX(hid.velocityX).withVelocityY(hid.velocityY)
-        }
-    )
-
-    x().whileTrue(
-        Chassis.snapAngleToReef { withVelocityX(hid.velocityX).withVelocityY(hid.velocityY) }
-    )
-
-    // only y
-    y().and(notLeftBumper).and(notRightBumper).whileTrue(Chassis.driveToBarge)
-    // y and left bumper
-    y().and(leftBumper()).and(notRightBumper).whileTrue(Chassis.driveToBargeLeft)
-    // y and right bumper
-    y().and(rightBumper()).and(notLeftBumper).whileTrue(Chassis.driveToBargeRight)
-}
-
-private fun CommandXboxController.configureDriveManualSequencingLayout() {
-    leftTrigger(0.55)
-        .onTrue(SuperStructure.goToSelectedLevel)
-        .onFalse(SuperStructure.smartGoTo(RobotState.Stow))
-    rightTrigger(0.55).whileTrue(Intake.scoreCoral)
-    a().whileTrue(Intake.outtakeCoral) // Spencer added, does this work here though?
 }
 
 // Driving with buttons for automatic scoring sequences
@@ -145,7 +55,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     // Auto score algae in processor
     b().whileTrue(
             Chassis.driveToProcessor
-                .andThen(Intake.dropAlgae)
+                .andThen(Intake.scoreAlgae)
                 .andThen(Chassis.backAwayFromProcessor.until { Chassis.isWithinGoal(0.05) })
                 .andThen(SuperStructure.smartGoTo(RobotState.Stow).asProxy())
         )
@@ -156,10 +66,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
     a().and(notRightBumper)
         .and(notLeftBumper)
         .whileTrue(Chassis.driveToClosestCenterCoralStation.raceWith(LEDSubsystem.flashWhite))
-    a().onTrue(
-        SuperStructure.smartGoTo(RobotState.NewCoralStation)
-            .alongWith(Intake.overIntakeCoralThenHold)
-    )
+    a().onTrue(SuperStructure.smartGoTo(RobotState.NewCoralStation).alongWith(Intake.intakeCoral))
 
     // Adding this to the automatic sequencing layout per Eli's request at Battlecry
     x().whileTrue(
@@ -173,8 +80,7 @@ private fun CommandXboxController.configureDriveAutomaticSequencingLayout() {
 private fun CommandXboxController.configureReefAlignments() {
     val notLeftBumper = leftBumper().negate()
     val notRightBumper = rightBumper().negate()
-    val hasCoral = Trigger { Intake.hasBranchCoral }
-    val hasNoCoral = Trigger { !Intake.hasBranchCoral }
+    val hasCoral = Trigger { Intake.holdingCoral }
 
     rightBumper()
         .and(notLeftBumper)
@@ -189,7 +95,7 @@ private fun CommandXboxController.configureReefAlignments() {
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
                 SuperStructure.smartGoTo(RobotState.NewCoralStation), // todo smoother retraction?
             ) {
-                Intake.hasBranchCoral
+                Intake.holdingCoral
             }
         )
 
@@ -206,13 +112,13 @@ private fun CommandXboxController.configureReefAlignments() {
                 SuperStructure.smartGoTo(RobotState.CoralStorage),
                 SuperStructure.smartGoTo(RobotState.NewCoralStation), // todo smoother retraction?
             ) {
-                Intake.hasBranchCoral
+                Intake.holdingCoral
             }
         )
 
     leftBumper()
         .and(rightBumper())
-        .and(hasNoCoral)
+        .and(hasCoral.negate())
         .whileTrue(
             Chassis.driveToClosestReef
                 .alongWith(
@@ -238,7 +144,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                     .andThen(Intake.scoreAlgae)
             )
             .andThen(SuperStructure.smartGoTo(RobotState.NewCoralStation))
-            .onlyIf { Intake.detectAlgaeByCurrent() }
+            .onlyIf { Intake.holdingAlgae }
     }
     // only y
     y().and(notLeftBumper)
@@ -267,7 +173,7 @@ private fun CommandXboxController.configureBargeAlignments() {
                 RobotState.NewCoralStation
             ), // spencer changed from stow thurs afternoon to avoid catching on barge
         ) {
-            Intake.detectAlgaeByCurrent()
+            Intake.holdingAlgae
         }
     )
 }

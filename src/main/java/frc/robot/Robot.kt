@@ -30,20 +30,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.auto.Autos
 import frc.robot.lib.FieldGeometry
 import frc.robot.lib.bindings.configureDriverBindings
-import frc.robot.lib.bindings.configureManipTestBindings
 import frc.robot.lib.bindings.configureManipulatorBindings
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
-import frc.robot.subsystems.Climber
-import frc.robot.subsystems.Elevator
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.LEDSubsystem
-import frc.robot.subsystems.Pivot
-import frc.robot.subsystems.RobotState
-import frc.robot.subsystems.SuperStructure
-import frc.robot.subsystems.Vision
-import frc.robot.subsystems.Wrist
+import frc.robot.subsystems.*
 import frc.robot.subsystems.drivetrain.Chassis
 import frc.robot.subsystems.drivetrain.Telemetry
 import org.littletonrobotics.junction.LoggedRobot
@@ -100,7 +91,6 @@ object Robot : LoggedRobot() {
 
         driverController.configureDriverBindings()
         CommandXboxController(1).configureManipulatorBindings()
-        CommandJoystick(5).configureManipTestBindings()
 
         Pivot.coast()
         RobotModeTriggers.disabled()
@@ -121,7 +111,7 @@ object Robot : LoggedRobot() {
                     Wrist.goToWithoutRequiring(RobotState.CoralStorage),
                     Commands.none(),
                 ) {
-                    Intake.hasBranchCoral
+                    Intake.holdingCoral
                 }
             )
 
@@ -142,7 +132,7 @@ object Robot : LoggedRobot() {
                     ),
                     Commands.none(),
                 ) {
-                    Intake.hasBranchCoral
+                    Intake.holdingCoral
                 }
             )
 

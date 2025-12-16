@@ -19,18 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.IS_COMP
-import frc.robot.lib.FieldGeometry
-import frc.robot.lib.command
-import frc.robot.lib.degrees
-import frc.robot.lib.meters
-import frc.robot.lib.radians
-import frc.robot.lib.radiansPerSecond
-import frc.robot.lib.rotationsPerSecond
-import frc.robot.lib.rotationsPerSecondCubed
-import frc.robot.lib.rotationsPerSecondPerSecond
-import frc.robot.lib.seconds
-import frc.robot.lib.volts
-import frc.robot.lib.voltsPerSecond
+import frc.robot.lib.*
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
@@ -197,7 +186,7 @@ object Wrist : SubsystemBase("wrist") {
 
         // Command the wrist to move to the setpoint
         motionMagic.withPosition(setpoint).withLimitReverseMotion(shouldLimitReverseMotion)
-        if (Intake.detectAlgaeByCurrent()) {
+        if (Intake.holdingAlgae) {
             motionMagic.withAcceleration(6.0)
         } else {
             motionMagic.withAcceleration(30.0)
