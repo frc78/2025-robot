@@ -51,9 +51,6 @@ object FieldPoses {
             RED_REEF_POSES[4],
         )
 
-    val closestAlgaeIsHigh
-        get() = closestReef in HIGH_ALGAE_REEF_POSES
-
     private val BLUE_CORAL_STATION_LOCATIONS =
         intArrayOf(12, 13).map {
             Robot.gameField.getTagPose(it).get().toPose2d().transformBy(CORAL_TO_BOT_TRANSFORM)
@@ -88,25 +85,6 @@ object FieldPoses {
         get() {
             val myReefs = allianceReefPoses
             return myReefs[2] == this || myReefs[3] == this || myReefs[4] == this
-        }
-
-    val closestLeftBranch: Pose2d
-        get() {
-            closestReef.let {
-                // reverse left/right branches for EF, GH, and IJ
-                return if (it.isFarReef) {
-                    it.transformBy(REEF_TO_BRANCH_RIGHT)
-                } else it.transformBy(REEF_TO_BRANCH_LEFT)
-            }
-        }
-
-    val closestRightBranch: Pose2d
-        get() {
-            closestReef.let {
-                return if (it.isFarReef) {
-                    it.transformBy(REEF_TO_BRANCH_LEFT)
-                } else it.transformBy(REEF_TO_BRANCH_RIGHT)
-            }
         }
 
     val closestCoralStation: Pose2d

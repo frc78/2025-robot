@@ -13,11 +13,11 @@ import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 import frc.robot.lib.*
 import frc.robot.lib.bindings.ReefscapeController
 import frc.robot.subsystems.Intake.IntakeState.*
+import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
 object Intake {
@@ -60,83 +60,76 @@ object Intake {
             )
         }
 
-    private val stateTimer = Timer()
-    var currentState = Idle
-        set(value) {
-            if (field != value) {
-                stateTimer.restart()
-            }
-            field = value
-        }
+    var state = Idle
 
     fun stateMachine() {
-        leader.setControl(currentState.control)
+        leader.setControl(state.control)
         val intakeAlgae =
             ReefscapeController.floorAlgae()
                 .or(ReefscapeController.lowAlgae())
                 .or(ReefscapeController.highAlgae())
-        when (currentState) {
+        when (state) {
             Idle -> {
                 if (ReefscapeController.coral()) {
-                    currentState = IntakeCoral
+                    state = IntakeCoral
                 } else if (intakeAlgae) {
-                    currentState = IntakeAlgae
+                    state = IntakeAlgae
                 }
             }
 
             IntakeCoral -> {
                 if (ReefscapeController.home()) {
-                    currentState = Idle
+                    state = Idle
                 } else if (holdingCoral) {
-                    currentState = HoldCoral
+                    state = HoldCoral
                 }
             }
 
             HoldCoral -> {
                 if (ReefscapeController.score()) {
-                    currentState = EjectCoral
+                    state = EjectCoral
                 }
             }
 
             EjectCoral -> {
                 if (ReefscapeController.home()) {
-                    currentState = Idle
+                    state = Idle
                 } else if (ReefscapeController.coral()) {
-                    currentState = IntakeCoral
+                    state = IntakeCoral
                 }
             }
 
             IntakeAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Idle
+                    state = Idle
                 } else if (holdingAlgae) {
-                    currentState = HoldAlgae
+                    state = HoldAlgae
                 }
             }
 
             HoldAlgae -> {
                 if (ReefscapeController.score()) {
-                    currentState = ProcessAlgae
+                    state = ProcessAlgae
                 }
             }
 
             NetAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Idle
+                    state = Idle
                 } else if (ReefscapeController.coral()) {
-                    currentState = IntakeCoral
+                    state = IntakeCoral
                 } else if (intakeAlgae) {
-                    currentState = IntakeAlgae
+                    state = IntakeAlgae
                 }
             }
 
             ProcessAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Idle
+                    state = Idle
                 } else if (ReefscapeController.coral()) {
-                    currentState = IntakeCoral
+                    state = IntakeCoral
                 } else if (intakeAlgae) {
-                    currentState = IntakeAlgae
+                    state = IntakeAlgae
                 }
             }
         }
@@ -178,7 +171,7 @@ object Intake {
         }
 
     fun periodic() {
-        Logger.recordOutput("intake/state", currentState.name)
+        Logger.recordOutput("intake/state", state.name)
         Logger.recordOutput("intake/coral_detected", hasBranchCoral)
         Logger.recordOutput("intake/coral_position", canRange.distance.value)
         Logger.recordOutput("intake/coral_location", coralLocation)
@@ -204,11 +197,13 @@ object Intake {
         sim.inputVoltage = simState.motorVoltage
         sim.update(0.02)
         if (
-            currentState == IntakeCoral ||
-                currentState == HoldCoral ||
-                currentState == IntakeState.IntakeAlgae ||
-                currentState == IntakeState.HoldAlgae
+            state == IntakeCoral &&
+                (Chassis.state.Pose.translation.getDistance(
+                    FieldPoses.closestCoralStation.translation
+                ) < .5)
         ) {
+            simState.setRotorVelocity(0.0)
+        } else if (state == HoldCoral || state == IntakeAlgae || state == HoldAlgae) {
             simState.setRotorVelocity(0.0)
         } else {
             simState.setRotorVelocity(sim.angularVelocity * 36.0 / 12.0)

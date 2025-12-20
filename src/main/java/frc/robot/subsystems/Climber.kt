@@ -22,11 +22,11 @@ object Climber {
     private const val EXTENDED_ROTATIONS = LEADSCREW_TPI * EXTENDED_INCHES
 
     fun stateMachine() {
-        leader.setControl(currentState.control)
-        when (currentState) {
+        leader.setControl(state.control)
+        when (state) {
             ClimberState.Retracted -> {
-                if (SuperStructure.currentState == FullyClimbed) {
-                    currentState = ClimberState.Extended
+                if (SuperStructure.state == FullyClimbed) {
+                    state = ClimberState.Extended
                 }
             }
             ClimberState.Extended -> {
@@ -35,7 +35,7 @@ object Climber {
         }
     }
 
-    private var currentState = ClimberState.Retracted
+    private var state = ClimberState.Retracted
 
     private val leader =
         TalonFX(16, "*").apply {

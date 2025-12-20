@@ -8,7 +8,6 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.sim.ChassisReference.Clockwise_Positive
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim
@@ -46,11 +45,6 @@ object Wrist {
             MotionMagic.MotionMagicAcceleration = 100.0
         }
 
-    private var setpoint = lowerLimit
-        set(value) {
-            field = value.coerceIn(lowerLimit, upperLimit)
-        }
-
     private val motionMagic =
         DynamicMotionMagicVoltage(
             0.degrees,
@@ -62,7 +56,7 @@ object Wrist {
     private val leader = TalonFX(13, "*").apply { configurator.apply(standardConfig) }
 
     val atPosition
-        get() = (angle - setpoint).abs(Degrees) < 1
+        get() = leader.closedLoopError.value < 2.0
 
     fun goTo(angle: Angle) {
         leader.setControl(motionMagic.withPosition(angle))
@@ -96,6 +90,5 @@ object Wrist {
     fun periodic() {
         Logger.recordOutput("wrist/angle_degrees", angle.degrees)
         Logger.recordOutput("wrist/at_position", atPosition)
-        Logger.recordOutput("wrist/setpoint", setpoint.degrees)
     }
 }

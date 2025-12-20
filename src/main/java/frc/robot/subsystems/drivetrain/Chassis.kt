@@ -67,12 +67,12 @@ object Chassis :
         }
     }
 
-    var currentState = ChassisState.FieldCentric
+    var state_ = ChassisState.FieldCentric
 
     val autoAlignDebounce = Debouncer(0.3)
 
     fun stateMachine() {
-        when (currentState) {
+        when (state_) {
             ChassisState.FieldCentric -> {
                 setControl(
                     FieldCentric.withVelocityX(ReefscapeController.velocityX)
@@ -80,9 +80,9 @@ object Chassis :
                         .withRotationalRate(ReefscapeController.velocityRot)
                 )
                 if (ReefscapeController.robotCentric()) {
-                    currentState = ChassisState.RobotCentric
+                    state_ = ChassisState.RobotCentric
                 } else if (
-                    Intake.currentState == IntakeState.HoldCoral &&
+                    Intake.state == IntakeState.HoldCoral &&
                         autoAlignDebounce.calculate(
                             ReefscapeController.l2() ||
                                 ReefscapeController.l3() ||
@@ -90,7 +90,7 @@ object Chassis :
                         )
                 ) {
                     posePIDController.reset()
-                    currentState = AutoAlign
+                    state_ = AutoAlign
                 }
             }
             ChassisState.RobotCentric -> {
@@ -100,20 +100,20 @@ object Chassis :
                         .withRotationalRate(ReefscapeController.velocityRot)
                 )
                 if (ReefscapeController.fieldCentric()) {
-                    currentState = ChassisState.FieldCentric
+                    state_ = ChassisState.FieldCentric
                 }
             }
             AutoAlign -> {
                 if (driveToPoseWithCoralOffset(closestBranch)) {
-                    LEDSubsystem.currentState = LEDSubsystem.LedState.Aligned
+                    LEDSubsystem.state = LEDSubsystem.LedState.Aligned
                 }
                 if (
                     !(ReefscapeController.l2() ||
                         ReefscapeController.l3() ||
                         ReefscapeController.l4())
                 ) {
-                    LEDSubsystem.currentState = LEDSubsystem.LedState.Idle
-                    currentState = ChassisState.FieldCentric
+                    LEDSubsystem.state = LEDSubsystem.LedState.Idle
+                    state_ = ChassisState.FieldCentric
                 }
             }
         }
@@ -199,7 +199,7 @@ object Chassis :
         closestBargePub.set(closestBarge)
         closestBargeLeftPub.set(closestLeftBarge)
         closestBargeRightPub.set(closestRightBarge)
-        Logger.recordOutput("chassis/state", currentState.name)
+        Logger.recordOutput("chassis/state", state_.name)
     }
 
     /** Drives to a pose such that the coral is at x=0 */

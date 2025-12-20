@@ -17,7 +17,7 @@ object LEDSubsystem {
     private val led = AddressableLED(0)
     private val buffer = AddressableLEDBuffer(30)
 
-    var currentState = LedState.Disabled
+    var state = LedState.Disabled
 
     init {
         led.setColorOrder(AddressableLED.ColorOrder.kRGB)
@@ -28,26 +28,26 @@ object LEDSubsystem {
     }
 
     fun stateMachine() {
-        when (currentState) {
+        when (state) {
             LedState.Disabled -> {
                 setColor(Color.kWhite)
             }
             LedState.Idle -> {
                 setColor(Color.kBlack)
                 if (
-                    Intake.currentState == Intake.IntakeState.HoldCoral ||
-                        Intake.currentState == Intake.IntakeState.HoldAlgae
+                    Intake.state == Intake.IntakeState.HoldCoral ||
+                        Intake.state == Intake.IntakeState.HoldAlgae
                 ) {
-                    currentState = LedState.GamePieceAcquired
+                    state = LedState.GamePieceAcquired
                 }
             }
             LedState.GamePieceAcquired -> {
                 setColor(Color.kGreen)
                 if (
-                    Intake.currentState != Intake.IntakeState.HoldCoral &&
-                        Intake.currentState != Intake.IntakeState.HoldAlgae
+                    Intake.state != Intake.IntakeState.HoldCoral &&
+                        Intake.state != Intake.IntakeState.HoldAlgae
                 ) {
-                    currentState = LedState.Idle
+                    state = LedState.Idle
                 }
             }
             LedState.Aligned -> {

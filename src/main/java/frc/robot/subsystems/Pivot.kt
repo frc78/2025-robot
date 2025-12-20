@@ -68,6 +68,9 @@ object Pivot {
 
     private val motionMagic = MotionMagicVoltage(0.0)
 
+    val atPosition
+        get() = leader.closedLoopError.value < 2.0
+
     val angle: Angle
         get() = leader.position.value
 

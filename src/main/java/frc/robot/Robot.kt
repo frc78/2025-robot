@@ -14,13 +14,11 @@ import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.Color
 import edu.wpi.first.wpilibj.util.Color8Bit
 import edu.wpi.first.wpilibj.util.WPILibVersion
-import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.CommandScheduler
+import frc.robot.auto.OPAuto
 import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.lib.meters
@@ -64,17 +62,9 @@ object Robot : LoggedRobot() {
         DriverStation.startDataLog(DataLogManager.getLog())
         Chassis.registerTelemetry(Telemetry::telemeterize)
 
-        // Initializing Subsystems
-        SuperStructure
-        LEDSubsystem
-        Intake
-        Climber
-
         Pivot.coast()
+        StateMachineManager.robotInit()
     }
-
-    private val autoChooser =
-        SendableChooser<Command>().apply { SmartDashboard.putData("Auto Mode", this) }
 
     /* lateinit is a way to tell the compiler that we promise to initialize this variable before
     using them. These are lateinit since we don't want to create them always, but when we access them in
@@ -83,6 +73,7 @@ object Robot : LoggedRobot() {
     private lateinit var wristMech: MechanismLigament2d
 
     override fun simulationInit() {
+        StateMachineManager.simulationInit()
         // Create a mechanism widget
         val robot = Mechanism2d(1.0, 5.0)
         // The pivot axis location is the root of the mechanism
@@ -125,31 +116,23 @@ object Robot : LoggedRobot() {
     }
 
     override fun robotPeriodic() {
-        SuperStructure.periodic()
-        Intake.periodic()
-        Climber.periodic()
-        Chassis.periodic()
+        StateMachineManager.robotPeriodic()
         if (isReal()) {
             Vision.update()
         }
     }
 
     override fun autonomousPeriodic() {
-        SuperStructure.stateMachine()
-        LEDSubsystem.stateMachine()
-        Intake.stateMachine()
+        OPAuto.runAuto()
+        StateMachineManager.autonomousPeriodic()
     }
 
     override fun teleopPeriodic() {
-        SuperStructure.stateMachine()
-        LEDSubsystem.stateMachine()
-        Intake.stateMachine()
-        Chassis.stateMachine()
+        StateMachineManager.teleopPeriodic()
     }
 
     override fun simulationPeriodic() {
-        SuperStructure.simulationPeriodic()
-        Intake.simulationPeriodic()
+        StateMachineManager.simulationPeriodic()
 
         // The angle of the elevator is determined by the pivot angle
         // The angle parameter expects a value in degrees, so we convert it to degrees
@@ -161,16 +144,19 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        autoChooser.selected?.let { CommandScheduler.getInstance().schedule(it) }
+        StateMachineManager.autonomousInit()
+        OPAuto.init()
     }
 
     override fun disabledInit() {
+        StateMachineManager.disabledInit()
         Vision.setMultitagFallbackStrategy(PhotonPoseEstimator.PoseStrategy.LOWEST_AMBIGUITY)
     }
 
     private var pivotBraked = false
 
     override fun disabledPeriodic() {
+        StateMachineManager.disabledPeriodic()
         if (Pivot.angle > 45.degrees && !pivotBraked) {
             Pivot.brake()
             pivotBraked = true

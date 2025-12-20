@@ -21,6 +21,7 @@ object SuperStructure {
         val wristAngle: Angle,
     ) {
         Home(40.degrees, 0.25.inches, 22.5.degrees),
+        PreScoreL4(90.degrees, 0.25.inches, 29.25.degrees),
         L1(38.degrees, 0.25.inches, 186.75.degrees),
         L2(93.5.degrees, 0.25.inches, 39.degrees),
         L3(92.6.degrees, 17.25.inches, 38.degrees),
@@ -35,145 +36,149 @@ object SuperStructure {
         FullyClimbed(5.degrees, 0.25.inches, 90.degrees),
     }
 
-    var currentState = Home
+    val atPosition
+        get() = Elevator.atPosition && Wrist.atPosition && Pivot.atPosition
+
+    var state = Home
 
     fun stateMachine() {
-        val intakeIdle = Intake.currentState == IntakeState.Idle
-        val intakeHasCoral = Intake.currentState == HoldCoral
-        val intakeHasAlgae = Intake.currentState == IntakeState.HoldAlgae
-        // If moving to a lower elevator position, move elevator first
-        if (currentState.elevatorHeight < Elevator.position) {
-            Elevator.goTo(currentState.elevatorHeight)
-            if ((Elevator.position - currentState.elevatorHeight).abs(Inches) < 0.5) {
-                Wrist.goTo(currentState.wristAngle)
-                Pivot.goTo(currentState.pivotAngle)
+        val intakeHasCoral = Intake.state == HoldCoral
+        val intakeHasAlgae = Intake.state == IntakeState.HoldAlgae
+        // If moving to a lower elevator position, move wrist after elevator is down
+        if (state.elevatorHeight < Elevator.position) {
+            Elevator.goTo(state.elevatorHeight)
+            Pivot.goTo(state.pivotAngle)
+            if ((Elevator.position - state.elevatorHeight).abs(Inches) < 0.5) {
+                Wrist.goTo(state.wristAngle)
             }
         } else {
             // Move pivot and wrist, then elevator
-            Pivot.goTo(currentState.pivotAngle)
-            Wrist.goTo(currentState.wristAngle)
-            if ((Pivot.angle - currentState.pivotAngle).abs(Degrees) < 2.0) {
-                Elevator.goTo(currentState.elevatorHeight)
+            Pivot.goTo(state.pivotAngle)
+            Wrist.goTo(state.wristAngle)
+            if ((Pivot.angle - state.pivotAngle).abs(Degrees) < 2.0) {
+                Elevator.goTo(state.elevatorHeight)
             }
         }
-        when (currentState) {
+        when (state) {
             Home -> {
                 if (intakeHasCoral) {
                     if (ReefscapeController.l1()) {
-                        currentState = L1
+                        state = L1
                     } else if (ReefscapeController.l2()) {
-                        currentState = L2
+                        state = L2
                     } else if (ReefscapeController.l3()) {
-                        currentState = L3
+                        state = L3
                     } else if (ReefscapeController.l4()) {
-                        currentState = L4
+                        state = L4
                     }
                 } else if (intakeHasAlgae) {
                     if (ReefscapeController.net()) {
-                        currentState = Net
+                        state = Net
                     } else if (ReefscapeController.process()) {
-                        currentState = Processor
+                        state = Processor
                     }
                 } else {
                     if (ReefscapeController.coral()) {
-                        currentState = CoralStation
+                        state = CoralStation
                     } else if (ReefscapeController.floorAlgae()) {
-                        currentState = FloorAlgae
+                        state = FloorAlgae
                     } else if (ReefscapeController.highAlgae()) {
-                        currentState = HighAlgae
+                        state = HighAlgae
                     } else if (ReefscapeController.lowAlgae()) {
-                        currentState = LowAlgae
+                        state = LowAlgae
                     }
                 }
                 if (ReefscapeController.prepareClimb()) {
-                    currentState = ReadyToClimb
+                    state = ReadyToClimb
                 }
             }
             L1 -> {
                 if (ReefscapeController.l2()) {
-                    currentState = L2
+                    state = L2
                 } else if (ReefscapeController.l3()) {
-                    currentState = L3
+                    state = L3
                 } else if (ReefscapeController.l4()) {
-                    currentState = L4
+                    state = L4
                 } else if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             L2 -> {
                 if (ReefscapeController.l1()) {
-                    currentState = L1
+                    state = L1
                 } else if (ReefscapeController.l3()) {
-                    currentState = L3
+                    state = L3
                 } else if (ReefscapeController.l4()) {
-                    currentState = L4
+                    state = L4
                 } else if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             L3 -> {
                 if (ReefscapeController.l1()) {
-                    currentState = L1
+                    state = L1
                 } else if (ReefscapeController.l2()) {
-                    currentState = L2
+                    state = L2
                 } else if (ReefscapeController.l4()) {
-                    currentState = L4
+                    state = L4
                 } else if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             L4 -> {
                 if (ReefscapeController.l1()) {
-                    currentState = L1
+                    state = L1
                 } else if (ReefscapeController.l2()) {
-                    currentState = L2
+                    state = L2
                 } else if (ReefscapeController.l3()) {
-                    currentState = L3
+                    state = L3
                 } else if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             CoralStation -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             FloorAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             Processor -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             HighAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 } else if (ReefscapeController.lowAlgae()) {
-                    currentState = LowAlgae
+                    state = LowAlgae
                 }
             }
             LowAlgae -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 } else if (ReefscapeController.highAlgae()) {
-                    currentState = HighAlgae
+                    state = HighAlgae
                 }
             }
             Net -> {
                 if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
             ReadyToClimb -> {
                 if (ReefscapeController.climb()) {
-                    currentState = FullyClimbed
+                    state = FullyClimbed
                 } else if (ReefscapeController.home()) {
-                    currentState = Home
+                    state = Home
                 }
             }
+            // only used in auto
+            PreScoreL4 -> Unit
             FullyClimbed -> Unit
         }
     }
@@ -182,7 +187,7 @@ object SuperStructure {
         Elevator.periodic()
         Pivot.periodic()
         Wrist.periodic()
-        Logger.recordOutput("superstructure/state", currentState.name)
+        Logger.recordOutput("superstructure/state", state.name)
     }
 
     fun simulationPeriodic() {
