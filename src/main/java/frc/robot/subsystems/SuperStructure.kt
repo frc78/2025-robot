@@ -9,7 +9,20 @@ import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Intake.IntakeState
 import frc.robot.subsystems.Intake.IntakeState.HoldCoral
-import frc.robot.subsystems.SuperStructure.SuperStructureState.*
+import frc.robot.subsystems.SuperStructure.SuperStructureState.CoralStation
+import frc.robot.subsystems.SuperStructure.SuperStructureState.FloorAlgae
+import frc.robot.subsystems.SuperStructure.SuperStructureState.FullyClimbed
+import frc.robot.subsystems.SuperStructure.SuperStructureState.HighAlgae
+import frc.robot.subsystems.SuperStructure.SuperStructureState.Home
+import frc.robot.subsystems.SuperStructure.SuperStructureState.L1
+import frc.robot.subsystems.SuperStructure.SuperStructureState.L2
+import frc.robot.subsystems.SuperStructure.SuperStructureState.L3
+import frc.robot.subsystems.SuperStructure.SuperStructureState.L4
+import frc.robot.subsystems.SuperStructure.SuperStructureState.LowAlgae
+import frc.robot.subsystems.SuperStructure.SuperStructureState.Net
+import frc.robot.subsystems.SuperStructure.SuperStructureState.PreScoreL4
+import frc.robot.subsystems.SuperStructure.SuperStructureState.Processor
+import frc.robot.subsystems.SuperStructure.SuperStructureState.ReadyToClimb
 import org.littletonrobotics.junction.Logger
 
 object SuperStructure {
@@ -61,23 +74,7 @@ object SuperStructure {
         }
         when (state) {
             Home -> {
-                if (intakeHasCoral) {
-                    if (ReefscapeController.l1()) {
-                        state = L1
-                    } else if (ReefscapeController.l2()) {
-                        state = L2
-                    } else if (ReefscapeController.l3()) {
-                        state = L3
-                    } else if (ReefscapeController.l4()) {
-                        state = L4
-                    }
-                } else if (intakeHasAlgae) {
-                    if (ReefscapeController.net()) {
-                        state = Net
-                    } else if (ReefscapeController.process()) {
-                        state = Processor
-                    }
-                } else {
+                if (!(intakeHasAlgae || intakeHasCoral)) {
                     if (ReefscapeController.coral()) {
                         state = CoralStation
                     } else if (ReefscapeController.floorAlgae()) {
@@ -92,51 +89,8 @@ object SuperStructure {
                     state = ReadyToClimb
                 }
             }
-            L1 -> {
-                if (ReefscapeController.l2()) {
-                    state = L2
-                } else if (ReefscapeController.l3()) {
-                    state = L3
-                } else if (ReefscapeController.l4()) {
-                    state = L4
-                } else if (ReefscapeController.home()) {
-                    state = Home
-                }
-            }
-            L2 -> {
-                if (ReefscapeController.l1()) {
-                    state = L1
-                } else if (ReefscapeController.l3()) {
-                    state = L3
-                } else if (ReefscapeController.l4()) {
-                    state = L4
-                } else if (ReefscapeController.home()) {
-                    state = Home
-                }
-            }
-            L3 -> {
-                if (ReefscapeController.l1()) {
-                    state = L1
-                } else if (ReefscapeController.l2()) {
-                    state = L2
-                } else if (ReefscapeController.l4()) {
-                    state = L4
-                } else if (ReefscapeController.home()) {
-                    state = Home
-                }
-            }
-            L4 -> {
-                if (ReefscapeController.l1()) {
-                    state = L1
-                } else if (ReefscapeController.l2()) {
-                    state = L2
-                } else if (ReefscapeController.l3()) {
-                    state = L3
-                } else if (ReefscapeController.home()) {
-                    state = Home
-                }
-            }
             CoralStation -> {
+                // Can go to coral scoring once holding coral
                 if (ReefscapeController.home()) {
                     state = Home
                 }
@@ -177,9 +131,33 @@ object SuperStructure {
                     state = Home
                 }
             }
+            // Handled below in intakeHasCoral block
+            L1,
+            L2,
+            L3,
+            L4,
             // only used in auto
             PreScoreL4 -> Unit
             FullyClimbed -> Unit
+        }
+        if (intakeHasCoral) {
+            if (ReefscapeController.l1()) {
+                state = L1
+            } else if (ReefscapeController.l2()) {
+                state = L2
+            } else if (ReefscapeController.l3()) {
+                state = L3
+            } else if (ReefscapeController.l4()) {
+                state = L4
+            } else if (ReefscapeController.home()) {
+                state = Home
+            }
+        } else if (intakeHasAlgae) {
+            if (ReefscapeController.net()) {
+                state = Net
+            } else if (ReefscapeController.process()) {
+                state = Processor
+            }
         }
     }
 

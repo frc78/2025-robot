@@ -14,9 +14,21 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import frc.robot.lib.*
+import frc.robot.lib.FieldPoses
+import frc.robot.lib.amps
 import frc.robot.lib.bindings.ReefscapeController
-import frc.robot.subsystems.Intake.IntakeState.*
+import frc.robot.lib.centimeters
+import frc.robot.lib.kilogramSquareMeters
+import frc.robot.lib.meters
+import frc.robot.lib.poundSquareInches
+import frc.robot.subsystems.Intake.IntakeState.EjectCoral
+import frc.robot.subsystems.Intake.IntakeState.HoldAlgae
+import frc.robot.subsystems.Intake.IntakeState.HoldCoral
+import frc.robot.subsystems.Intake.IntakeState.Idle
+import frc.robot.subsystems.Intake.IntakeState.IntakeAlgae
+import frc.robot.subsystems.Intake.IntakeState.IntakeCoral
+import frc.robot.subsystems.Intake.IntakeState.NetAlgae
+import frc.robot.subsystems.Intake.IntakeState.ProcessAlgae
 import frc.robot.subsystems.drivetrain.Chassis
 import org.littletonrobotics.junction.Logger
 
@@ -86,7 +98,8 @@ object Intake {
             }
 
             HoldCoral -> {
-                if (ReefscapeController.score()) {
+                // Allow holding score button to score as soon as superstructure is in position
+                if (ReefscapeController.score() && SuperStructure.atPosition) {
                     state = EjectCoral
                 }
             }

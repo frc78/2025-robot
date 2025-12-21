@@ -80,12 +80,6 @@ object FieldPoses {
     val closestBranch: Pose2d
         get() = Chassis.state.Pose.nearest(branchPoses)
 
-    /** Returns true if the pose is on the far side of the reef from the alliance wall */
-    val Pose2d.isFarReef: Boolean
-        get() {
-            val myReefs = allianceReefPoses
-            return myReefs[2] == this || myReefs[3] == this || myReefs[4] == this
-        }
 
     val closestCoralStation: Pose2d
         get() {

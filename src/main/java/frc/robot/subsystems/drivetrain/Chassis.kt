@@ -16,7 +16,12 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
-import frc.robot.generated.CompBotTunerConstants.*
+import frc.robot.generated.CompBotTunerConstants.BackLeft
+import frc.robot.generated.CompBotTunerConstants.BackRight
+import frc.robot.generated.CompBotTunerConstants.CompBotTunerSwerveDrivetrain
+import frc.robot.generated.CompBotTunerConstants.DrivetrainConstants
+import frc.robot.generated.CompBotTunerConstants.FrontLeft
+import frc.robot.generated.CompBotTunerConstants.FrontRight
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
@@ -28,9 +33,10 @@ import frc.robot.lib.bindings.ReefscapeController
 import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Intake.IntakeState
 import frc.robot.subsystems.LEDSubsystem
 import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlign
+import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlignAlgae
+import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlignCoral
 import org.littletonrobotics.junction.Logger
 
 /**
@@ -44,7 +50,8 @@ object Chassis :
     enum class ChassisState {
         FieldCentric,
         RobotCentric,
-        AutoAlign,
+        AutoAlignCoral,
+        AutoAlignAlgae,
     }
 
     private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
@@ -69,7 +76,8 @@ object Chassis :
 
     var state_ = ChassisState.FieldCentric
 
-    val autoAlignDebounce = Debouncer(0.3)
+    val coralAutoAlignDebouncer = Debouncer(0.3)
+    val algaeAutoAlignDebounce = Debouncer(0.3)
 
     fun stateMachine() {
         when (state_) {
@@ -81,16 +89,6 @@ object Chassis :
                 )
                 if (ReefscapeController.robotCentric()) {
                     state_ = ChassisState.RobotCentric
-                } else if (
-                    Intake.state == IntakeState.HoldCoral &&
-                        autoAlignDebounce.calculate(
-                            ReefscapeController.l2() ||
-                                ReefscapeController.l3() ||
-                                ReefscapeController.l4()
-                        )
-                ) {
-                    posePIDController.reset()
-                    state_ = AutoAlign
                 }
             }
             ChassisState.RobotCentric -> {
@@ -103,7 +101,7 @@ object Chassis :
                     state_ = ChassisState.FieldCentric
                 }
             }
-            AutoAlign -> {
+            AutoAlignCoral -> {
                 if (driveToPoseWithCoralOffset(closestBranch)) {
                     LEDSubsystem.state = LEDSubsystem.LedState.Aligned
                 }
@@ -116,6 +114,30 @@ object Chassis :
                     state_ = ChassisState.FieldCentric
                 }
             }
+
+            AutoAlignAlgae -> {
+                driveToPose(closestReef, 0.0)
+                if (!(ReefscapeController.highAlgae() || ReefscapeController.lowAlgae())) {
+                    state_ = ChassisState.FieldCentric
+                }
+            }
+        }
+        if (
+            coralAutoAlignDebouncer.calculate(
+                Intake.holdingCoral &&
+                    (ReefscapeController.l2() ||
+                        ReefscapeController.l3() ||
+                        ReefscapeController.l4())
+            ) ||
+                algaeAutoAlignDebounce.calculate(
+                    !Intake.holdingAlgae &&
+                        (ReefscapeController.highAlgae() || ReefscapeController.lowAlgae())
+                )
+        ) {
+            posePIDController.reset()
+            coralAutoAlignDebouncer.calculate(false)
+            algaeAutoAlignDebounce.calculate(false)
+            state_ = AutoAlign
         }
     }
 
