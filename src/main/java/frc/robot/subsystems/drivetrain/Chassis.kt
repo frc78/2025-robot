@@ -16,12 +16,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
-import frc.robot.generated.CompBotTunerConstants.BackLeft
-import frc.robot.generated.CompBotTunerConstants.BackRight
-import frc.robot.generated.CompBotTunerConstants.CompBotTunerSwerveDrivetrain
-import frc.robot.generated.CompBotTunerConstants.DrivetrainConstants
-import frc.robot.generated.CompBotTunerConstants.FrontLeft
-import frc.robot.generated.CompBotTunerConstants.FrontRight
+import frc.robot.generated.CompBotTunerConstants.*
 import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
 import frc.robot.lib.FieldPoses.closestCoralStation
@@ -34,7 +29,6 @@ import frc.robot.lib.inches
 import frc.robot.lib.meters
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.LEDSubsystem
-import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlign
 import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlignAlgae
 import frc.robot.subsystems.drivetrain.Chassis.ChassisState.AutoAlignCoral
 import org.littletonrobotics.junction.Logger
@@ -128,16 +122,20 @@ object Chassis :
                     (ReefscapeController.l2() ||
                         ReefscapeController.l3() ||
                         ReefscapeController.l4())
-            ) ||
-                algaeAutoAlignDebounce.calculate(
-                    !Intake.holdingAlgae &&
-                        (ReefscapeController.highAlgae() || ReefscapeController.lowAlgae())
-                )
+            )
         ) {
             posePIDController.reset()
             coralAutoAlignDebouncer.calculate(false)
-            algaeAutoAlignDebounce.calculate(false)
-            state_ = AutoAlign
+            state_ = AutoAlignCoral
+        } else if (
+            algaeAutoAlignDebounce.calculate(
+                !Intake.holdingAlgae &&
+                    (ReefscapeController.highAlgae() || ReefscapeController.lowAlgae())
+            )
+        ) {
+            posePIDController.reset()
+            coralAutoAlignDebouncer.calculate(false)
+            state_ = AutoAlignAlgae
         }
     }
 

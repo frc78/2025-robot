@@ -9,20 +9,7 @@ import frc.robot.lib.degrees
 import frc.robot.lib.inches
 import frc.robot.subsystems.Intake.IntakeState
 import frc.robot.subsystems.Intake.IntakeState.HoldCoral
-import frc.robot.subsystems.SuperStructure.SuperStructureState.CoralStation
-import frc.robot.subsystems.SuperStructure.SuperStructureState.FloorAlgae
-import frc.robot.subsystems.SuperStructure.SuperStructureState.FullyClimbed
-import frc.robot.subsystems.SuperStructure.SuperStructureState.HighAlgae
-import frc.robot.subsystems.SuperStructure.SuperStructureState.Home
-import frc.robot.subsystems.SuperStructure.SuperStructureState.L1
-import frc.robot.subsystems.SuperStructure.SuperStructureState.L2
-import frc.robot.subsystems.SuperStructure.SuperStructureState.L3
-import frc.robot.subsystems.SuperStructure.SuperStructureState.L4
-import frc.robot.subsystems.SuperStructure.SuperStructureState.LowAlgae
-import frc.robot.subsystems.SuperStructure.SuperStructureState.Net
-import frc.robot.subsystems.SuperStructure.SuperStructureState.PreScoreL4
-import frc.robot.subsystems.SuperStructure.SuperStructureState.Processor
-import frc.robot.subsystems.SuperStructure.SuperStructureState.ReadyToClimb
+import frc.robot.subsystems.SuperStructure.SuperStructureState.*
 import org.littletonrobotics.junction.Logger
 
 object SuperStructure {
@@ -131,14 +118,7 @@ object SuperStructure {
                     state = Home
                 }
             }
-            // Handled below in intakeHasCoral block
-            L1,
-            L2,
-            L3,
-            L4,
-            // only used in auto
-            PreScoreL4 -> Unit
-            FullyClimbed -> Unit
+            else -> Unit
         }
         if (intakeHasCoral) {
             if (ReefscapeController.l1()) {
