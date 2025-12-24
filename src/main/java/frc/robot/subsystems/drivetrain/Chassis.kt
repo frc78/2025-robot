@@ -129,7 +129,7 @@ object Chassis :
             state_ = AutoAlignCoral
         } else if (
             algaeAutoAlignDebounce.calculate(
-                !Intake.holdingAlgae &&
+                !(Intake.holdingAlgae || Intake.holdingCoral) &&
                     (ReefscapeController.highAlgae() || ReefscapeController.lowAlgae())
             )
         ) {
