@@ -11,19 +11,13 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.Notifier
 import edu.wpi.first.wpilibj.RobotController
 import frc.robot.generated.CompBotTunerConstants.*
-import frc.robot.lib.FieldPoses.closestBarge
 import frc.robot.lib.FieldPoses.closestBranch
-import frc.robot.lib.FieldPoses.closestCoralStation
-import frc.robot.lib.FieldPoses.closestLeftBarge
-import frc.robot.lib.FieldPoses.closestProcessor
 import frc.robot.lib.FieldPoses.closestReef
-import frc.robot.lib.FieldPoses.closestRightBarge
 import frc.robot.lib.bindings.ReefscapeController
 import frc.robot.lib.inches
 import frc.robot.lib.meters
@@ -47,20 +41,6 @@ object Chassis :
         AutoAlignCoral,
         AutoAlignAlgae,
     }
-
-    private val table = NetworkTableInstance.getDefault().getTable("drivetrain")
-    private val closestReefPub = table.getStructTopic("closest_reef", Pose2d.struct).publish()
-    private val closestBranchPub = table.getStructTopic("closest_branch", Pose2d.struct).publish()
-    private val closestCoralStationPub =
-        table.getStructTopic("closest_coral", Pose2d.struct).publish()
-    private val closestProcessorPub =
-        table.getStructTopic("closest_processor", Pose2d.struct).publish()
-
-    private val closestBargePub = table.getStructTopic("closest_barge", Pose2d.struct).publish()
-    private val closestBargeLeftPub =
-        table.getStructTopic("closest_barge_left", Pose2d.struct).publish()
-    private val closestBargeRightPub =
-        table.getStructTopic("closest_barge_right", Pose2d.struct).publish()
 
     init {
         if (Utils.isSimulation()) {
@@ -211,14 +191,7 @@ object Chassis :
                 hasAppliedOperatorPerspective = true
             }
         }
-        closestReefPub.set(closestReef)
-        closestBranchPub.set(closestBranch)
-        closestCoralStationPub.set(closestCoralStation)
-        closestProcessorPub.set(closestProcessor)
 
-        closestBargePub.set(closestBarge)
-        closestBargeLeftPub.set(closestLeftBarge)
-        closestBargeRightPub.set(closestRightBarge)
         Logger.recordOutput("chassis/state", state_.name)
     }
 
