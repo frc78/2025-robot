@@ -71,6 +71,15 @@ object SuperStructure {
                     } else if (ReefscapeController.lowAlgae()) {
                         state = LowAlgae
                     }
+                } else if (intakeHasCoral) {
+                    processCoralScoring()
+                } else {
+                    // intake necesarily has algae
+                    if (ReefscapeController.process()) {
+                        state = Processor
+                    } else if (ReefscapeController.net()) {
+                        state = Net
+                    }
                 }
                 if (ReefscapeController.prepareClimb()) {
                     state = ReadyToClimb
@@ -118,26 +127,26 @@ object SuperStructure {
                     state = Home
                 }
             }
-            else -> Unit
+            L1,
+            L2,
+            L3,
+            L4 -> processCoralScoring()
+            PreScoreL4,
+            FullyClimbed -> Unit
         }
-        if (intakeHasCoral) {
-            if (ReefscapeController.l1()) {
-                state = L1
-            } else if (ReefscapeController.l2()) {
-                state = L2
-            } else if (ReefscapeController.l3()) {
-                state = L3
-            } else if (ReefscapeController.l4()) {
-                state = L4
-            } else if (ReefscapeController.home()) {
-                state = Home
-            }
-        } else if (intakeHasAlgae) {
-            if (ReefscapeController.net()) {
-                state = Net
-            } else if (ReefscapeController.process()) {
-                state = Processor
-            }
+    }
+
+    private fun processCoralScoring() {
+        if (ReefscapeController.home()) {
+            state = Home
+        } else if (ReefscapeController.l1()) {
+            state = L1
+        } else if (ReefscapeController.l2()) {
+            state = L2
+        } else if (ReefscapeController.l3()) {
+            state = L3
+        } else if (ReefscapeController.l4()) {
+            state = L4
         }
     }
 
