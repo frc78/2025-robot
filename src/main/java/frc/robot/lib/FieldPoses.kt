@@ -80,7 +80,6 @@ object FieldPoses {
     val closestBranch: Pose2d
         get() = Chassis.state.Pose.nearest(branchPoses)
 
-
     val closestCoralStation: Pose2d
         get() {
             val alliance = DriverStation.getAlliance().getOrNull() ?: return Pose2d.kZero
