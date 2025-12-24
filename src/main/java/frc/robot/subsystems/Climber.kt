@@ -25,7 +25,7 @@ object Climber {
         leader.setControl(state.control)
         when (state) {
             ClimberState.Retracted -> {
-                if (SuperStructure.state == FullyClimbed) {
+                if (SuperStructure.state == FullyClimbed && SuperStructure.atPosition) {
                     state = ClimberState.Extended
                 }
             }
