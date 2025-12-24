@@ -185,6 +185,7 @@ object Intake {
         )
 
     private val simState by lazy { leader.simState }
+    private val canRangeSimState by lazy { canRange.simState }
 
     fun simulationPeriodic() {
         sim.inputVoltage = simState.motorVoltage
@@ -196,9 +197,12 @@ object Intake {
                 ) < .5)
         ) {
             simState.setRotorVelocity(0.0)
+            // Centered
+            canRangeSimState.setDistance(19.centimeters)
         } else if (state == HoldCoral || state == IntakeAlgae || state == HoldAlgae) {
             simState.setRotorVelocity(0.0)
         } else {
+            canRangeSimState.setDistance(50.centimeters)
             simState.setRotorVelocity(sim.angularVelocity * 36.0 / 12.0)
         }
     }
